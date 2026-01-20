@@ -1,9 +1,7 @@
-export const runtime = 'edge';
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
+import { User } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // Enrich users with their stats
     const enrichedUsers = await Promise.all(
-      users.map(async (user) => {
+      users.map(async (user: User) => {
         const stats = await db.getUserStats(user.id);
         return {
           id: user.id,
