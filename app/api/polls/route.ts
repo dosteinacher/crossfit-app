@@ -1,9 +1,7 @@
-export const runtime = 'edge';
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
+import { Poll, PollOption } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,12 +17,12 @@ export async function GET(request: NextRequest) {
 
     // Enrich polls with creator info and vote counts
     const enrichedPolls = await Promise.all(
-      polls.map(async (poll) => {
+      polls.map(async (poll: Poll) => {
         const creator = await db.getUserById(poll.created_by);
         const options = await db.getPollOptions(poll.id);
         
         const optionsWithVotes = await Promise.all(
-          options.map(async (option) => {
+          options.map(async (option: PollOption) => {
             const votes = await db.getPollVotes(option.id);
             return {
               ...option,

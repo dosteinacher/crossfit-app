@@ -1,9 +1,7 @@
-export const runtime = 'edge';
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
+import { Registration } from '@/lib/types';
 
 export async function GET(
   request: NextRequest,
@@ -29,7 +27,7 @@ export async function GET(
     const isRegistered = userRegistrations.some((r) => r.workout_id === workoutId);
 
     const participants = await Promise.all(
-      registrations.map(async (reg) => {
+      registrations.map(async (reg: Registration) => {
         const user = await db.getUserById(reg.user_id);
         return {
           user_id: reg.user_id,

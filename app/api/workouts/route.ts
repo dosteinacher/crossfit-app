@@ -1,9 +1,7 @@
-export const runtime = 'edge';
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
+import { Workout, Registration } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,11 +21,11 @@ export async function GET(request: NextRequest) {
 
     // Enrich workouts with additional data
     const enrichedWorkouts = await Promise.all(
-      workouts.map(async (workout) => {
+      workouts.map(async (workout: Workout) => {
         const creator = await db.getUserById(workout.created_by);
         const registrations = await db.getRegistrationsForWorkout(workout.id);
         const participants = await Promise.all(
-          registrations.map(async (reg) => {
+          registrations.map(async (reg: Registration) => {
             const user = await db.getUserById(reg.user_id);
             return {
               user_id: reg.user_id,
