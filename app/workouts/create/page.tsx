@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, TimeInput } from '@/components/ui';
 
-export default function CreateWorkoutPage() {
+function CreateWorkoutForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get('template');
@@ -241,5 +241,13 @@ export default function CreateWorkoutPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function CreateWorkoutPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateWorkoutForm />
+    </Suspense>
   );
 }
