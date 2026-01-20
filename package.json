@@ -14,7 +14,9 @@
     "react-dom": "^19.0.0",
     "jsonwebtoken": "^9.0.2",
     "date-fns": "^4.1.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "@neondatabase/serverless": "^0.10.3",
+    "@vercel/postgres": "^0.10.0"
   },
   "devDependencies": {
     "typescript": "^5",
