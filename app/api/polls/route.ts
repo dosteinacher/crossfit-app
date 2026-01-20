@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
         // Get unique voters across all options
         const allVotes = await Promise.all(
-          options.map((o) => db.getPollVotes(o.id))
+          options.map((o: PollOption) => db.getPollVotes(o.id))
         );
         const totalVoters = new Set(
           allVotes.flat().map((v) => v.user_id)
