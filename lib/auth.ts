@@ -1,19 +1,24 @@
 // Authentication utilities
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { SessionUser } from './types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
 
+// Use Web Crypto API for password hashing (works in edge runtime)
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export async function verifyPassword(
   password: string,
   hash: string
 ): Promise<boolean> {
-  return bcrypt.compare(password, hash);
+  const passwordHash = await hashPassword(password);
+  return passwordHash === hash;
 }
 
 export function createToken(user: SessionUser): string {
