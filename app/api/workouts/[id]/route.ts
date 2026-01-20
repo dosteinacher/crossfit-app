@@ -84,7 +84,7 @@ export async function PUT(
       description || '',
       workout_type || 'General',
       date,
-      max_participants || 20,
+      max_participants || 4,
       session.id
     );
 

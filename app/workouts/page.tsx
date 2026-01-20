@@ -21,7 +21,7 @@ export default function WorkoutsPage() {
     if (!loading) {
       fetchWorkouts();
     }
-  }, [filter]);
+  }, [filter, loading]);
 
   const checkAuth = async () => {
     try {
@@ -61,23 +61,23 @@ export default function WorkoutsPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-pure-dark py-8">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800">Workouts</h1>
+            <h1 className="text-4xl font-bold text-pure-white">Workouts</h1>
             <Link href="/workouts/create">
               <Button>Create Workout</Button>
             </Link>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-gray-200">
+          <div className="flex gap-2 mb-6 border-b border-gray-700">
             <button
               onClick={() => setFilter('upcoming')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'upcoming'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'text-pure-green border-b-2 border-pure-green'
+                  : 'text-gray-400 hover:text-pure-white'
               }`}
             >
               Upcoming
@@ -86,8 +86,8 @@ export default function WorkoutsPage() {
               onClick={() => setFilter('all')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'all'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'text-pure-green border-b-2 border-pure-green'
+                  : 'text-gray-400 hover:text-pure-white'
               }`}
             >
               All
@@ -96,8 +96,8 @@ export default function WorkoutsPage() {
               onClick={() => setFilter('past')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'past'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'text-pure-green border-b-2 border-pure-green'
+                  : 'text-gray-400 hover:text-pure-white'
               }`}
             >
               Past
@@ -106,39 +106,39 @@ export default function WorkoutsPage() {
 
           {/* Workouts List */}
           {workouts.length === 0 ? (
-            <Card>
-              <p className="text-gray-600 text-center py-8">No workouts found</p>
+            <Card className="bg-pure-gray border-gray-700">
+              <p className="text-gray-400 text-center py-8">No workouts found</p>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {workouts.map((workout) => (
                 <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                  <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-gray border-gray-700">
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                      <span className="text-xs font-medium px-2 py-1 bg-blue-900 text-blue-200 rounded">
                         {workout.workout_type}
                       </span>
                       {workout.is_registered && (
-                        <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">
+                        <span className="text-xs font-medium px-2 py-1 bg-green-900 text-green-200 rounded">
                           Registered
                         </span>
                       )}
                     </div>
                     
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    <h3 className="text-xl font-bold text-pure-white mb-2">
                       {workout.title}
                     </h3>
                     
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                    <p className="text-sm text-gray-400 mb-4 line-clamp-2">
                       {workout.description || 'No description'}
                     </p>
                     
-                    <div className="border-t border-gray-200 pt-3 mt-auto">
+                    <div className="border-t border-gray-700 pt-3 mt-auto">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">
+                        <span className="text-gray-400">
                           {format(new Date(workout.date), 'MMM d, h:mm a')}
                         </span>
-                        <span className="text-gray-600">
+                        <span className="text-gray-400">
                           {workout.registered_count}/{workout.max_participants}
                         </span>
                       </div>

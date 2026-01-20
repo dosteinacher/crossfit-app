@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, Loading } from '@/components/ui';
+import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, Loading, TimeInput } from '@/components/ui';
 
 export default function EditWorkoutPage() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function EditWorkoutPage() {
   const [workoutType, setWorkoutType] = useState('General');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [maxParticipants, setMaxParticipants] = useState('20');
+  const [maxParticipants, setMaxParticipants] = useState('4');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
@@ -100,9 +100,9 @@ export default function EditWorkoutPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-pure-dark py-8">
         <div className="container mx-auto px-4 max-w-2xl">
-          <h1 className="text-4xl font-bold mb-8 text-gray-800">Edit Workout</h1>
+          <h1 className="text-4xl font-bold mb-8 text-pure-white">Edit Workout</h1>
 
           <Card>
             {error && <ErrorMessage message={error} />}
@@ -127,17 +127,17 @@ export default function EditWorkoutPage() {
               />
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-pure-white mb-1">
                   Workout Type <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={workoutType}
                   onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                   required
                 >
                   {workoutTypes.map((type) => (
-                    <option key={type} value={type}>
+                    <option key={type} value={type} className="bg-pure-dark text-pure-white">
                       {type}
                     </option>
                   ))}
@@ -153,9 +153,8 @@ export default function EditWorkoutPage() {
                   required
                 />
 
-                <Input
+                <TimeInput
                   label="Time"
-                  type="time"
                   value={time}
                   onChange={setTime}
                   required
@@ -167,7 +166,7 @@ export default function EditWorkoutPage() {
                 type="number"
                 value={maxParticipants}
                 onChange={setMaxParticipants}
-                placeholder="20"
+                placeholder="4"
                 required
               />
 

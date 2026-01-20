@@ -60,3 +60,28 @@ export interface SessionUser {
   name: string;
   is_admin: boolean;
 }
+
+export interface Poll {
+  id: number;
+  title: string;
+  description?: string;
+  template_id?: number; // Optional link to workout template
+  created_by: number;
+  status: 'active' | 'closed';
+  created_at: string;
+}
+
+export interface PollOption {
+  id: number;
+  poll_id: number;
+  date: string; // ISO datetime
+  label?: string; // Optional label like "Morning session"
+  created_at: string;
+}
+
+export interface PollVote {
+  id: number;
+  poll_option_id: number;
+  user_id: number;
+  voted_at: string;
+}

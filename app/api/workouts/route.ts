@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       description || '',
       workout_type || 'General',
       date,
-      max_participants || 20,
+      max_participants || 4,
       session.id
     );
 

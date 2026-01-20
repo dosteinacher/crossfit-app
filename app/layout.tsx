@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Crossfit Workouts',
-  description: 'Manage your Crossfit workouts and attendance',
+  title: 'PURE Workouts',
+  description: 'Manage your PURE workouts and attendance',
 };
 
 export default function RootLayout({

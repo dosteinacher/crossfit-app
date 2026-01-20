@@ -5,13 +5,22 @@ import { hashPassword } from '@/lib/auth';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name } = body;
+    const { email, password, name, inviteCode } = body;
 
     // Validate input
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: 'Email, password, and name are required' },
         { status: 400 }
+      );
+    }
+
+    // Check invite code
+    const validInviteCode = process.env.INVITE_CODE || 'PURE2026';
+    if (inviteCode !== validInviteCode) {
+      return NextResponse.json(
+        { error: 'Invalid invite code. Ask your gym admin for the code.' },
+        { status: 403 }
       );
     }
 

@@ -138,7 +138,7 @@ export default function WorkoutDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-pure-dark py-8">
           <div className="container mx-auto px-4 max-w-4xl">
             <Card>
               <p className="text-red-600">Workout not found</p>
@@ -155,7 +155,7 @@ export default function WorkoutDetailPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-pure-dark py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {error && <ErrorMessage message={error} />}
           {success && <SuccessMessage message={success} />}
@@ -164,11 +164,11 @@ export default function WorkoutDetailPage() {
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <span className="text-sm font-medium px-3 py-1 bg-blue-100 text-blue-800 rounded">
+                <span className="text-sm font-medium px-3 py-1 bg-blue-900 text-blue-200 rounded">
                   {workout.workout_type}
                 </span>
                 {workout.is_registered && (
-                  <span className="ml-2 text-sm font-medium px-3 py-1 bg-green-100 text-green-800 rounded">
+                  <span className="ml-2 text-sm font-medium px-3 py-1 bg-green-900 text-green-200 rounded">
                     Registered
                   </span>
                 )}
@@ -188,9 +188,9 @@ export default function WorkoutDetailPage() {
             </div>
 
             {/* Title and Date */}
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">{workout.title}</h1>
+            <h1 className="text-3xl font-bold text-pure-white mb-4">{workout.title}</h1>
             
-            <div className="flex items-center gap-4 text-gray-600 mb-6">
+            <div className="flex items-center gap-4 text-pure-text-light mb-6">
               <div>
                 <span className="font-medium">Date:</span>{' '}
                 {format(new Date(workout.date), 'EEEE, MMMM d, yyyy')}
@@ -204,26 +204,26 @@ export default function WorkoutDetailPage() {
             {/* Description */}
             {workout.description && (
               <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Description</h2>
-                <p className="text-gray-700 whitespace-pre-wrap">{workout.description}</p>
+                <h2 className="text-xl font-bold text-pure-white mb-2">Description</h2>
+                <p className="text-pure-text-light whitespace-pre-wrap">{workout.description}</p>
               </div>
             )}
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Created by</p>
-                <p className="text-lg font-semibold text-gray-800">{workout.creator_name}</p>
+              <div className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+                <p className="text-sm text-pure-text-light">Created by</p>
+                <p className="text-lg font-semibold text-pure-white">{workout.creator_name || 'Unknown'}</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Participants</p>
-                <p className="text-lg font-semibold text-gray-800">
+              <div className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+                <p className="text-sm text-pure-text-light">Participants</p>
+                <p className="text-lg font-semibold text-pure-white">
                   {workout.registered_count}/{workout.max_participants}
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">Status</p>
-                <p className="text-lg font-semibold text-gray-800">
+              <div className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+                <p className="text-sm text-pure-text-light">Status</p>
+                <p className="text-lg font-semibold text-pure-white">
                   {isPastWorkout ? 'Completed' : isFull ? 'Full' : 'Open'}
                 </p>
               </div>
@@ -255,20 +255,20 @@ export default function WorkoutDetailPage() {
 
             {/* Participants List */}
             <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
+              <h2 className="text-xl font-bold text-pure-white mb-4">
                 Participants ({workout.participants.length})
               </h2>
               
               {workout.participants.length === 0 ? (
-                <p className="text-gray-600">No participants yet</p>
+                <p className="text-pure-text-light">No participants yet</p>
               ) : (
                 <div className="space-y-2">
                   {workout.participants.map((participant: any) => (
                     <div
                       key={participant.user_id}
-                      className="flex justify-between items-center bg-gray-50 rounded-lg p-3"
+                      className="flex justify-between items-center bg-pure-dark border border-gray-700 rounded-lg p-3"
                     >
-                      <span className="font-medium text-gray-800">
+                      <span className="font-medium text-pure-white">
                         {participant.user_name}
                       </span>
                       {isPastWorkout && user?.is_admin && (
@@ -279,13 +279,13 @@ export default function WorkoutDetailPage() {
                             onChange={(e) =>
                               handleMarkAttendance(participant.user_id, e.target.checked)
                             }
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            className="w-4 h-4 text-pure-green rounded focus:ring-2 focus:ring-pure-green"
                           />
-                          <span className="text-sm text-gray-600">Attended</span>
+                          <span className="text-sm text-pure-text-light">Attended</span>
                         </label>
                       )}
                       {isPastWorkout && !user?.is_admin && participant.attended && (
-                        <span className="text-sm font-medium text-green-600">✓ Attended</span>
+                        <span className="text-sm font-medium text-green-400">✓ Attended</span>
                       )}
                     </div>
                   ))}

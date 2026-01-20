@@ -1,23 +1,67 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage } from '@/components/ui';
+import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, TimeInput } from '@/components/ui';
 
 export default function CreateWorkoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get('template');
+  const pollDate = searchParams.get('date'); // ISO datetime from poll
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [workoutType, setWorkoutType] = useState('General');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [maxParticipants, setMaxParticipants] = useState('20');
+  const [maxParticipants, setMaxParticipants] = useState('4');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saveToArchive, setSaveToArchive] = useState(true);
 
   const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
+
+  useEffect(() => {
+    // Pre-fill date and time from poll if provided
+    if (pollDate) {
+      const pollDateTime = new Date(pollDate);
+      setDate(pollDateTime.toISOString().split('T')[0]); // YYYY-MM-DD
+      setTime(pollDateTime.toTimeString().slice(0, 5)); // HH:MM
+    }
+  }, [pollDate]);
+
+  useEffect(() => {
+    if (templateId) {
+      loadTemplate();
+    }
+  }, [templateId]);
+
+  const loadTemplate = async () => {
+    try {
+      const response = await fetch(`/api/templates/${templateId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTitle(data.template.title);
+        setDescription(data.template.description);
+        setWorkoutType(data.template.workout_type);
+        // Increment usage count
+        await fetch(`/api/templates/${templateId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...data.template,
+            times_used: (data.template.times_used || 0) + 1,
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('Load template error:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +93,20 @@ export default function CreateWorkoutPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Save to archive if checkbox is checked
+        if (saveToArchive) {
+          await fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title,
+              description,
+              workout_type: workoutType,
+              category: 'Custom',
+            }),
+          });
+        }
+
         setSuccess('Workout created successfully!');
         setTimeout(() => router.push(`/workouts/${data.workout.id}`), 1500);
       } else {
@@ -64,9 +122,24 @@ export default function CreateWorkoutPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-pure-dark py-8">
         <div className="container mx-auto px-4 max-w-2xl">
-          <h1 className="text-4xl font-bold mb-8 text-gray-800">Create New Workout</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-4xl font-bold text-pure-white">
+              {templateId ? 'Schedule from Template' : 'Create New Workout'}
+            </h1>
+            <Link href="/archive">
+              <Button variant="secondary">Browse Archive</Button>
+            </Link>
+          </div>
+
+          {templateId && (
+            <div className="bg-purple-900 border border-purple-700 rounded-lg p-4 mb-6">
+              <p className="text-purple-200">
+                <strong>📚 Using template!</strong> Edit as needed and schedule for a specific date/time.
+              </p>
+            </div>
+          )}
 
           <Card>
             {error && <ErrorMessage message={error} />}
@@ -87,21 +160,21 @@ export default function CreateWorkoutPage() {
                 value={description}
                 onChange={setDescription}
                 placeholder="Describe the workout, movements, and any notes..."
-                rows={4}
+                rows={6}
               />
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-pure-white mb-1">
                   Workout Type <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={workoutType}
                   onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                   required
                 >
                   {workoutTypes.map((type) => (
-                    <option key={type} value={type}>
+                    <option key={type} value={type} className="bg-pure-dark text-pure-white">
                       {type}
                     </option>
                   ))}
@@ -117,9 +190,8 @@ export default function CreateWorkoutPage() {
                   required
                 />
 
-                <Input
+                <TimeInput
                   label="Time"
-                  type="time"
                   value={time}
                   onChange={setTime}
                   required
@@ -131,9 +203,25 @@ export default function CreateWorkoutPage() {
                 type="number"
                 value={maxParticipants}
                 onChange={setMaxParticipants}
-                placeholder="20"
+                placeholder="4"
                 required
               />
+
+              {!templateId && (
+                <div className="mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={saveToArchive}
+                      onChange={(e) => setSaveToArchive(e.target.checked)}
+                      className="w-4 h-4 text-pure-green rounded focus:ring-2 focus:ring-pure-green"
+                    />
+                    <span className="text-sm text-pure-white">
+                      Save this workout to Archive (for future reuse)
+                    </span>
+                  </label>
+                </div>
+              )}
 
               <div className="flex gap-4 mt-6">
                 <Button type="submit" disabled={loading} className="flex-1">

@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,14 +39,26 @@ export default function RegisterPage() {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, inviteCode }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess('Registration successful! Redirecting to login...');
-        setTimeout(() => router.push('/login'), 2000);
+        // Auto-login after successful registration
+        const loginResponse = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (loginResponse.ok) {
+          setSuccess('Registration successful! Redirecting...');
+          setTimeout(() => router.push('/dashboard'), 1500);
+        } else {
+          setSuccess('Registration successful! Redirecting to login...');
+          setTimeout(() => router.push('/login'), 2000);
+        }
       } else {
         setError(data.error || 'Registration failed');
       }
@@ -57,10 +70,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
-          Register for Crossfit
+    <div className="min-h-screen bg-pure-dark flex items-center justify-center px-4">
+      <Card className="w-full max-w-md bg-pure-gray border-gray-700">
+        <h1 className="text-3xl font-bold text-center mb-6 text-pure-white">
+          Register for PURE
         </h1>
         
         {error && <ErrorMessage message={error} />}
@@ -82,6 +95,15 @@ export default function RegisterPage() {
             value={email}
             onChange={setEmail}
             placeholder="your@email.com"
+            required
+          />
+
+          <Input
+            label="Invite Code"
+            type="text"
+            value={inviteCode}
+            onChange={setInviteCode}
+            placeholder="Ask your gym admin"
             required
           />
 
@@ -112,9 +134,9 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <p className="text-center mt-4 text-gray-600">
+        <p className="text-center mt-4 text-gray-400">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href="/login" className="text-pure-green hover:underline">
             Login here
           </Link>
         </p>

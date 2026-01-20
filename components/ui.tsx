@@ -1,4 +1,6 @@
 // Shared UI Components
+import React from 'react';
+
 
 export function Button({
   children,
@@ -18,9 +20,9 @@ export function Button({
   const baseClasses = 'px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
+    primary: 'bg-pure-green text-black hover:bg-lime-400 font-semibold',
+    secondary: 'bg-pure-gray text-pure-white hover:bg-gray-700 border border-gray-600',
+    danger: 'bg-red-600 text-pure-white hover:bg-red-700',
   };
 
   return (
@@ -54,7 +56,7 @@ export function Input({
 }) {
   return (
     <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-pure-white mb-1">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
@@ -64,8 +66,82 @@ export function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green [color-scheme:dark]"
       />
+    </div>
+  );
+}
+
+export function TimeInput({
+  label,
+  value,
+  onChange,
+  required = false,
+  className = '',
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  className?: string;
+}) {
+  // Parse current value or set defaults
+  const [hour, minute] = value ? value.split(':') : ['12', '00'];
+
+  // Set initial value if empty
+  React.useEffect(() => {
+    if (!value) {
+      onChange('12:00');
+    }
+  }, []);
+
+  const handleHourChange = (newHour: string) => {
+    onChange(`${newHour}:${minute || '00'}`);
+  };
+
+  const handleMinuteChange = (newMinute: string) => {
+    onChange(`${hour || '12'}:${newMinute}`);
+  };
+
+  // Generate hours (00-23 for 24-hour format)
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  
+  // Generate minutes in 15-minute intervals
+  const minutes = ['00', '15', '30', '45'];
+
+  return (
+    <div className={`mb-4 ${className}`}>
+      <label className="block text-sm font-medium text-pure-white mb-1">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+      <div className="flex gap-2">
+        <select
+          value={hour}
+          onChange={(e) => handleHourChange(e.target.value)}
+          required={required}
+          className="flex-1 px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+        >
+          {hours.map((h) => (
+            <option key={h} value={h} className="bg-pure-dark text-pure-white">
+              {h}
+            </option>
+          ))}
+        </select>
+        <span className="text-pure-white text-2xl flex items-center">:</span>
+        <select
+          value={minute}
+          onChange={(e) => handleMinuteChange(e.target.value)}
+          required={required}
+          className="flex-1 px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+        >
+          {minutes.map((m) => (
+            <option key={m} value={m} className="bg-pure-dark text-pure-white">
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
@@ -87,7 +163,7 @@ export function TextArea({
 }) {
   return (
     <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-pure-white mb-1">
         {label}
       </label>
       <textarea
@@ -95,7 +171,7 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
       />
     </div>
   );
@@ -109,7 +185,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
+    <div className={`bg-pure-gray text-pure-white rounded-lg shadow-lg border border-gray-800 p-6 ${className}`}>
       {children}
     </div>
   );
@@ -117,8 +193,8 @@ export function Card({
 
 export function Loading() {
   return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+    <div className="flex justify-center items-center min-h-screen bg-pure-dark">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pure-green"></div>
     </div>
   );
 }
