@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     // Get registrations for current user
     const userRegistrations = await db.getRegistrationsForUser(session.id);
-    const registeredWorkoutIds = new Set(userRegistrations.map((r) => r.workout_id));
+    const registeredWorkoutIds = new Set(userRegistrations.map((r: Registration) => r.workout_id));
 
     // Enrich workouts with additional data
     const enrichedWorkouts = await Promise.all(
