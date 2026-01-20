@@ -43,25 +43,23 @@ let pollIdCounter = globalForDb.pollIdCounter || 1;
 let pollOptionIdCounter = globalForDb.pollOptionIdCounter || 1;
 let pollVoteIdCounter = globalForDb.pollVoteIdCounter || 1;
 
-// Persist to global
-if (process.env.NODE_ENV !== 'production') {
-  globalForDb.mockUsers = mockUsers;
-  globalForDb.mockWorkouts = mockWorkouts;
-  globalForDb.mockRegistrations = mockRegistrations;
-  globalForDb.mockWorkoutEdits = mockWorkoutEdits;
-  globalForDb.mockWorkoutTemplates = mockWorkoutTemplates;
-  globalForDb.mockPolls = mockPolls;
-  globalForDb.mockPollOptions = mockPollOptions;
-  globalForDb.mockPollVotes = mockPollVotes;
-  globalForDb.userIdCounter = userIdCounter;
-  globalForDb.workoutIdCounter = workoutIdCounter;
-  globalForDb.registrationIdCounter = registrationIdCounter;
-  globalForDb.editIdCounter = editIdCounter;
-  globalForDb.templateIdCounter = templateIdCounter;
-  globalForDb.pollIdCounter = pollIdCounter;
-  globalForDb.pollOptionIdCounter = pollOptionIdCounter;
-  globalForDb.pollVoteIdCounter = pollVoteIdCounter;
-}
+// Always persist to global (needed for serverless environments like Vercel)
+globalForDb.mockUsers = mockUsers;
+globalForDb.mockWorkouts = mockWorkouts;
+globalForDb.mockRegistrations = mockRegistrations;
+globalForDb.mockWorkoutEdits = mockWorkoutEdits;
+globalForDb.mockWorkoutTemplates = mockWorkoutTemplates;
+globalForDb.mockPolls = mockPolls;
+globalForDb.mockPollOptions = mockPollOptions;
+globalForDb.mockPollVotes = mockPollVotes;
+globalForDb.userIdCounter = userIdCounter;
+globalForDb.workoutIdCounter = workoutIdCounter;
+globalForDb.registrationIdCounter = registrationIdCounter;
+globalForDb.editIdCounter = editIdCounter;
+globalForDb.templateIdCounter = templateIdCounter;
+globalForDb.pollIdCounter = pollIdCounter;
+globalForDb.pollOptionIdCounter = pollOptionIdCounter;
+globalForDb.pollVoteIdCounter = pollVoteIdCounter;
 
 export class Database {
   // User operations
@@ -75,9 +73,7 @@ export class Database {
       created_at: new Date().toISOString(),
     };
     mockUsers.push(user);
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.userIdCounter = userIdCounter;
-    }
+    globalForDb.userIdCounter = userIdCounter;
     return user;
   }
 
@@ -128,9 +124,7 @@ export class Database {
       updated_at: new Date().toISOString(),
     };
     mockWorkouts.push(workout);
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.workoutIdCounter = workoutIdCounter;
-    }
+    globalForDb.workoutIdCounter = workoutIdCounter;
     return workout;
   }
 
@@ -172,9 +166,7 @@ export class Database {
       user_id,
       edited_at: new Date().toISOString(),
     });
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.editIdCounter = editIdCounter;
-    }
+    globalForDb.editIdCounter = editIdCounter;
 
     return workout;
   }
@@ -204,9 +196,7 @@ export class Database {
       registered_at: new Date().toISOString(),
     };
     mockRegistrations.push(registration);
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.registrationIdCounter = registrationIdCounter;
-    }
+    globalForDb.registrationIdCounter = registrationIdCounter;
     return registration;
   }
 
@@ -275,9 +265,7 @@ export class Database {
       times_used: 0,
     };
     mockWorkoutTemplates.push(template);
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.templateIdCounter = templateIdCounter;
-    }
+    globalForDb.templateIdCounter = templateIdCounter;
     return template;
   }
 
@@ -350,9 +338,7 @@ export class Database {
       created_at: new Date().toISOString(),
     };
     mockPolls.push(poll);
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.pollIdCounter = pollIdCounter;
-    }
+    globalForDb.pollIdCounter = pollIdCounter;
     return poll;
   }
 
@@ -395,9 +381,7 @@ export class Database {
       created_at: new Date().toISOString(),
     };
     mockPollOptions.push(option);
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.pollOptionIdCounter = pollOptionIdCounter;
-    }
+    globalForDb.pollOptionIdCounter = pollOptionIdCounter;
     return option;
   }
 
@@ -429,9 +413,7 @@ export class Database {
       voted_at: new Date().toISOString(),
     };
     mockPollVotes.push(vote);
-    if (process.env.NODE_ENV !== 'production') {
-      globalForDb.pollVoteIdCounter = pollVoteIdCounter;
-    }
+    globalForDb.pollVoteIdCounter = pollVoteIdCounter;
     return vote;
   }
 
