@@ -24,7 +24,7 @@ export async function GET(
     const creator = await db.getUserById(workout.created_by);
     const registrations = await db.getRegistrationsForWorkout(workoutId);
     const userRegistrations = await db.getRegistrationsForUser(session.id);
-    const isRegistered = userRegistrations.some((r) => r.workout_id === workoutId);
+    const isRegistered = userRegistrations.some((r: Registration) => r.workout_id === workoutId);
 
     const participants = await Promise.all(
       registrations.map(async (reg: Registration) => {
