@@ -3,12 +3,13 @@ import { sql } from '@vercel/postgres';
 import { User, Workout, Registration, Poll, PollOption, PollVote } from '../types';
 import { WorkoutTemplate } from '../workout-templates';
 
-export class PostgresDatabase {
-  constructor() {
-    this.initDatabase();
-  }
+// Global flag to track if tables are initialized
+let tablesInitialized = false;
 
-  private async initDatabase() {
+export class PostgresDatabase {
+  private async ensureTablesExist() {
+    if (tablesInitialized) return;
+    
     try {
       // Create users table
       await sql`
@@ -97,14 +98,17 @@ export class PostgresDatabase {
         )
       `;
 
+      tablesInitialized = true;
       console.log('Database tables initialized successfully');
     } catch (error) {
       console.error('Error initializing database:', error);
+      throw error;
     }
   }
 
   // User operations
   async createUser(email: string, password_hash: string, name: string, is_admin: boolean = false): Promise<User> {
+    await this.ensureTablesExist();
     const result = await sql`
       INSERT INTO users (email, password_hash, name, is_admin)
       VALUES (${email}, ${password_hash}, ${name}, ${is_admin})
@@ -114,6 +118,7 @@ export class PostgresDatabase {
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
+    await this.ensureTablesExist();
     const result = await sql`
       SELECT * FROM users WHERE email = ${email}
     `;
