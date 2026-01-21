@@ -21,7 +21,7 @@ export function Button({
   
   const variantClasses = {
     primary: 'bg-pure-green text-black hover:bg-lime-400 font-semibold',
-    secondary: 'bg-pure-gray text-pure-white hover:bg-gray-700 border border-gray-600',
+    secondary: 'bg-coastal-sky text-pure-white hover:bg-coastal-search border border-coastal-day',
     danger: 'bg-red-600 text-pure-white hover:bg-red-700',
   };
 
@@ -66,7 +66,7 @@ export function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green [color-scheme:dark]"
+        className="w-full px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky [color-scheme:dark]"
       />
     </div>
   );
@@ -120,7 +120,7 @@ export function TimeInput({
           value={hour}
           onChange={(e) => handleHourChange(e.target.value)}
           required={required}
-          className="flex-1 px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+          className="flex-1 px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky"
         >
           {hours.map((h) => (
             <option key={h} value={h} className="bg-pure-dark text-pure-white">
@@ -133,7 +133,7 @@ export function TimeInput({
           value={minute}
           onChange={(e) => handleMinuteChange(e.target.value)}
           required={required}
-          className="flex-1 px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+          className="flex-1 px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky"
         >
           {minutes.map((m) => (
             <option key={m} value={m} className="bg-pure-dark text-pure-white">
@@ -171,7 +171,7 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+        className="w-full px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky"
       />
     </div>
   );
@@ -185,7 +185,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-pure-gray text-pure-white rounded-lg shadow-lg border border-gray-800 p-6 ${className}`}>
+    <div className={`bg-pure-gray text-pure-white rounded-lg shadow-lg border border-coastal-search p-6 ${className}`}>
       {children}
     </div>
   );
@@ -201,7 +201,7 @@ export function Loading() {
 
 export function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+    <div className="bg-red-900/30 border border-red-600/50 text-red-300 px-4 py-3 rounded-lg mb-4">
       {message}
     </div>
   );
@@ -209,7 +209,7 @@ export function ErrorMessage({ message }: { message: string }) {
 
 export function SuccessMessage({ message }: { message: string }) {
   return (
-    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+    <div className="bg-coastal-day/20 border border-coastal-sky text-coastal-day px-4 py-3 rounded-lg mb-4">
       {message}
     </div>
   );

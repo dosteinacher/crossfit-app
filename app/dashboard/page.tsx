@@ -63,22 +63,22 @@ export default function DashboardPage() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-700">
+            <Card className="bg-gradient-to-br from-coastal-sky to-coastal-search text-white border-coastal-sky">
               <h3 className="text-sm font-medium opacity-90">Total Workouts</h3>
               <p className="text-4xl font-bold mt-2">{stats?.total_workouts || 0}</p>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-green-700">
+            <Card className="bg-gradient-to-br from-coastal-search to-coastal-day text-white border-coastal-day">
               <h3 className="text-sm font-medium opacity-90">Attended</h3>
               <p className="text-4xl font-bold mt-2">{stats?.attended_workouts || 0}</p>
             </Card>
 
-            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-purple-700">
+            <Card className="bg-gradient-to-br from-coastal-day to-coastal-kombucha text-gray-900 border-coastal-kombucha">
               <h3 className="text-sm font-medium opacity-90">Upcoming</h3>
               <p className="text-4xl font-bold mt-2">{stats?.upcoming_workouts || 0}</p>
             </Card>
 
-            <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-orange-700">
+            <Card className="bg-gradient-to-br from-coastal-kombucha to-coastal-honey text-gray-900 border-coastal-honey">
               <h3 className="text-sm font-medium opacity-90">Current Streak</h3>
               <p className="text-4xl font-bold mt-2">{stats?.current_streak || 0}</p>
             </Card>
@@ -87,21 +87,21 @@ export default function DashboardPage() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Link href="/workouts">
-              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-gray-700 hover:border-pure-green bg-pure-gray">
+              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-coastal-sky bg-pure-gray">
                 <h3 className="text-xl font-bold text-pure-white mb-2">View All Workouts</h3>
                 <p className="text-gray-300">Browse and register for upcoming workouts</p>
               </Card>
             </Link>
 
             <Link href="/workouts/create">
-              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-gray-700 hover:border-pure-green bg-pure-gray">
+              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-pure-green bg-pure-gray">
                 <h3 className="text-xl font-bold text-pure-white mb-2">Create Workout</h3>
                 <p className="text-gray-300">Add a new workout for the community</p>
               </Card>
             </Link>
 
             <Link href="/archive">
-              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-gray-700 hover:border-pure-green bg-pure-gray">
+              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-coastal-honey bg-pure-gray">
                 <h3 className="text-xl font-bold text-pure-white mb-2">Workout Archive</h3>
                 <p className="text-gray-300">Browse your library of {346} templates</p>
               </Card>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Upcoming Registered Workouts */}
-          <Card className="bg-pure-gray border-gray-700">
+          <Card className="bg-pure-gray border-coastal-search">
             <h2 className="text-2xl font-bold mb-4 text-pure-white">Upcoming Workouts</h2>
             
             {upcomingWorkouts.length === 0 ? (
@@ -118,13 +118,13 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {upcomingWorkouts.map((workout) => (
                   <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                    <div className="border border-gray-700 rounded-lg p-4 hover:bg-gray-800 hover:border-pure-green transition cursor-pointer">
+                    <div className="border border-coastal-search rounded-lg p-4 hover:bg-gray-800 hover:border-coastal-sky transition cursor-pointer">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <h3 className="font-bold text-lg text-pure-white">{workout.title}</h3>
                             {workout.is_registered && (
-                              <span className="text-xs font-medium px-2 py-1 bg-green-900 text-green-200 rounded">
+                              <span className="text-xs font-medium px-2 py-1 bg-coastal-day/20 text-coastal-day rounded border border-coastal-day">
                                 Registered
                               </span>
                             )}
@@ -132,7 +132,7 @@ export default function DashboardPage() {
                           <p className="text-sm text-gray-400 mt-1">{workout.workout_type}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium text-pure-green">
+                          <p className="text-sm font-medium text-coastal-honey">
                             {format(new Date(workout.date), 'MMM d, yyyy')}
                           </p>
                           <p className="text-xs text-gray-400">

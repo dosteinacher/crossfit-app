@@ -69,7 +69,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-pure-dark border-b border-pure-green shadow-lg">
+    <nav className="bg-pure-dark border-b-2 border-coastal-sky shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link href="/dashboard" className="text-2xl font-bold text-pure-green">
@@ -80,32 +80,32 @@ export default function Navbar() {
           <div className="hidden md:flex gap-6 items-center">
             <Link
               href="/dashboard"
-              className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-                pathname === '/dashboard' ? 'bg-pure-gray border border-pure-green' : ''
+              className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                pathname === '/dashboard' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
               }`}
             >
               Dashboard
             </Link>
             <Link
               href="/workouts"
-              className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-                pathname === '/workouts' ? 'bg-pure-gray border border-pure-green' : ''
+              className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                pathname === '/workouts' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
               }`}
             >
               Workouts
             </Link>
             <Link
               href="/polls"
-              className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-                pathname === '/polls' ? 'bg-pure-gray border border-pure-green' : ''
+              className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                pathname === '/polls' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
               }`}
             >
               Polls
             </Link>
             <Link
               href="/archive"
-              className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-                pathname === '/archive' ? 'bg-pure-gray border border-pure-green' : ''
+              className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                pathname === '/archive' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
               }`}
             >
               Archive
@@ -113,8 +113,8 @@ export default function Navbar() {
             {user.is_admin && (
               <Link
                 href="/admin/users"
-                className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-                  pathname === '/admin/users' ? 'bg-pure-gray border border-pure-green' : ''
+                className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                  pathname === '/admin/users' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
                 }`}
               >
                 Users
@@ -123,7 +123,7 @@ export default function Navbar() {
             <Link
               href="/workouts/create"
               className={`bg-pure-green text-black hover:bg-lime-400 px-4 py-2 rounded-lg transition font-semibold ${
-                pathname === '/workouts/create' ? 'ring-2 ring-pure-white' : ''
+                pathname === '/workouts/create' ? 'ring-2 ring-coastal-sky' : ''
               }`}
             >
               Create
@@ -132,7 +132,7 @@ export default function Navbar() {
               <span className="text-sm text-pure-white font-medium">
                 {user.name}
                 {user.is_admin && (
-                  <span className="ml-2 bg-pure-green text-black text-xs px-2 py-1 rounded font-semibold">
+                  <span className="ml-2 bg-coastal-honey text-black text-xs px-2 py-1 rounded font-semibold">
                     Admin
                   </span>
                 )}
@@ -162,24 +162,24 @@ export default function Navbar() {
         <div className="md:hidden mt-4 flex flex-col gap-2">
           <Link
             href="/dashboard"
-            className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-              pathname === '/dashboard' ? 'bg-pure-gray border border-pure-green' : ''
+            className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+              pathname === '/dashboard' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
             }`}
           >
             Dashboard
           </Link>
           <Link
             href="/workouts"
-            className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-              pathname === '/workouts' ? 'bg-pure-gray border border-pure-green' : ''
+            className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+              pathname === '/workouts' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
             }`}
           >
             Workouts
           </Link>
           <Link
             href="/archive"
-            className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-              pathname === '/archive' ? 'bg-pure-gray border border-pure-green' : ''
+            className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+              pathname === '/archive' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
             }`}
           >
             Archive
@@ -187,8 +187,8 @@ export default function Navbar() {
           {user.is_admin && (
             <Link
               href="/admin/users"
-              className={`hover:bg-pure-gray px-4 py-2 rounded-lg transition text-pure-white ${
-                pathname === '/admin/users' ? 'bg-pure-gray border border-pure-green' : ''
+              className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                pathname === '/admin/users' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
               }`}
             >
               Users
@@ -197,7 +197,7 @@ export default function Navbar() {
           <Link
             href="/workouts/create"
             className={`bg-pure-green text-black hover:bg-lime-400 px-4 py-2 rounded-lg transition font-semibold ${
-              pathname === '/workouts/create' ? 'ring-2 ring-pure-white' : ''
+              pathname === '/workouts/create' ? 'ring-2 ring-coastal-sky' : ''
             }`}
           >
             Create
