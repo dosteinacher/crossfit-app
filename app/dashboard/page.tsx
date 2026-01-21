@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import { Card, Loading } from '@/components/ui';
 import { format } from 'date-fns';
@@ -55,8 +56,21 @@ export default function DashboardPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
-        <div className="container mx-auto px-4 max-w-6xl">
+      <div className="min-h-screen bg-pure-dark py-8 relative">
+        {/* Watermark Logo */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+          <Image 
+            src="/go-pure-logo.png" 
+            alt="" 
+            width={800} 
+            height={800}
+            className="opacity-[0.07] select-none"
+            style={{ filter: 'grayscale(100%)' }}
+          />
+        </div>
+        
+        {/* Content */}
+        <div className="container mx-auto px-4 max-w-6xl relative z-10">
           <h1 className="text-4xl font-bold mb-8 text-pure-white">
             Welcome back, {user?.name}!
           </h1>
