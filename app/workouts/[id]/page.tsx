@@ -164,11 +164,11 @@ export default function WorkoutDetailPage() {
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <span className="text-sm font-medium px-3 py-1 bg-blue-900 text-blue-200 rounded">
+                <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/30 rounded">
                   {workout.workout_type}
                 </span>
                 {workout.is_registered && (
-                  <span className="ml-2 text-sm font-medium px-3 py-1 bg-green-900 text-green-200 rounded">
+                  <span className="ml-2 text-sm font-medium px-3 py-1 bg-coastal-day text-pure-dark rounded">
                     Registered
                   </span>
                 )}
@@ -211,17 +211,17 @@ export default function WorkoutDetailPage() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+              <div className="bg-pure-dark border border-coastal-search rounded-lg p-4">
                 <p className="text-sm text-pure-text-light">Created by</p>
                 <p className="text-lg font-semibold text-pure-white">{workout.creator_name || 'Unknown'}</p>
               </div>
-              <div className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+              <div className="bg-pure-dark border border-coastal-search rounded-lg p-4">
                 <p className="text-sm text-pure-text-light">Participants</p>
                 <p className="text-lg font-semibold text-pure-white">
                   {workout.registered_count}/{workout.max_participants}
                 </p>
               </div>
-              <div className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+              <div className="bg-pure-dark border border-coastal-search rounded-lg p-4">
                 <p className="text-sm text-pure-text-light">Status</p>
                 <p className="text-lg font-semibold text-pure-white">
                   {isPastWorkout ? 'Completed' : isFull ? 'Full' : 'Open'}
@@ -266,7 +266,7 @@ export default function WorkoutDetailPage() {
                   {workout.participants.map((participant: any) => (
                     <div
                       key={participant.user_id}
-                      className="flex justify-between items-center bg-pure-dark border border-gray-700 rounded-lg p-3"
+                      className="flex justify-between items-center bg-pure-dark border border-coastal-search rounded-lg p-3"
                     >
                       <span className="font-medium text-pure-white">
                         {participant.user_name}
@@ -285,7 +285,7 @@ export default function WorkoutDetailPage() {
                         </label>
                       )}
                       {isPastWorkout && !user?.is_admin && participant.attended && (
-                        <span className="text-sm font-medium text-green-400">✓ Attended</span>
+                        <span className="text-sm font-medium text-coastal-day">✓ Attended</span>
                       )}
                     </div>
                   ))}
