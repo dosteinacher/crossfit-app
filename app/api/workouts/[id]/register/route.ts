@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
+import { notifyWorkoutRegistration } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -31,6 +32,38 @@ export async function POST(
     }
 
     const registration = await db.registerForWorkout(workoutId, session.id);
+
+    // Send calendar invite to registrant
+    try {
+      const [user, creator] = await Promise.all([
+        db.getUserById(session.id),
+        db.getUserById(workout.created_by),
+      ]);
+
+      if (user && creator) {
+        await notifyWorkoutRegistration(
+          {
+            id: workout.id,
+            title: workout.title,
+            description: workout.description,
+            date: workout.date,
+            workout_type: workout.workout_type,
+            sequence: workout.sequence,
+          },
+          {
+            email: creator.email,
+            name: creator.name,
+          },
+          {
+            email: user.email,
+            name: user.name,
+          }
+        );
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the registration
+      console.error('Failed to send calendar invite:', emailError);
+    }
 
     return NextResponse.json({ registration }, { status: 201 });
   } catch (error) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
 import { Workout, Registration } from '@/lib/types';
+import { notifyWorkoutCreator } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,6 +82,30 @@ export async function POST(request: NextRequest) {
       max_participants || 4,
       session.id
     );
+
+    // Send calendar invite to creator
+    try {
+      const creator = await db.getUserById(session.id);
+      if (creator) {
+        await notifyWorkoutCreator(
+          {
+            id: workout.id,
+            title: workout.title,
+            description: workout.description,
+            date: workout.date,
+            workout_type: workout.workout_type,
+            sequence: workout.sequence,
+          },
+          {
+            email: creator.email,
+            name: creator.name,
+          }
+        );
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the workout creation
+      console.error('Failed to send calendar invite:', emailError);
+    }
 
     return NextResponse.json({ workout }, { status: 201 });
   } catch (error) {

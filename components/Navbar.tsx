@@ -95,12 +95,12 @@ export default function Navbar() {
               Workouts
             </Link>
             <Link
-              href="/polls"
+              href="/calendar"
               className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
-                pathname === '/polls' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
+                pathname === '/calendar' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
               }`}
             >
-              Polls
+              Calendar
             </Link>
             <Link
               href="/archive"
