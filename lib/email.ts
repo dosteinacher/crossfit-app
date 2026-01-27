@@ -138,7 +138,7 @@ See you there! 💪
         {
           filename: icsFilename,
           content: Buffer.from(icsContent).toString('base64'),
-          content_type: 'text/calendar',
+          contentType: 'text/calendar',
         },
       ],
     });
