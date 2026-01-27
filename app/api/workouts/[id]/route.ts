@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
 import { Registration } from '@/lib/types';
-import { notifyWorkoutUpdate, notifyWorkoutCancellation } from '@/lib/email';
 
 export async function GET(
   request: NextRequest,
@@ -94,46 +93,6 @@ export async function PUT(
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
     }
 
-    // Send update emails to all registered participants
-    try {
-      const [creator, registrations] = await Promise.all([
-        db.getUserById(updatedWorkout.created_by),
-        db.getRegistrationsForWorkout(workoutId),
-      ]);
-
-      if (creator && registrations.length > 0) {
-        const attendees = await Promise.all(
-          registrations.map(async (reg: Registration) => {
-            const user = await db.getUserById(reg.user_id);
-            return user ? { email: user.email, name: user.name } : null;
-          })
-        );
-
-        const validAttendees = attendees.filter((a): a is { email: string; name: string } => a !== null);
-
-        if (validAttendees.length > 0) {
-          await notifyWorkoutUpdate(
-            {
-              id: updatedWorkout.id,
-              title: updatedWorkout.title,
-              description: updatedWorkout.description,
-              date: updatedWorkout.date,
-              workout_type: updatedWorkout.workout_type,
-              sequence: updatedWorkout.sequence,
-            },
-            {
-              email: creator.email,
-              name: creator.name,
-            },
-            validAttendees
-          );
-        }
-      }
-    } catch (emailError) {
-      // Log email error but don't fail the update
-      console.error('Failed to send update emails:', emailError);
-    }
-
     return NextResponse.json({ workout: updatedWorkout });
   } catch (error) {
     console.error('Update workout error:', error);
@@ -162,55 +121,9 @@ export async function DELETE(
     const { id } = await params;
     const workoutId = parseInt(id);
 
-    // Get workout and registrations before deletion for email notifications
-    const workout = await db.getWorkoutById(workoutId);
-    if (!workout) {
-      return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
-    }
-
-    const [creator, registrations] = await Promise.all([
-      db.getUserById(workout.created_by),
-      db.getRegistrationsForWorkout(workoutId),
-    ]);
-
     const success = await db.deleteWorkout(workoutId);
     if (!success) {
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
-    }
-
-    // Send cancellation emails to all registered participants
-    try {
-      if (creator && registrations.length > 0) {
-        const attendees = await Promise.all(
-          registrations.map(async (reg: Registration) => {
-            const user = await db.getUserById(reg.user_id);
-            return user ? { email: user.email, name: user.name } : null;
-          })
-        );
-
-        const validAttendees = attendees.filter((a): a is { email: string; name: string } => a !== null);
-
-        if (validAttendees.length > 0) {
-          await notifyWorkoutCancellation(
-            {
-              id: workout.id,
-              title: workout.title,
-              description: workout.description,
-              date: workout.date,
-              workout_type: workout.workout_type,
-              sequence: workout.sequence,
-            },
-            {
-              email: creator.email,
-              name: creator.name,
-            },
-            validAttendees
-          );
-        }
-      }
-    } catch (emailError) {
-      // Log email error but don't fail the deletion
-      console.error('Failed to send cancellation emails:', emailError);
     }
 
     return NextResponse.json({ message: 'Workout deleted successfully' });

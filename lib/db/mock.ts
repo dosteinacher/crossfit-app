@@ -122,7 +122,6 @@ export class Database {
       created_by,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      sequence: 0,
     };
     mockWorkouts.push(workout);
     globalForDb.workoutIdCounter = workoutIdCounter;
@@ -159,7 +158,6 @@ export class Database {
     workout.date = date;
     workout.max_participants = max_participants;
     workout.updated_at = new Date().toISOString();
-    workout.sequence = (workout.sequence || 0) + 1; // Increment sequence for calendar updates
 
     // Log the edit
     mockWorkoutEdits.push({

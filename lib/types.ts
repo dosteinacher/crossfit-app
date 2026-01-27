@@ -19,7 +19,6 @@ export interface Workout {
   created_by: number;
   created_at: string;
   updated_at: string;
-  sequence: number; // For calendar update tracking
 }
 
 export interface Registration {

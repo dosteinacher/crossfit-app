@@ -34,8 +34,7 @@ export class PostgresDatabase {
           max_participants INTEGER DEFAULT 4,
           created_by INTEGER REFERENCES users(id),
           created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW(),
-          sequence INTEGER DEFAULT 0
+          updated_at TIMESTAMP DEFAULT NOW()
         )
       `;
 
@@ -204,8 +203,7 @@ export class PostgresDatabase {
           workout_type = ${workout_type}, 
           date = ${date}, 
           max_participants = ${max_participants},
-          updated_at = NOW(),
-          sequence = sequence + 1
+          updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `;
@@ -508,7 +506,6 @@ export class PostgresDatabase {
       created_by: row.created_by,
       created_at: row.created_at.toISOString(),
       updated_at: row.updated_at.toISOString(),
-      sequence: row.sequence || 0,
     };
   }
 
