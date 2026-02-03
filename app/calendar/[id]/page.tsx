@@ -249,8 +249,8 @@ export default function PollDetailPage() {
           </Card>
 
           <div className="mt-6">
-            <Link href="/polls">
-              <Button variant="secondary">← Back to Polls</Button>
+            <Link href="/calendar">
+              <Button variant="secondary">← Back to Calendar</Button>
             </Link>
           </div>
         </div>

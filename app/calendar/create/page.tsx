@@ -87,7 +87,7 @@ export default function CreatePollPage() {
 
       if (response.ok) {
         setSuccess('Poll created successfully!');
-        setTimeout(() => router.push(`/polls/${data.poll.id}`), 1500);
+        setTimeout(() => router.push(`/calendar/${data.poll.id}`), 1500);
       } else {
         setError(data.error || 'Failed to create poll');
       }
@@ -203,7 +203,7 @@ export default function CreatePollPage() {
                 <Button type="submit" disabled={loading} className="flex-1">
                   {loading ? 'Creating...' : 'Create Poll'}
                 </Button>
-                <Link href="/polls">
+                <Link href="/calendar">
                   <Button type="button" variant="secondary" className="flex-1">
                     Cancel
                   </Button>
