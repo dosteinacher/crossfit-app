@@ -80,7 +80,7 @@ The calendar event has been removed from your calendar.
         const updateDateStr = updateDate.toLocaleString('en-US', { 
           dateStyle: 'full', 
           timeStyle: 'short',
-          timeZone: 'UTC'
+          timeZone: 'Europe/Zurich'
         });
         htmlBody = `
           <h2>Workout Updated</h2>
@@ -111,7 +111,7 @@ Your calendar has been updated with the latest details.
         const createDateStr = createDate.toLocaleString('en-US', { 
           dateStyle: 'full', 
           timeStyle: 'short',
-          timeZone: 'UTC'
+          timeZone: 'Europe/Zurich'
         });
         htmlBody = `
           <h2>Workout Invitation</h2>
