@@ -77,11 +77,16 @@ The calendar event has been removed from your calendar.
       case 'update':
         subject = `Workout Updated: ${workout.title}`;
         const updateDate = new Date(workout.date);
-        const updateDateStr = updateDate.toLocaleString('en-US', { 
-          dateStyle: 'full', 
-          timeStyle: 'short',
-          timeZone: 'Europe/Zurich'
-        });
+        const updateDateStr = new Intl.DateTimeFormat('en-US', { 
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long', 
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: 'Europe/Zurich',
+          timeZoneName: 'short'
+        }).format(updateDate);
         htmlBody = `
           <h2>Workout Updated</h2>
           <p>A workout you're registered for has been updated:</p>
@@ -108,11 +113,17 @@ Your calendar has been updated with the latest details.
       default: // create
         subject = `Workout Invitation: ${workout.title}`;
         const createDate = new Date(workout.date);
-        const createDateStr = createDate.toLocaleString('en-US', { 
-          dateStyle: 'full', 
-          timeStyle: 'short',
-          timeZone: 'Europe/Zurich'
-        });
+        // Format date in a readable way - the date is stored in UTC but represents the local workout time
+        const createDateStr = new Intl.DateTimeFormat('en-US', { 
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long', 
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          timeZone: 'Europe/Zurich',
+          timeZoneName: 'short'
+        }).format(createDate);
         htmlBody = `
           <h2>Workout Invitation</h2>
           <p>You've been registered for the following workout:</p>
