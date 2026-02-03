@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
 import { Workout, Registration } from '@/lib/types';
-import { notifyWorkoutCreator } from '@/lib/email';
+import { notifyWorkoutCreator, notifyWorkoutRegistration } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, workout_type, date, max_participants } = body;
+    const { title, description, workout_type, date, max_participants, pre_selected_user_ids } = body;
 
     // Validate input
     if (!title || !date) {
@@ -105,6 +105,41 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       // Log email error but don't fail the workout creation
       console.error('Failed to send calendar invite:', emailError);
+    }
+
+    // Auto-register pre-selected users and send them calendar invites
+    if (pre_selected_user_ids && Array.isArray(pre_selected_user_ids) && pre_selected_user_ids.length > 0) {
+      for (const userId of pre_selected_user_ids) {
+        try {
+          // Skip if user is the creator (already notified above)
+          if (userId === session.id) continue;
+
+          // Register the user
+          await db.registerForWorkout(workout.id, userId);
+
+          // Send calendar invite
+          const user = await db.getUserById(userId);
+          if (user) {
+            await notifyWorkoutRegistration(
+              {
+                id: workout.id,
+                title: workout.title,
+                description: workout.description,
+                date: workout.date,
+                workout_type: workout.workout_type,
+                sequence: workout.sequence,
+              },
+              {
+                email: user.email,
+                name: user.name,
+              }
+            );
+          }
+        } catch (registrationError) {
+          // Log error but continue with other registrations
+          console.error(`Failed to register user ${userId}:`, registrationError);
+        }
+      }
     }
 
     return NextResponse.json({ workout }, { status: 201 });

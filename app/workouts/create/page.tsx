@@ -22,6 +22,8 @@ function CreateWorkoutForm() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [saveToArchive, setSaveToArchive] = useState(true);
+  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
 
@@ -32,6 +34,8 @@ function CreateWorkoutForm() {
       setDate(pollDateTime.toISOString().split('T')[0]); // YYYY-MM-DD
       setTime(pollDateTime.toTimeString().slice(0, 5)); // HH:MM
     }
+    // Fetch users for pre-selection
+    fetchUsers();
   }, [pollDate]);
 
   useEffect(() => {
@@ -39,6 +43,18 @@ function CreateWorkoutForm() {
       loadTemplate();
     }
   }, [templateId]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      }
+    } catch (error) {
+      console.error('Fetch users error:', error);
+    }
+  };
 
   const loadTemplate = async () => {
     try {
@@ -87,6 +103,7 @@ function CreateWorkoutForm() {
           workout_type: workoutType,
           date: dateTime,
           max_participants: parseInt(maxParticipants),
+          pre_selected_user_ids: selectedUserIds,
         }),
       });
 
@@ -206,6 +223,45 @@ function CreateWorkoutForm() {
                 placeholder="4"
                 required
               />
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-pure-white mb-1">
+                  Pre-select Attendees (Optional)
+                </label>
+                <p className="text-xs text-gray-400 mb-2">
+                  Select users who you know will attend. They'll be auto-registered and receive a calendar invite.
+                </p>
+                <div className="bg-pure-dark border border-gray-700 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  {users.length === 0 ? (
+                    <p className="text-gray-400 text-sm">Loading users...</p>
+                  ) : (
+                    users.map((user) => (
+                      <label key={user.id} className="flex items-center gap-2 py-2 hover:bg-gray-800 px-2 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedUserIds.includes(user.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUserIds([...selectedUserIds, user.id]);
+                            } else {
+                              setSelectedUserIds(selectedUserIds.filter((id) => id !== user.id));
+                            }
+                          }}
+                          className="w-4 h-4 text-pure-green rounded focus:ring-2 focus:ring-pure-green"
+                        />
+                        <span className="text-sm text-pure-white">
+                          {user.name} <span className="text-gray-400 text-xs">({user.email})</span>
+                        </span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {selectedUserIds.length > 0 && (
+                  <p className="text-xs text-pure-green mt-2">
+                    {selectedUserIds.length} user{selectedUserIds.length > 1 ? 's' : ''} selected
+                  </p>
+                )}
+              </div>
 
               {!templateId && (
                 <div className="mb-4">
