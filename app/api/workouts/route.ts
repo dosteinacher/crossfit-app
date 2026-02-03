@@ -109,6 +109,9 @@ export async function POST(request: NextRequest) {
 
     // Auto-register pre-selected users and send them calendar invites
     if (pre_selected_user_ids && Array.isArray(pre_selected_user_ids) && pre_selected_user_ids.length > 0) {
+      // Get creator info for email notifications
+      const creator = await db.getUserById(session.id);
+      
       for (const userId of pre_selected_user_ids) {
         try {
           // Skip if user is the creator (already notified above)
@@ -119,7 +122,7 @@ export async function POST(request: NextRequest) {
 
           // Send calendar invite
           const user = await db.getUserById(userId);
-          if (user) {
+          if (user && creator) {
             await notifyWorkoutRegistration(
               {
                 id: workout.id,
@@ -128,6 +131,10 @@ export async function POST(request: NextRequest) {
                 date: workout.date,
                 workout_type: workout.workout_type,
                 sequence: workout.sequence,
+              },
+              {
+                email: creator.email,
+                name: creator.name,
               },
               {
                 email: user.email,
