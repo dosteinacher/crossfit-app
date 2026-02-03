@@ -114,33 +114,32 @@ export async function POST(request: NextRequest) {
       
       for (const userId of pre_selected_user_ids) {
         try {
-          // Skip if user is the creator (already notified above)
-          if (userId === session.id) continue;
-
           // Register the user
           await db.registerForWorkout(workout.id, userId);
 
-          // Send calendar invite
-          const user = await db.getUserById(userId);
-          if (user && creator) {
-            await notifyWorkoutRegistration(
-              {
-                id: workout.id,
-                title: workout.title,
-                description: workout.description,
-                date: workout.date,
-                workout_type: workout.workout_type,
-                sequence: workout.sequence,
-              },
-              {
-                email: creator.email,
-                name: creator.name,
-              },
-              {
-                email: user.email,
-                name: user.name,
-              }
-            );
+          // Send calendar invite (skip if user is the creator - already got creator notification)
+          if (userId !== session.id) {
+            const user = await db.getUserById(userId);
+            if (user && creator) {
+              await notifyWorkoutRegistration(
+                {
+                  id: workout.id,
+                  title: workout.title,
+                  description: workout.description,
+                  date: workout.date,
+                  workout_type: workout.workout_type,
+                  sequence: workout.sequence,
+                },
+                {
+                  email: creator.email,
+                  name: creator.name,
+                },
+                {
+                  email: user.email,
+                  name: user.name,
+                }
+              );
+            }
           }
         } catch (registrationError) {
           // Log error but continue with other registrations

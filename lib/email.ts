@@ -76,11 +76,17 @@ The calendar event has been removed from your calendar.
 
       case 'update':
         subject = `Workout Updated: ${workout.title}`;
+        const updateDate = new Date(workout.date);
+        const updateDateStr = updateDate.toLocaleString('en-US', { 
+          dateStyle: 'full', 
+          timeStyle: 'short',
+          timeZone: 'UTC'
+        });
         htmlBody = `
           <h2>Workout Updated</h2>
           <p>A workout you're registered for has been updated:</p>
           <h3>${workout.title}</h3>
-          <p><strong>Date:</strong> ${new Date(workout.date).toLocaleString()}</p>
+          <p><strong>Date:</strong> ${updateDateStr}</p>
           ${workout.workout_type ? `<p><strong>Type:</strong> ${workout.workout_type}</p>` : ''}
           ${workout.description ? `<p><strong>Description:</strong> ${workout.description}</p>` : ''}
           <p>Your calendar has been updated with the latest details.</p>
@@ -91,7 +97,7 @@ Workout Updated
 A workout you're registered for has been updated:
 
 ${workout.title}
-Date: ${new Date(workout.date).toLocaleString()}
+Date: ${updateDateStr}
 ${workout.workout_type ? `Type: ${workout.workout_type}` : ''}
 ${workout.description ? `Description: ${workout.description}` : ''}
 
@@ -101,11 +107,17 @@ Your calendar has been updated with the latest details.
 
       default: // create
         subject = `Workout Invitation: ${workout.title}`;
+        const createDate = new Date(workout.date);
+        const createDateStr = createDate.toLocaleString('en-US', { 
+          dateStyle: 'full', 
+          timeStyle: 'short',
+          timeZone: 'UTC'
+        });
         htmlBody = `
           <h2>Workout Invitation</h2>
           <p>You've been registered for the following workout:</p>
           <h3>${workout.title}</h3>
-          <p><strong>Date:</strong> ${new Date(workout.date).toLocaleString()}</p>
+          <p><strong>Date:</strong> ${createDateStr}</p>
           ${workout.workout_type ? `<p><strong>Type:</strong> ${workout.workout_type}</p>` : ''}
           ${workout.description ? `<p><strong>Description:</strong> ${workout.description}</p>` : ''}
           <p>The workout has been added to your calendar automatically.</p>
@@ -117,7 +129,7 @@ Workout Invitation
 You've been registered for the following workout:
 
 ${workout.title}
-Date: ${new Date(workout.date).toLocaleString()}
+Date: ${createDateStr}
 ${workout.workout_type ? `Type: ${workout.workout_type}` : ''}
 ${workout.description ? `Description: ${workout.description}` : ''}
 
