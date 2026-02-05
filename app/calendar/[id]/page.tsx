@@ -94,7 +94,7 @@ export default function PollDetailPage() {
     }
   };
 
-  const handleScheduleWorkout = (optionId: number, optionDate: string, optionLabel: string) => {
+  const handleScheduleWorkout = (optionId: number, optionDate: string, optionLabel: string, voterIds: string[]) => {
     const params = new URLSearchParams({
       poll_option_id: optionId.toString(),
       date: optionDate,
@@ -102,6 +102,11 @@ export default function PollDetailPage() {
     
     if (poll.template_id) {
       params.append('template', poll.template_id.toString());
+    }
+
+    // Pass voter IDs to pre-select them
+    if (voterIds && voterIds.length > 0) {
+      params.append('preselect_users', voterIds.join(','));
     }
 
     router.push(`/workouts/create?${params}`);
@@ -235,7 +240,7 @@ export default function PollDetailPage() {
                       {user?.is_admin && (
                         <Button
                           variant="secondary"
-                          onClick={() => handleScheduleWorkout(option.id, option.date, option.label)}
+                          onClick={() => handleScheduleWorkout(option.id, option.date, option.label, option.voter_ids || [])}
                           className="whitespace-nowrap text-sm"
                         >
                           Schedule →

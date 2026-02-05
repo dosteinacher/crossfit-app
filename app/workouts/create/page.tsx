@@ -11,6 +11,7 @@ function CreateWorkoutForm() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get('template');
   const pollDate = searchParams.get('date'); // ISO datetime from poll
+  const preselectUsers = searchParams.get('preselect_users'); // Comma-separated user IDs from poll
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -50,6 +51,12 @@ function CreateWorkoutForm() {
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
+        
+        // Pre-select users from poll if provided
+        if (preselectUsers) {
+          const userIdsToSelect = preselectUsers.split(',').filter(id => id);
+          setSelectedUserIds(userIdsToSelect);
+        }
       }
     } catch (error) {
       console.error('Fetch users error:', error);

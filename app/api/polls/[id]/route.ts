@@ -35,17 +35,21 @@ export async function GET(
     const enrichedOptions = await Promise.all(
       options.map(async (option: PollOption) => {
         const votes = await db.getPollVotes(option.id);
-        const voters = await Promise.all(
+        const votersData = await Promise.all(
           votes.map(async (vote: PollVote) => {
             const user = await db.getUserById(vote.user_id);
-            return user?.name || 'Unknown';
+            return {
+              id: vote.user_id,
+              name: user?.name || 'Unknown'
+            };
           })
         );
 
         return {
           ...option,
           vote_count: votes.length,
-          voters,
+          voters: votersData.map(v => v.name), // For display
+          voter_ids: votersData.map(v => v.id), // For pre-selection
           user_voted: userVotes.includes(option.id),
         };
       })
