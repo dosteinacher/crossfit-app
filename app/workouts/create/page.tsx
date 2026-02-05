@@ -23,8 +23,8 @@ function CreateWorkoutForm() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [saveToArchive, setSaveToArchive] = useState(true);
-  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([]);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [users, setUsers] = useState<Array<{ id: number; name: string; email: string }>>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
 
   const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
 
@@ -48,7 +48,9 @@ function CreateWorkoutForm() {
   // Pre-select users from poll after users are loaded
   useEffect(() => {
     if (preselectUsers && users.length > 0) {
-      const userIdsToSelect = preselectUsers.split(',').filter(id => id.trim());
+      const userIdsToSelect = preselectUsers.split(',')
+        .filter(id => id.trim())
+        .map(id => parseInt(id.trim())); // Convert strings to numbers
       console.log('Pre-selecting users:', userIdsToSelect); // Debug log
       setSelectedUserIds(userIdsToSelect);
     }
