@@ -45,18 +45,21 @@ function CreateWorkoutForm() {
     }
   }, [templateId]);
 
+  // Pre-select users from poll after users are loaded
+  useEffect(() => {
+    if (preselectUsers && users.length > 0) {
+      const userIdsToSelect = preselectUsers.split(',').filter(id => id.trim());
+      console.log('Pre-selecting users:', userIdsToSelect); // Debug log
+      setSelectedUserIds(userIdsToSelect);
+    }
+  }, [preselectUsers, users]);
+
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/users');
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
-        
-        // Pre-select users from poll if provided
-        if (preselectUsers) {
-          const userIdsToSelect = preselectUsers.split(',').filter(id => id);
-          setSelectedUserIds(userIdsToSelect);
-        }
       }
     } catch (error) {
       console.error('Fetch users error:', error);
