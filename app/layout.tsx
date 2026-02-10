@@ -16,7 +16,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <div className="relative min-h-screen">
+          {/* Watermark background */}
+          <div 
+            className="fixed inset-0 pointer-events-none z-0"
+            style={{
+              backgroundImage: 'url(/go-pure-logo.png)',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              backgroundSize: '40%',
+              opacity: 0.05,
+            }}
+          />
+          {/* Content */}
+          <div className="relative z-10">
+            {children}
+          </div>
+        </div>
+      </body>
     </html>
   );
 }

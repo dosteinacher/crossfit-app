@@ -6,10 +6,6 @@ import { generateICSFile, generateICSFilename, ICSAction, WorkoutData, UserData 
 // Default from email
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@crossfit-app.com';
 
-// Admin email addresses - send calendar invites to both
-const ADMIN_PRIMARY_EMAIL = 'nigglus@gmail.com';
-const ADMIN_SECONDARY_EMAIL = 'dsteinacher@adobe.com';
-
 // Initialize Resend lazily to avoid errors when API key is not configured
 let resend: Resend | null = null;
 function getResendClient(): Resend | null {
@@ -155,14 +151,9 @@ See you there! 💪
     }
 
     // Send email with ICS attachment
-    // If recipient is admin, send to both primary and secondary email
-    const recipientEmails = attendee.email === ADMIN_PRIMARY_EMAIL 
-      ? [ADMIN_PRIMARY_EMAIL, ADMIN_SECONDARY_EMAIL]
-      : attendee.email;
-    
     const response = await resendClient.emails.send({
       from: FROM_EMAIL,
-      to: recipientEmails,
+      to: attendee.email,
       subject: subject,
       html: htmlBody,
       text: textBody,
