@@ -85,21 +85,48 @@ export async function PUT(
     const { id } = await params;
     const pollId = parseInt(id);
     const body = await request.json();
-    const { status } = body;
 
-    if (!status || (status !== 'active' && status !== 'closed')) {
-      return NextResponse.json(
-        { error: 'Valid status required' },
-        { status: 400 }
+    // Check if this is a status update or a full poll update
+    if (body.status) {
+      // Status update only
+      const { status } = body;
+      if (status !== 'active' && status !== 'closed') {
+        return NextResponse.json(
+          { error: 'Valid status required' },
+          { status: 400 }
+        );
+      }
+
+      const updatedPoll = await db.updatePollStatus(pollId, status);
+      if (!updatedPoll) {
+        return NextResponse.json({ error: 'Poll not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({ poll: updatedPoll });
+    } else {
+      // Full poll update (title, description, template_id)
+      const { title, description, template_id } = body;
+
+      if (!title || title.trim() === '') {
+        return NextResponse.json(
+          { error: 'Title is required' },
+          { status: 400 }
+        );
+      }
+
+      const updatedPoll = await db.updatePoll(
+        pollId,
+        title,
+        description || '',
+        template_id || null
       );
-    }
 
-    const updatedPoll = await db.updatePollStatus(pollId, status);
-    if (!updatedPoll) {
-      return NextResponse.json({ error: 'Poll not found' }, { status: 404 });
-    }
+      if (!updatedPoll) {
+        return NextResponse.json({ error: 'Poll not found' }, { status: 404 });
+      }
 
-    return NextResponse.json({ poll: updatedPoll });
+      return NextResponse.json({ poll: updatedPoll });
+    }
   } catch (error) {
     console.error('Update poll error:', error);
     return NextResponse.json(

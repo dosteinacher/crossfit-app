@@ -353,6 +353,20 @@ export class Database {
     return mockPolls.sort((a, b) => b.created_at.localeCompare(a.created_at));
   }
 
+  async updatePoll(
+    id: number,
+    title: string,
+    description: string,
+    template_id: number | null
+  ): Promise<Poll | null> {
+    const poll = mockPolls.find((p) => p.id === id);
+    if (!poll) return null;
+    poll.title = title;
+    poll.description = description;
+    poll.template_id = template_id || undefined;
+    return poll;
+  }
+
   async updatePollStatus(id: number, status: 'active' | 'closed'): Promise<Poll | null> {
     const poll = mockPolls.find((p) => p.id === id);
     if (!poll) return null;

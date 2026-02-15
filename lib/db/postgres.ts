@@ -404,6 +404,23 @@ export class PostgresDatabase {
     return result.rows.map(row => this.mapPoll(row));
   }
 
+  async updatePoll(
+    id: number,
+    title: string,
+    description: string,
+    template_id: number | null
+  ): Promise<Poll | null> {
+    const result = await sql`
+      UPDATE polls 
+      SET title = ${title}, 
+          description = ${description}, 
+          template_id = ${template_id}
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    return result.rows[0] ? this.mapPoll(result.rows[0]) : null;
+  }
+
   async updatePollStatus(id: number, status: 'active' | 'closed'): Promise<Poll | null> {
     const result = await sql`
       UPDATE polls 

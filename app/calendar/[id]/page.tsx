@@ -155,11 +155,20 @@ export default function PollDetailPage() {
                   {poll.status}
                 </span>
               </div>
-              {user?.is_admin && poll.status === 'active' && (
-                <Button variant="secondary" onClick={handleClosePoll}>
-                  Close Poll
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {user?.is_admin && (
+                  <Link href={`/calendar/${pollId}/edit`}>
+                    <Button variant="secondary">
+                      Edit Poll
+                    </Button>
+                  </Link>
+                )}
+                {user?.is_admin && poll.status === 'active' && (
+                  <Button variant="secondary" onClick={handleClosePoll}>
+                    Close Poll
+                  </Button>
+                )}
+              </div>
             </div>
 
             {poll.description && (
