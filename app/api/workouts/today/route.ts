@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { Workout } from '@/lib/types';
 
 export async function GET() {
   try {
@@ -16,7 +17,7 @@ export async function GET() {
 
     // Enrich workouts with creator info and registration counts
     const enrichedWorkouts = await Promise.all(
-      workouts.map(async (workout) => {
+      workouts.map(async (workout: Workout) => {
         const creator = await db.getUserById(workout.created_by);
         const registrations = await db.getRegistrationsForWorkout(workout.id);
 
