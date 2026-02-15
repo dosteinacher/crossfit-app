@@ -187,6 +187,15 @@ export class PostgresDatabase {
     return result.rows.map(row => this.mapWorkout(row));
   }
 
+  async getWorkoutsByDateRange(startDate: string, endDate: string): Promise<Workout[]> {
+    const result = await sql`
+      SELECT * FROM workouts 
+      WHERE date >= ${startDate} AND date <= ${endDate}
+      ORDER BY date ASC
+    `;
+    return result.rows.map(row => this.mapWorkout(row));
+  }
+
   async updateWorkout(
     id: number,
     title: string,

@@ -140,6 +140,12 @@ export class Database {
     return mockWorkouts.sort((a, b) => b.date.localeCompare(a.date));
   }
 
+  async getWorkoutsByDateRange(startDate: string, endDate: string): Promise<Workout[]> {
+    return mockWorkouts
+      .filter((w) => w.date >= startDate && w.date <= endDate)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
   async updateWorkout(
     id: number,
     title: string,
