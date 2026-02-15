@@ -156,11 +156,16 @@ export default function WODPage() {
 
       {/* Footer */}
       <div className="max-w-6xl mx-auto mt-12 text-center">
-        <div className="inline-block bg-pure-gray border border-gray-700 rounded-xl px-8 py-4">
-          <p className="text-xl text-pure-text-light">
-            Visit <span className="font-bold text-pure-green">go-pure.ch</span> to register
+        <a
+          href="https://go-pure.ch/login"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block bg-pure-gray border-2 border-gray-700 rounded-xl px-8 py-4 hover:border-pure-green hover:bg-pure-dark transition-all duration-300 cursor-pointer"
+        >
+          <p className="text-2xl font-bold text-pure-green">
+            go-pure.ch login
           </p>
-        </div>
+        </a>
       </div>
     </div>
   );
