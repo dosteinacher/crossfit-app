@@ -1,54 +1,51 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { db } from '@/lib/db';
 import { format } from 'date-fns';
+import { Metadata } from 'next';
+import { Workout } from '@/lib/types';
 
-export default function WODPage() {
-  const [workouts, setWorkouts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
+// ISR: Regenerate page every 30 seconds
+export const revalidate = 30;
 
-  useEffect(() => {
-    fetchWorkouts();
-    
-    // Auto-refresh every 5 minutes
-    const refreshInterval = setInterval(fetchWorkouts, 5 * 60 * 1000);
-    
-    // Update clock every second
-    const clockInterval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+// Meta refresh for browser auto-reload (Smart TV compatible)
+export const metadata: Metadata = {
+  title: 'Workout of the Day - PURE',
+  other: {
+    'http-equiv': 'refresh',
+    content: '30',
+  },
+};
 
-    return () => {
-      clearInterval(refreshInterval);
-      clearInterval(clockInterval);
-    };
-  }, []);
+async function getWorkoutsForToday() {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-  const fetchWorkouts = async () => {
-    try {
-      const response = await fetch('/api/workouts/today');
-      if (response.ok) {
-        const data = await response.json();
-        setWorkouts(data.workouts);
-      }
-    } catch (error) {
-      console.error('Fetch workouts error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const startDate = startOfDay.toISOString();
+  const endDate = endOfDay.toISOString();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-pure-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pure-green mx-auto"></div>
-          <p className="text-pure-white text-2xl mt-4">Loading workout...</p>
-        </div>
-      </div>
-    );
-  }
+  // Fetch workouts for today
+  const workouts = await db.getWorkoutsByDateRange(startDate, endDate);
+
+  // Enrich workouts with creator info and registration counts
+  const enrichedWorkouts = await Promise.all(
+    workouts.map(async (workout: Workout) => {
+      const creator = await db.getUserById(workout.created_by);
+      const registrations = await db.getRegistrationsForWorkout(workout.id);
+
+      return {
+        ...workout,
+        creator_name: creator?.name || 'Unknown',
+        registered_count: registrations.length,
+      };
+    })
+  );
+
+  return enrichedWorkouts;
+}
+
+export default async function WODPage() {
+  const workouts = await getWorkoutsForToday();
+  const currentTime = new Date();
 
   return (
     <div className="min-h-screen bg-pure-dark py-12 px-8">
@@ -65,8 +62,9 @@ export default function WODPage() {
           </div>
           <div className="text-right">
             <p className="text-5xl font-bold text-pure-white">
-              {format(currentTime, 'h:mm:ss a')}
+              {format(currentTime, 'h:mm a')}
             </p>
+            <p className="text-sm text-gray-400 mt-1">Last updated</p>
           </div>
         </div>
         <div className="h-1 bg-gradient-to-r from-pure-green to-coastal-sky rounded-full"></div>
@@ -85,72 +83,77 @@ export default function WODPage() {
             </p>
           </div>
         ) : (
-          workouts.map((workout, index) => (
-            <div
-              key={workout.id}
-              className="bg-pure-gray border-2 border-gray-700 rounded-2xl p-10 shadow-2xl hover:border-pure-green transition-all duration-300"
-            >
-              {/* Workout header */}
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-6">
-                  <div className="text-7xl font-bold text-pure-green">
-                    #{index + 1}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-4 mb-2">
-                      <span className="text-2xl font-medium px-6 py-2 bg-coastal-sky/20 text-coastal-sky border-2 border-coastal-sky/50 rounded-xl">
-                        {workout.workout_type}
-                      </span>
-                      <span className="text-3xl font-bold text-pure-white">
-                        {format(new Date(workout.date), 'h:mm a')}
-                      </span>
+          workouts.map((workout, index) => {
+            const workoutDate = new Date(workout.date);
+            const now = new Date();
+            
+            return (
+              <div
+                key={workout.id}
+                className="bg-pure-gray border-2 border-gray-700 rounded-2xl p-10 shadow-2xl"
+              >
+                {/* Workout header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-6">
+                    <div className="text-7xl font-bold text-pure-green">
+                      #{index + 1}
                     </div>
-                    <h2 className="text-5xl font-bold text-pure-white mt-2">
-                      {workout.title}
-                    </h2>
+                    <div>
+                      <div className="flex items-center gap-4 mb-2">
+                        <span className="text-2xl font-medium px-6 py-2 bg-coastal-sky/20 text-coastal-sky border-2 border-coastal-sky/50 rounded-xl">
+                          {workout.workout_type}
+                        </span>
+                        <span className="text-3xl font-bold text-pure-white">
+                          {format(workoutDate, 'h:mm a')}
+                        </span>
+                      </div>
+                      <h2 className="text-5xl font-bold text-pure-white mt-2">
+                        {workout.title}
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl text-pure-text-light mb-2">Participants</p>
+                    <p className="text-4xl font-bold text-pure-green">
+                      {workout.registered_count}/{workout.max_participants}
+                    </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xl text-pure-text-light mb-2">Participants</p>
-                  <p className="text-4xl font-bold text-pure-green">
-                    {workout.registered_count}/{workout.max_participants}
-                  </p>
-                </div>
-              </div>
 
-              {/* Workout description */}
-              {workout.description && (
-                <div className="mt-8 bg-pure-dark border border-gray-700 rounded-xl p-8">
-                  <h3 className="text-3xl font-bold text-pure-white mb-4">
-                    Description
-                  </h3>
-                  <p className="text-2xl text-pure-text-light whitespace-pre-wrap leading-relaxed">
-                    {workout.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Workout footer */}
-              <div className="mt-6 pt-6 border-t border-gray-700 flex items-center justify-between">
-                <p className="text-xl text-pure-text-light">
-                  Created by <span className="font-semibold text-pure-white">{workout.creator_name}</span>
-                </p>
-                {new Date(workout.date) < new Date() ? (
-                  <span className="text-xl font-medium px-4 py-2 bg-gray-700 text-gray-400 rounded-lg">
-                    Completed
-                  </span>
-                ) : new Date(workout.date) > new Date() ? (
-                  <span className="text-xl font-medium px-4 py-2 bg-green-900 text-green-200 rounded-lg">
-                    Upcoming
-                  </span>
-                ) : (
-                  <span className="text-xl font-medium px-4 py-2 bg-pure-green text-pure-dark rounded-lg">
-                    In Progress
-                  </span>
+                {/* Workout description */}
+                {workout.description && (
+                  <div className="mt-8 bg-pure-dark border border-gray-700 rounded-xl p-8">
+                    <h3 className="text-3xl font-bold text-pure-white mb-4">
+                      Description
+                    </h3>
+                    <p className="text-2xl text-pure-text-light whitespace-pre-wrap leading-relaxed">
+                      {workout.description}
+                    </p>
+                  </div>
                 )}
+
+                {/* Workout footer */}
+                <div className="mt-6 pt-6 border-t border-gray-700 flex items-center justify-between">
+                  <p className="text-xl text-pure-text-light">
+                    Created by <span className="font-semibold text-pure-white">{workout.creator_name}</span>
+                  </p>
+                  {workoutDate < now ? (
+                    <span className="text-xl font-medium px-4 py-2 bg-gray-700 text-gray-400 rounded-lg">
+                      Completed
+                    </span>
+                  ) : workoutDate > now ? (
+                    <span className="text-xl font-medium px-4 py-2 bg-green-900 text-green-200 rounded-lg">
+                      Upcoming
+                    </span>
+                  ) : (
+                    <span className="text-xl font-medium px-4 py-2 bg-pure-green text-pure-dark rounded-lg">
+                      In Progress
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
