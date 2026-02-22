@@ -50,8 +50,8 @@ export default async function WODPage() {
   return (
     <div className="min-h-screen bg-pure-dark py-4 px-8">
       {/* Header with current time */}
-      <div className="max-w-6xl mx-auto mb-3">
-        <div className="flex items-center justify-between mb-3">
+      <div className="max-w-6xl mx-auto mb-1">
+        <div className="flex items-center justify-between mb-2">
           <div>
             <h1 className="text-4xl font-bold text-pure-green mb-2">
               Workout of the Day
@@ -71,7 +71,7 @@ export default async function WODPage() {
       </div>
 
       {/* Workouts */}
-      <div className="max-w-6xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4 mt-2">
         {workouts.length === 0 ? (
           <div className="bg-pure-gray border border-gray-700 rounded-lg p-8 text-center">
             <div className="text-6xl mb-4">💪</div>
@@ -92,31 +92,27 @@ export default async function WODPage() {
                 key={workout.id}
                 className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-2xl"
               >
-                {/* Workout header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="text-4xl font-bold text-pure-green">
-                      #{index + 1}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="text-lg font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg">
-                          {workout.workout_type}
-                        </span>
-                        <span className="text-xl font-bold text-pure-white">
-                          {format(workoutDate, 'h:mm a')}
-                        </span>
-                      </div>
-                      <h2 className="text-3xl font-bold text-pure-white mt-1">
-                        {workout.title}
-                      </h2>
-                    </div>
+                {/* Workout header - all on one line */}
+                <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
+                  <div className="text-4xl font-bold text-pure-green shrink-0">
+                    #{index + 1}
                   </div>
-                  <div className="text-right">
-                    <p className="text-base text-pure-text-light mb-1">Participants</p>
-                    <p className="text-2xl font-bold text-pure-green">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="text-lg font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
+                      {workout.workout_type}
+                    </span>
+                    <span className="text-xl font-bold text-pure-white shrink-0">
+                      {format(workoutDate, 'h:mm a')}
+                    </span>
+                    <h2 className="text-2xl font-bold text-pure-white truncate min-w-0">
+                      {workout.title}
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-base text-pure-text-light">Participants</span>
+                    <span className="text-2xl font-bold text-pure-green">
                       {workout.registered_count}/{workout.max_participants}
-                    </p>
+                    </span>
                   </div>
                 </div>
 
