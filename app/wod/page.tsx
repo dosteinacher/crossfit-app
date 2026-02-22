@@ -48,20 +48,20 @@ export default async function WODPage() {
   const currentTime = new Date();
 
   return (
-    <div className="min-h-screen bg-pure-dark py-12 px-8">
+    <div className="min-h-screen bg-pure-dark py-4 px-8">
       {/* Header with current time */}
-      <div className="max-w-6xl mx-auto mb-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-6xl mx-auto mb-3">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-6xl font-bold text-pure-green mb-2">
+            <h1 className="text-4xl font-bold text-pure-green mb-2">
               Workout of the Day
             </h1>
-            <p className="text-3xl text-pure-text-light">
+            <p className="text-xl text-pure-text-light">
               {format(currentTime, 'EEEE, MMMM d, yyyy')}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-5xl font-bold text-pure-white">
+            <p className="text-3xl font-bold text-pure-white">
               {format(currentTime, 'h:mm a')}
             </p>
             <p className="text-sm text-gray-400 mt-1">Last updated</p>
@@ -71,14 +71,14 @@ export default async function WODPage() {
       </div>
 
       {/* Workouts */}
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-4">
         {workouts.length === 0 ? (
-          <div className="bg-pure-gray border-2 border-gray-700 rounded-2xl p-16 text-center">
-            <div className="text-8xl mb-6">💪</div>
-            <h2 className="text-5xl font-bold text-pure-white mb-4">
+          <div className="bg-pure-gray border border-gray-700 rounded-lg p-8 text-center">
+            <div className="text-6xl mb-4">💪</div>
+            <h2 className="text-3xl font-bold text-pure-white mb-3">
               No Workouts Scheduled
             </h2>
-            <p className="text-3xl text-pure-text-light">
+            <p className="text-xl text-pure-text-light">
               Check back tomorrow for the next workout!
             </p>
           </div>
@@ -90,31 +90,31 @@ export default async function WODPage() {
             return (
               <div
                 key={workout.id}
-                className="bg-pure-gray border-2 border-gray-700 rounded-2xl p-10 shadow-2xl"
+                className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-2xl"
               >
                 {/* Workout header */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-6">
-                    <div className="text-7xl font-bold text-pure-green">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-4xl font-bold text-pure-green">
                       #{index + 1}
                     </div>
                     <div>
-                      <div className="flex items-center gap-4 mb-2">
-                        <span className="text-2xl font-medium px-6 py-2 bg-coastal-sky/20 text-coastal-sky border-2 border-coastal-sky/50 rounded-xl">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-lg font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg">
                           {workout.workout_type}
                         </span>
-                        <span className="text-3xl font-bold text-pure-white">
+                        <span className="text-xl font-bold text-pure-white">
                           {format(workoutDate, 'h:mm a')}
                         </span>
                       </div>
-                      <h2 className="text-5xl font-bold text-pure-white mt-2">
+                      <h2 className="text-3xl font-bold text-pure-white mt-1">
                         {workout.title}
                       </h2>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl text-pure-text-light mb-2">Participants</p>
-                    <p className="text-4xl font-bold text-pure-green">
+                    <p className="text-base text-pure-text-light mb-1">Participants</p>
+                    <p className="text-2xl font-bold text-pure-green">
                       {workout.registered_count}/{workout.max_participants}
                     </p>
                   </div>
@@ -122,8 +122,8 @@ export default async function WODPage() {
 
                 {/* Workout description */}
                 {workout.description && (
-                  <div className="mt-8 bg-pure-dark border border-gray-700 rounded-xl p-8">
-                    <h3 className="text-3xl font-bold text-pure-white mb-4">
+                  <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
+                    <h3 className="text-xl font-bold text-pure-white mb-2">
                       Description
                     </h3>
                     <p className="text-2xl text-pure-text-light whitespace-pre-wrap leading-relaxed">
@@ -133,20 +133,20 @@ export default async function WODPage() {
                 )}
 
                 {/* Workout footer */}
-                <div className="mt-6 pt-6 border-t border-gray-700 flex items-center justify-between">
-                  <p className="text-xl text-pure-text-light">
+                <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
+                  <p className="text-base text-pure-text-light">
                     Created by <span className="font-semibold text-pure-white">{workout.creator_name}</span>
                   </p>
                   {workoutDate < now ? (
-                    <span className="text-xl font-medium px-4 py-2 bg-gray-700 text-gray-400 rounded-lg">
+                    <span className="text-base font-medium px-3 py-1 bg-gray-700 text-gray-400 rounded-lg">
                       Completed
                     </span>
                   ) : workoutDate > now ? (
-                    <span className="text-xl font-medium px-4 py-2 bg-green-900 text-green-200 rounded-lg">
+                    <span className="text-base font-medium px-3 py-1 bg-green-900 text-green-200 rounded-lg">
                       Upcoming
                     </span>
                   ) : (
-                    <span className="text-xl font-medium px-4 py-2 bg-pure-green text-pure-dark rounded-lg">
+                    <span className="text-base font-medium px-3 py-1 bg-pure-green text-pure-dark rounded-lg">
                       In Progress
                     </span>
                   )}
@@ -158,14 +158,14 @@ export default async function WODPage() {
       </div>
 
       {/* Footer */}
-      <div className="max-w-6xl mx-auto mt-12 text-center">
+      <div className="max-w-6xl mx-auto mt-6 text-center">
         <a
           href="https://go-pure.ch/login"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block bg-pure-gray border-2 border-gray-700 rounded-xl px-8 py-4 hover:border-pure-green hover:bg-pure-dark transition-all duration-300 cursor-pointer"
+          className="inline-block bg-pure-gray border border-gray-700 rounded-lg px-6 py-3 hover:border-pure-green hover:bg-pure-dark transition-all duration-300 cursor-pointer"
         >
-          <p className="text-2xl font-bold text-pure-green">
+          <p className="text-xl font-bold text-pure-green">
             go-pure.ch login
           </p>
         </a>
