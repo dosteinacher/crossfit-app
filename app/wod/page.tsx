@@ -92,23 +92,23 @@ export default async function WODPage() {
                 key={workout.id}
                 className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-2xl"
               >
-                {/* Workout header - all on one line */}
-                <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
+                {/* Workout header - all on one line, no wrap */}
+                <div className="flex items-center gap-4 mb-3 flex-nowrap min-w-0">
                   <div className="text-4xl font-bold text-pure-green shrink-0">
                     #{index + 1}
                   </div>
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden">
                     <span className="text-lg font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
                       {workout.workout_type}
                     </span>
-                    <span className="text-xl font-bold text-pure-white shrink-0">
+                    <span className="text-xl font-bold text-pure-white shrink-0 whitespace-nowrap">
                       {format(workoutDate, 'h:mm a')}
                     </span>
-                    <h2 className="text-2xl font-bold text-pure-white truncate min-w-0">
+                    <h2 className="text-2xl font-bold text-pure-white truncate min-w-0 shrink">
                       {workout.title}
                     </h2>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
                     <span className="text-base text-pure-text-light">Participants</span>
                     <span className="text-2xl font-bold text-pure-green">
                       {workout.registered_count}/{workout.max_participants}
