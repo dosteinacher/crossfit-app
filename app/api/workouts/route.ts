@@ -109,17 +109,21 @@ export async function POST(request: NextRequest) {
 
     // Auto-register pre-selected users and send them calendar invites
     if (pre_selected_user_ids && Array.isArray(pre_selected_user_ids) && pre_selected_user_ids.length > 0) {
-      // Get creator info for email notifications
+      // Normalize IDs to numbers (request body may have string IDs, causing getUserById to return null)
+      const normalizedIds = pre_selected_user_ids
+        .map((id: unknown) => Number(id))
+        .filter((id: number) => !Number.isNaN(id));
+
       const creator = await db.getUserById(session.id);
-      
-      for (const userId of pre_selected_user_ids) {
+      const creatorIdNum = Number(session.id);
+
+      for (const userIdNum of normalizedIds) {
         try {
-          // Register the user
-          await db.registerForWorkout(workout.id, userId);
+          await db.registerForWorkout(workout.id, userIdNum);
 
           // Send calendar invite (skip if user is the creator - already got creator notification)
-          if (userId !== session.id) {
-            const user = await db.getUserById(userId);
+          if (userIdNum !== creatorIdNum) {
+            const user = await db.getUserById(userIdNum);
             if (user && creator) {
               await notifyWorkoutRegistration(
                 {
@@ -142,8 +146,7 @@ export async function POST(request: NextRequest) {
             }
           }
         } catch (registrationError) {
-          // Log error but continue with other registrations
-          console.error(`Failed to register user ${userId}:`, registrationError);
+          console.error(`Failed to register or send invite to user ${userIdNum}:`, registrationError);
         }
       }
     }
