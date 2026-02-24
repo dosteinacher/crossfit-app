@@ -116,17 +116,23 @@ export default async function WODPage() {
                   </div>
                 </div>
 
-                {/* Workout description */}
-                {workout.description && (
-                  <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
-                    <h3 className="text-xl font-bold text-pure-white mb-2">
-                      Description
-                    </h3>
-                    <p className="text-2xl text-pure-text-light whitespace-pre-wrap leading-relaxed">
-                      {workout.description}
-                    </p>
-                  </div>
-                )}
+                {/* Workout description - smaller font for ~16 lines; 2 columns if longer */}
+                {workout.description && (() => {
+                  const lineCount = workout.description.split('\n').length;
+                  const useTwoColumns = lineCount > 16;
+                  return (
+                    <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
+                      <h3 className="text-xl font-bold text-pure-white mb-2">
+                        Description
+                      </h3>
+                      <div className={useTwoColumns ? 'columns-2 gap-8' : ''}>
+                        <p className="text-lg text-pure-text-light whitespace-pre-wrap leading-relaxed">
+                          {workout.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Workout footer */}
                 <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
