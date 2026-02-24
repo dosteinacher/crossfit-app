@@ -65,9 +65,18 @@ export default function WorkoutsPage() {
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bold text-pure-white">Workouts</h1>
-            <Link href="/workouts/create">
-              <Button>Create Workout</Button>
-            </Link>
+            <div className="flex gap-2">
+              <a
+                href="/api/export/workouts-txt"
+                download
+                className="inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold border-2 border-gray-600 text-pure-white hover:bg-pure-gray hover:border-gray-500 transition"
+              >
+                Export as TXT
+              </a>
+              <Link href="/workouts/create">
+                <Button>Create Workout</Button>
+              </Link>
+            </div>
           </div>
 
           {/* Filter Tabs */}
