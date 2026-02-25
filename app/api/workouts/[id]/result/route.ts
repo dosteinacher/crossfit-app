@@ -35,9 +35,10 @@ export async function POST(
     const isParticipant = userRegistrations.some(
       (r: Registration) => r.workout_id === workoutId
     );
-    if (!isParticipant) {
+    const isCreator = workout.created_by === session.id;
+    if (!isParticipant && !isCreator) {
       return NextResponse.json(
-        { error: 'Only participants can set result and rating' },
+        { error: 'Only participants or the workout creator can set result and rating' },
         { status: 403 }
       );
     }

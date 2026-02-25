@@ -297,7 +297,7 @@ export default function WorkoutDetailPage() {
             {isPastWorkout && (
               <div className="mb-6 space-y-4">
                 <h2 className="text-xl font-bold text-pure-white">Result & Rating</h2>
-                {workout.is_registered ? (
+                {(workout.is_registered || (user && workout.created_by === user.id)) ? (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-pure-text-light mb-1">
