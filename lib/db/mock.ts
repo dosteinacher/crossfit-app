@@ -122,6 +122,8 @@ export class Database {
       created_by,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      result: null,
+      rating: null,
     };
     mockWorkouts.push(workout);
     globalForDb.workoutIdCounter = workoutIdCounter;
@@ -183,6 +185,19 @@ export class Database {
     mockWorkouts.splice(index, 1);
     // Also delete associated registrations
     mockRegistrations = mockRegistrations.filter((r) => r.workout_id !== id);
+    return true;
+  }
+
+  async updateWorkoutResultAndRating(
+    workout_id: number,
+    result: string | null,
+    rating: number | null
+  ): Promise<boolean> {
+    const workout = mockWorkouts.find((w) => w.id === workout_id);
+    if (!workout) return false;
+    workout.result = result;
+    workout.rating = rating;
+    workout.updated_at = new Date().toISOString();
     return true;
   }
 

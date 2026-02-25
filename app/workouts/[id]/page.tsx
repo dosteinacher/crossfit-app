@@ -18,6 +18,9 @@ export default function WorkoutDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [resultSaving, setResultSaving] = useState(false);
+  const [editResult, setEditResult] = useState('');
+  const [editRating, setEditRating] = useState<number | ''>('');
 
   useEffect(() => {
     fetchData();
@@ -38,7 +41,10 @@ export default function WorkoutDetailPage() {
       const workoutResponse = await fetch(`/api/workouts/${workoutId}`);
       if (workoutResponse.ok) {
         const workoutData = await workoutResponse.json();
-        setWorkout(workoutData.workout);
+        const w = workoutData.workout;
+        setWorkout(w);
+        setEditResult(w?.result ?? '');
+        setEditRating(w?.rating ?? '');
       } else {
         setError('Workout not found');
       }
@@ -111,6 +117,35 @@ export default function WorkoutDetailPage() {
       }
     } catch (error) {
       console.error('Mark attendance error:', error);
+    }
+  };
+
+  const handleSaveResult = async () => {
+    setError('');
+    setSuccess('');
+    setResultSaving(true);
+    try {
+      const response = await fetch(`/api/workouts/${workoutId}/result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          result: typeof editResult === 'string' ? editResult.trim() || null : null,
+          rating: editRating === '' ? null : Number(editRating),
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.workout) setWorkout(data.workout);
+        setSuccess('Result and rating saved.');
+        fetchData();
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to save result');
+      }
+    } catch (err) {
+      setError('Failed to save result.');
+    } finally {
+      setResultSaving(false);
     }
   };
 
@@ -249,6 +284,70 @@ export default function WorkoutDetailPage() {
                   >
                     {actionLoading ? 'Processing...' : isFull ? 'Workout Full' : 'Register'}
                   </Button>
+                )}
+              </div>
+            )}
+
+            {/* Result & Rating (past workouts only) */}
+            {isPastWorkout && (
+              <div className="mb-6 space-y-4">
+                <h2 className="text-xl font-bold text-pure-white">Result & Rating</h2>
+                {workout.is_registered ? (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-pure-text-light mb-1">
+                        Result (time, reps, or notes)
+                      </label>
+                      <textarea
+                        value={editResult}
+                        onChange={(e) => setEditResult(e.target.value)}
+                        placeholder="e.g. 12:34 or 3 rounds + 5 reps"
+                        rows={2}
+                        className="w-full px-4 py-2 bg-pure-dark border border-coastal-search rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-pure-text-light mb-2">
+                        How hard was it? (1–5)
+                      </label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setEditRating(editRating === n ? '' : n)}
+                            className={`w-10 h-10 rounded-lg font-semibold border-2 transition ${
+                              editRating === n
+                                ? 'bg-pure-green border-pure-green text-black'
+                                : 'border-coastal-search text-pure-text-light hover:border-pure-green'
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleSaveResult}
+                      disabled={resultSaving}
+                      className="w-full sm:w-auto"
+                    >
+                      {resultSaving ? 'Saving...' : 'Save result & rating'}
+                    </Button>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    {workout.result ? (
+                      <p className="text-pure-text-light whitespace-pre-wrap">{workout.result}</p>
+                    ) : (
+                      <p className="text-gray-500">No result recorded yet.</p>
+                    )}
+                    {workout.rating != null && workout.rating >= 1 && workout.rating <= 5 ? (
+                      <p className="text-pure-text-light">
+                        Rating: {workout.rating}/5
+                      </p>
+                    ) : null}
+                  </div>
                 )}
               </div>
             )}

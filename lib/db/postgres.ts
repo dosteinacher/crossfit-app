@@ -38,6 +38,10 @@ export class PostgresDatabase {
         )
       `;
 
+      // Add result and rating columns if they don't exist (migration for existing DBs)
+      await sql`ALTER TABLE workouts ADD COLUMN IF NOT EXISTS result TEXT`.catch(() => {});
+      await sql`ALTER TABLE workouts ADD COLUMN IF NOT EXISTS rating SMALLINT`.catch(() => {});
+
       // Create registrations table
       await sql`
         CREATE TABLE IF NOT EXISTS registrations (
@@ -224,6 +228,19 @@ export class PostgresDatabase {
       DELETE FROM workouts WHERE id = ${id}
     `;
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async updateWorkoutResultAndRating(
+    workout_id: number,
+    result: string | null,
+    rating: number | null
+  ): Promise<boolean> {
+    const resultQuery = await sql`
+      UPDATE workouts
+      SET result = ${result}, rating = ${rating}, updated_at = NOW()
+      WHERE id = ${workout_id}
+    `;
+    return resultQuery.rowCount ? resultQuery.rowCount > 0 : false;
   }
 
   // Registration operations
@@ -532,6 +549,8 @@ export class PostgresDatabase {
       created_by: row.created_by,
       created_at: row.created_at.toISOString(),
       updated_at: row.updated_at.toISOString(),
+      result: row.result ?? null,
+      rating: row.rating != null ? row.rating : null,
     };
   }
 

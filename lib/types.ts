@@ -19,6 +19,8 @@ export interface Workout {
   created_by: number;
   created_at: string;
   updated_at: string;
+  result?: string | null;
+  rating?: number | null; // 1-5 difficulty
 }
 
 export interface Registration {
