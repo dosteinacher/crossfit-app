@@ -42,9 +42,14 @@ export default function WorkoutDetailPage() {
       if (workoutResponse.ok) {
         const workoutData = await workoutResponse.json();
         const w = workoutData.workout;
-        setWorkout(w);
-        setEditResult(w?.result ?? '');
-        setEditRating(w?.rating ?? '');
+        if (w) {
+          setWorkout({ ...w, participants: Array.isArray(w.participants) ? w.participants : [] });
+          setEditResult(typeof w.result === 'string' ? w.result : '');
+          const r = w.rating;
+          setEditRating(r != null && r >= 1 && r <= 5 ? Number(r) : '');
+        } else {
+          setError('Workout not found');
+        }
       } else {
         setError('Workout not found');
       }
@@ -315,9 +320,9 @@ export default function WorkoutDetailPage() {
                           <button
                             key={n}
                             type="button"
-                            onClick={() => setEditRating(editRating === n ? '' : n)}
+                            onClick={() => setEditRating(Number(editRating) === n ? '' : n)}
                             className={`w-10 h-10 rounded-lg font-semibold border-2 transition ${
-                              editRating === n
+                              Number(editRating) === n
                                 ? 'bg-pure-green border-pure-green text-black'
                                 : 'border-coastal-search text-pure-text-light hover:border-pure-green'
                             }`}
@@ -355,14 +360,14 @@ export default function WorkoutDetailPage() {
             {/* Participants List */}
             <div>
               <h2 className="text-xl font-bold text-pure-white mb-4">
-                Participants ({workout.participants.length})
+                Participants ({(workout.participants || []).length})
               </h2>
               
-              {workout.participants.length === 0 ? (
+              {(workout.participants || []).length === 0 ? (
                 <p className="text-pure-text-light">No participants yet</p>
               ) : (
                 <div className="space-y-2">
-                  {workout.participants.map((participant: any) => (
+                  {(workout.participants || []).map((participant: any) => (
                     <div
                       key={participant.user_id}
                       className="flex justify-between items-center bg-pure-dark border border-coastal-search rounded-lg p-3"
