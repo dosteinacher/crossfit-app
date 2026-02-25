@@ -39,8 +39,16 @@ export class PostgresDatabase {
       `;
 
       // Add result and rating columns if they don't exist (migration for existing DBs)
-      await sql`ALTER TABLE workouts ADD COLUMN IF NOT EXISTS result TEXT`.catch(() => {});
-      await sql`ALTER TABLE workouts ADD COLUMN IF NOT EXISTS rating SMALLINT`.catch(() => {});
+      try {
+        await sql`ALTER TABLE workouts ADD COLUMN result TEXT`;
+      } catch (e: any) {
+        if (e?.code !== '42701') throw e; // 42701 = column already exists
+      }
+      try {
+        await sql`ALTER TABLE workouts ADD COLUMN rating SMALLINT`;
+      } catch (e: any) {
+        if (e?.code !== '42701') throw e;
+      }
 
       // Create registrations table
       await sql`
@@ -235,6 +243,7 @@ export class PostgresDatabase {
     result: string | null,
     rating: number | null
   ): Promise<boolean> {
+    await this.ensureTablesExist();
     const resultQuery = await sql`
       UPDATE workouts
       SET result = ${result}, rating = ${rating}, updated_at = NOW()
@@ -539,16 +548,17 @@ export class PostgresDatabase {
   }
 
   private mapWorkout(row: any): Workout {
+    const toIso = (v: any) => (v instanceof Date ? v.toISOString() : typeof v === 'string' ? v : new Date(v).toISOString());
     return {
       id: row.id,
       title: row.title,
       description: row.description,
       workout_type: row.workout_type,
-      date: row.date.toISOString(),
+      date: toIso(row.date),
       max_participants: row.max_participants,
       created_by: row.created_by,
-      created_at: row.created_at.toISOString(),
-      updated_at: row.updated_at.toISOString(),
+      created_at: toIso(row.created_at),
+      updated_at: toIso(row.updated_at),
       result: row.result ?? null,
       rating: row.rating != null ? row.rating : null,
     };
