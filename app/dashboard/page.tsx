@@ -12,7 +12,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
-  const [upcomingWorkouts, setUpcomingWorkouts] = useState<any[]>([]);
+  const [allUpcomingWorkouts, setAllUpcomingWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,12 +37,11 @@ export default function DashboardPage() {
         setStats(statsData.stats);
       }
 
-      // Fetch upcoming workouts
+      // Fetch upcoming workouts (full list for weekly overview + first 5 for list)
       const workoutsResponse = await fetch('/api/workouts?filter=upcoming');
       if (workoutsResponse.ok) {
         const workoutsData = await workoutsResponse.json();
-        // Show all upcoming workouts (limit to 5)
-        setUpcomingWorkouts(workoutsData.workouts.slice(0, 5));
+        setAllUpcomingWorkouts(workoutsData.workouts || []);
       }
     } catch (error) {
       console.error('Fetch error:', error);
@@ -52,6 +51,25 @@ export default function DashboardPage() {
   };
 
   if (loading) return <Loading />;
+
+  // Next 7 days (today through today+6), grouped by day; only days with at least one workout
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const next7End = new Date(todayStart);
+  next7End.setDate(next7End.getDate() + 7);
+  next7End.setHours(23, 59, 59, 999);
+  const next7Workouts = allUpcomingWorkouts.filter((w: any) => {
+    const d = new Date(w.date);
+    return d >= todayStart && d <= next7End;
+  });
+  const workoutsByDay = next7Workouts.reduce<Record<string, any[]>>((acc, w) => {
+    const key = format(new Date(w.date), 'yyyy-MM-dd');
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(w);
+    return acc;
+  }, {});
+  const orderedDayKeys = Object.keys(workoutsByDay).sort();
+  const upcomingWorkouts = allUpcomingWorkouts.slice(0, 5);
 
   return (
     <>
@@ -99,27 +117,107 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Link href="/workouts">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Link href="/wod">
               <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-coastal-sky bg-pure-gray">
-                <h3 className="text-xl font-bold text-pure-white mb-2">View All Workouts</h3>
-                <p className="text-gray-300">Browse and register for upcoming workouts</p>
-              </Card>
-            </Link>
-
-            <Link href="/workouts/create">
-              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-pure-green bg-pure-gray">
-                <h3 className="text-xl font-bold text-pure-white mb-2">Create Workout</h3>
-                <p className="text-gray-300">Add a new workout for the community</p>
+                <h3 className="text-xl font-bold text-pure-white mb-2">Today&apos;s workout</h3>
+                <p className="text-gray-300">See today&apos;s scheduled workouts</p>
               </Card>
             </Link>
 
             <Link href="/archive">
               <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-coastal-honey bg-pure-gray">
                 <h3 className="text-xl font-bold text-pure-white mb-2">Workout Archive</h3>
-                <p className="text-gray-300">Browse your library of {346} templates</p>
+                <p className="text-gray-300">Browse your library of templates</p>
               </Card>
             </Link>
+          </div>
+
+          {/* Weekly Workout Overview (next 7 days, WOD-style) */}
+          <div className="mb-8">
+            <h2 className="text-4xl font-bold text-pure-green mb-2">Weekly Workout Overview</h2>
+            <p className="text-xl text-pure-text-light mb-4">Next 7 days</p>
+            <div className="h-1 bg-gradient-to-r from-pure-green to-coastal-sky rounded-full mb-6" />
+
+            {orderedDayKeys.length === 0 ? (
+              <div className="bg-pure-gray border border-gray-700 rounded-lg p-8 text-center">
+                <div className="text-6xl mb-4">💪</div>
+                <h3 className="text-3xl font-bold text-pure-white mb-3">No workouts in the next 7 days</h3>
+                <p className="text-xl text-pure-text-light">Check back later or create a workout!</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {orderedDayKeys.map((dayKey) => {
+                  const dayWorkouts = workoutsByDay[dayKey];
+                  const dayDate = new Date(dayKey + 'T12:00:00');
+                  return (
+                    <div key={dayKey} className="space-y-3">
+                      <div>
+                        <h3 className="text-2xl font-bold text-pure-green">
+                          {format(dayDate, 'EEEE, MMMM d, yyyy')}
+                        </h3>
+                      </div>
+                      <div className="space-y-4">
+                        {dayWorkouts.map((workout: any, index: number) => {
+                          const workoutDate = new Date(workout.date);
+                          const now = new Date();
+                          return (
+                            <Link key={workout.id} href={`/workouts/${workout.id}`}>
+                              <div className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-lg hover:border-coastal-sky transition">
+                                <div className="flex items-center gap-4 mb-3 flex-nowrap min-w-0">
+                                  <div className="text-2xl font-bold text-pure-green shrink-0">
+                                    #{index + 1}
+                                  </div>
+                                  <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden">
+                                    <span className="text-base font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
+                                      {workout.workout_type}
+                                    </span>
+                                    <span className="text-lg font-bold text-pure-white shrink-0 whitespace-nowrap">
+                                      {format(workoutDate, 'h:mm a')}
+                                    </span>
+                                    <h4 className="text-xl font-bold text-pure-white truncate min-w-0 shrink">
+                                      {workout.title}
+                                    </h4>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
+                                    <span className="text-sm text-pure-text-light">Participants</span>
+                                    <span className="text-xl font-bold text-pure-green">
+                                      {workout.registered_count}/{workout.max_participants}
+                                    </span>
+                                  </div>
+                                </div>
+                                {workout.description && (
+                                  <div className="mt-3 bg-pure-dark border border-gray-700 rounded-lg p-3">
+                                    <h4 className="text-sm font-bold text-pure-white mb-1">Description</h4>
+                                    <p className="text-sm text-pure-text-light whitespace-pre-wrap line-clamp-4">
+                                      {workout.description}
+                                    </p>
+                                  </div>
+                                )}
+                                <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
+                                  <p className="text-sm text-pure-text-light">
+                                    Created by <span className="font-semibold text-pure-white">{workout.creator_name}</span>
+                                  </p>
+                                  {workoutDate < now ? (
+                                    <span className="text-sm font-medium px-2 py-0.5 bg-gray-700 text-gray-400 rounded">
+                                      Completed
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm font-medium px-2 py-0.5 bg-green-900 text-green-200 rounded">
+                                      Upcoming
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Upcoming Registered Workouts */}
