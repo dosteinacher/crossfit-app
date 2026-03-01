@@ -163,18 +163,18 @@ export default function DashboardPage() {
                           return (
                             <Link key={workout.id} href={`/workouts/${workout.id}`} className="block group">
                               <div className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-lg hover:border-coastal-sky transition hover:shadow-xl">
-                                <div className="flex items-center gap-4 mb-3 flex-nowrap min-w-0">
+                                <div className="flex items-center gap-4 mb-3 flex-nowrap min-w-0 group-hover:overflow-visible">
                                   <div className="text-2xl font-bold text-pure-green shrink-0">
                                     #{index + 1}
                                   </div>
-                                  <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden">
+                                  <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden group-hover:overflow-visible">
                                     <span className="text-base font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
                                       {workout.workout_type}
                                     </span>
                                     <span className="text-lg font-bold text-pure-white shrink-0 whitespace-nowrap">
                                       {format(workoutDate, 'h:mm a')}
                                     </span>
-                                    <h4 className="text-xl font-bold text-pure-white truncate min-w-0 shrink group-hover:whitespace-normal group-hover:break-words">
+                                    <h4 className="text-xl font-bold text-pure-white truncate min-w-0 shrink group-hover:whitespace-normal group-hover:break-words group-hover:overflow-visible">
                                       {workout.title}
                                     </h4>
                                   </div>
@@ -186,9 +186,9 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
                                 {workout.description && (
-                                  <div className="mt-3 bg-pure-dark border border-gray-700 rounded-lg p-3">
+                                  <div className="mt-3 bg-pure-dark border border-gray-700 rounded-lg p-3 overflow-hidden max-h-24 group-hover:max-h-[80rem] group-hover:overflow-visible transition-[max-height] duration-300 ease-out">
                                     <h4 className="text-sm font-bold text-pure-white mb-1">Description</h4>
-                                    <p className="text-sm text-pure-text-light whitespace-pre-wrap line-clamp-4 group-hover:[line-clamp:unset]">
+                                    <p className="text-sm text-pure-text-light whitespace-pre-wrap">
                                       {workout.description}
                                     </p>
                                   </div>
