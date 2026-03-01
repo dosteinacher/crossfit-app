@@ -7,7 +7,8 @@ import Navbar from '@/components/Navbar';
 import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, TimeInput } from '@/components/ui';
 import { format } from 'date-fns';
 
-const DEFAULT_TIMES = ['08:00', '12:00', '18:00']; // 8am, 12pm, 6pm
+const WEEKDAY_TIMES = ['08:00', '12:00', '18:00']; // Mon–Fri: 8am, 12pm, 6pm
+const SATURDAY_TIMES = ['09:00', '10:00', '11:00']; // Sat: 9am, 10am, 11am
 const POLL_DAYS = 7;
 
 function generateOptionsFromStartDate(startDate: string): Array<{ date: string; time: string; label: string }> {
@@ -17,8 +18,11 @@ function generateOptionsFromStartDate(startDate: string): Array<{ date: string; 
   for (let d = 0; d < POLL_DAYS; d++) {
     const day = new Date(start);
     day.setDate(start.getDate() + d);
+    const dayOfWeek = day.getDay(); // 0 Sun, 1 Mon, ..., 6 Sat
+    if (dayOfWeek === 0) continue; // Sunday: no slots
     const dateStr = day.getFullYear() + '-' + String(day.getMonth() + 1).padStart(2, '0') + '-' + String(day.getDate()).padStart(2, '0');
-    for (const time of DEFAULT_TIMES) {
+    const times = dayOfWeek === 6 ? SATURDAY_TIMES : WEEKDAY_TIMES;
+    for (const time of times) {
       options.push({ date: dateStr, time, label: '' });
     }
   }
@@ -87,7 +91,7 @@ export default function CreatePollPage() {
 
     const validOptions = options.filter((opt) => opt.date && opt.time);
     if (validOptions.length === 0) {
-      setError('Please add at least one time slot (or set a start date to generate 7 days × 8am, 12pm, 6pm)');
+      setError('Please add at least one time slot (or set a start date to generate the default week)');
       return;
     }
 
@@ -114,7 +118,7 @@ export default function CreatePollPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess('Poll created successfully!');
+        setSuccess('Poll created and is now active! Redirecting to your poll…');
         setTimeout(() => router.push(`/calendar/${data.poll.id}`), 1500);
       } else {
         setError(data.error || 'Failed to create poll');
@@ -146,7 +150,7 @@ export default function CreatePollPage() {
                 required
               />
               <p className="text-sm text-gray-400 mb-4">
-                Standard poll: 7 days from this date, each day 8am, 12pm, 6pm. You can remove or add slots below.
+                Mon–Fri: 8am, 12pm, 6pm. Saturday: 9am, 10am, 11am. Sunday: no slots. You can remove or add slots below.
               </p>
 
               <Input
@@ -198,7 +202,7 @@ export default function CreatePollPage() {
                   {options.map((option, index) => {
                     const isFilled = option.date && option.time;
                     const optionDate = option.date ? new Date(option.date + 'T12:00:00') : null;
-                    const timeLabel = option.time === '08:00' ? '8am' : option.time === '12:00' ? '12pm' : option.time === '18:00' ? '6pm' : option.time;
+                    const timeLabel = option.time === '08:00' ? '8am' : option.time === '12:00' ? '12pm' : option.time === '18:00' ? '6pm' : option.time === '09:00' ? '9am' : option.time === '10:00' ? '10am' : option.time === '11:00' ? '11am' : option.time;
                     return (
                       <div key={index} className="bg-pure-dark border border-gray-700 rounded-lg p-4">
                         <div className="flex items-start gap-3">
@@ -260,6 +264,9 @@ export default function CreatePollPage() {
                 </div>
               </div>
 
+              <p className="text-sm text-gray-400 mt-4">
+                Click Create Poll to publish. Your poll will then appear under &quot;Active&quot; on the Calendar page so others can vote.
+              </p>
               <div className="flex gap-4 mt-6">
                 <Button type="submit" disabled={loading || !startDate} className="flex-1">
                   {loading ? 'Creating...' : 'Create Poll'}
