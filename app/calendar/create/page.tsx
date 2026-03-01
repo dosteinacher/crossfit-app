@@ -5,16 +5,34 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, TimeInput } from '@/components/ui';
+import { format } from 'date-fns';
+
+const DEFAULT_TIMES = ['08:00', '12:00', '18:00']; // 8am, 12pm, 6pm
+const POLL_DAYS = 7;
+
+function generateOptionsFromStartDate(startDate: string): Array<{ date: string; time: string; label: string }> {
+  if (!startDate) return [];
+  const options: Array<{ date: string; time: string; label: string }> = [];
+  const start = new Date(startDate + 'T12:00:00');
+  for (let d = 0; d < POLL_DAYS; d++) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + d);
+    const dateStr = day.getFullYear() + '-' + String(day.getMonth() + 1).padStart(2, '0') + '-' + String(day.getDate()).padStart(2, '0');
+    for (const time of DEFAULT_TIMES) {
+      options.push({ date: dateStr, time, label: '' });
+    }
+  }
+  return options;
+}
 
 export default function CreatePollPage() {
   const router = useRouter();
+  const [startDate, setStartDate] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [templates, setTemplates] = useState<any[]>([]);
-  const [options, setOptions] = useState<Array<{ date: string; time: string; label: string }>>([
-    { date: '', time: '12:00', label: '' },
-  ]);
+  const [options, setOptions] = useState<Array<{ date: string; time: string; label: string }>>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +40,14 @@ export default function CreatePollPage() {
   useEffect(() => {
     fetchTemplates();
   }, []);
+
+  useEffect(() => {
+    if (startDate) {
+      setOptions(generateOptionsFromStartDate(startDate));
+    } else {
+      setOptions([]);
+    }
+  }, [startDate]);
 
   const fetchTemplates = async () => {
     try {
@@ -40,9 +66,7 @@ export default function CreatePollPage() {
   };
 
   const removeOption = (index: number) => {
-    if (options.length > 1) {
-      setOptions(options.filter((_, i) => i !== index));
-    }
+    setOptions(options.filter((_, i) => i !== index));
   };
 
   const updateOption = (index: number, field: string, value: string) => {
@@ -56,10 +80,14 @@ export default function CreatePollPage() {
     setError('');
     setSuccess('');
 
-    // Validate options
+    if (!startDate) {
+      setError('Please set the poll start date');
+      return;
+    }
+
     const validOptions = options.filter((opt) => opt.date && opt.time);
     if (validOptions.length === 0) {
-      setError('Please add at least one time slot with date and time');
+      setError('Please add at least one time slot (or set a start date to generate 7 days × 8am, 12pm, 6pm)');
       return;
     }
 
@@ -111,6 +139,17 @@ export default function CreatePollPage() {
 
             <form onSubmit={handleSubmit}>
               <Input
+                label="Poll start date"
+                type="date"
+                value={startDate}
+                onChange={setStartDate}
+                required
+              />
+              <p className="text-sm text-gray-400 mb-4">
+                Standard poll: 7 days from this date, each day 8am, 12pm, 6pm. You can remove or add slots below.
+              </p>
+
+              <Input
                 label="Poll Title"
                 type="text"
                 value={title}
@@ -156,51 +195,73 @@ export default function CreatePollPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {options.map((option, index) => (
-                    <div key={index} className="bg-pure-dark border border-gray-700 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
-                          <Input
-                            label={`Date ${index + 1}`}
-                            type="date"
-                            value={option.date}
-                            onChange={(val) => updateOption(index, 'date', val)}
-                            required
-                            className="mb-0"
-                          />
-                          <TimeInput
-                            label={`Time ${index + 1}`}
-                            value={option.time}
-                            onChange={(val) => updateOption(index, 'time', val)}
-                            required
-                            className="mb-0"
-                          />
-                          <Input
-                            label="Label (Optional)"
-                            type="text"
-                            value={option.label}
-                            onChange={(val) => updateOption(index, 'label', val)}
-                            placeholder="e.g., Morning"
-                            className="mb-0"
-                          />
-                        </div>
-                        {options.length > 1 && (
+                  {options.map((option, index) => {
+                    const isFilled = option.date && option.time;
+                    const optionDate = option.date ? new Date(option.date + 'T12:00:00') : null;
+                    const timeLabel = option.time === '08:00' ? '8am' : option.time === '12:00' ? '12pm' : option.time === '18:00' ? '6pm' : option.time;
+                    return (
+                      <div key={index} className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {isFilled ? (
+                              <>
+                                <div className="md:col-span-2 flex items-center">
+                                  <span className="text-pure-white font-medium">
+                                    {optionDate ? format(optionDate, 'EEE d MMM') : ''}, {timeLabel}
+                                  </span>
+                                </div>
+                                <Input
+                                  label="Label (Optional)"
+                                  type="text"
+                                  value={option.label}
+                                  onChange={(val) => updateOption(index, 'label', val)}
+                                  placeholder="e.g., Morning"
+                                  className="mb-0"
+                                />
+                              </>
+                            ) : (
+                              <>
+                                <Input
+                                  label="Date"
+                                  type="date"
+                                  value={option.date}
+                                  onChange={(val) => updateOption(index, 'date', val)}
+                                  className="mb-0"
+                                />
+                                <TimeInput
+                                  label="Time"
+                                  value={option.time}
+                                  onChange={(val) => updateOption(index, 'time', val)}
+                                  className="mb-0"
+                                />
+                                <Input
+                                  label="Label (Optional)"
+                                  type="text"
+                                  value={option.label}
+                                  onChange={(val) => updateOption(index, 'label', val)}
+                                  placeholder="e.g., Morning"
+                                  className="mb-0"
+                                />
+                              </>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeOption(index)}
-                            className="mt-7 text-red-400 hover:text-red-300 transition"
+                            className="mt-7 text-red-400 hover:text-red-300 transition shrink-0"
+                            title="Remove slot"
                           >
                             ✕
                           </button>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="flex gap-4 mt-6">
-                <Button type="submit" disabled={loading} className="flex-1">
+                <Button type="submit" disabled={loading || !startDate} className="flex-1">
                   {loading ? 'Creating...' : 'Create Poll'}
                 </Button>
                 <Link href="/calendar">
