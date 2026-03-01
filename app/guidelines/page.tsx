@@ -38,29 +38,27 @@ export default function GuidelinesPage() {
   if (loading) return <Loading />;
 
   return (
-    <>
+    <div>
       <Navbar />
       <div className="min-h-screen bg-pure-dark py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           <h1 className="text-4xl font-bold text-pure-white mb-2">CrossFit Workout Formats</h1>
           <p className="text-gray-400 mb-8">Guidelines for training structure, team rules, programming, and session formats.</p>
 
-          {/* Sub-navigation: horizontal scroll on mobile, sticky sidebar on desktop */}
           <div className="flex flex-col md:flex-row md:gap-8 md:items-start">
             <aside className="flex gap-2 mb-6 overflow-x-auto pb-2 md:overflow-visible md:flex-col md:mb-0 md:shrink-0 md:w-48 md:sticky md:top-24">
-              {SECTIONS.map(({ id, label }) => (
+              {SECTIONS.map((section) => (
                 <a
-                  key={id}
-                  href={`#${id}`}
+                  key={section.id}
+                  href={'#' + section.id}
                   className="shrink-0 px-4 py-2 rounded-lg border border-coastal-sky/50 text-pure-white hover:bg-coastal-sky/20 transition text-sm whitespace-nowrap md:whitespace-normal"
                 >
-                  {label}
+                  {section.label}
                 </a>
               ))}
             </aside>
 
             <div className="min-w-0 flex-1">
-            {/* General & team guidelines */}
             <section id="team-guidelines" className="scroll-mt-24 mb-10">
               <Card className="bg-pure-gray border border-gray-700">
                 <h2 className="text-2xl font-bold text-pure-green mb-4">General training structure & team guidelines</h2>
@@ -118,10 +116,9 @@ export default function GuidelinesPage() {
               </Card>
             </section>
 
-            {/* Programming guidelines */}
             <section id="programming" className="scroll-mt-24 mb-10">
               <Card className="bg-pure-gray border border-gray-700">
-                <h2 className="text-2xl font-bold text-pure-green mb-4">Programming guidelines (for coaches & session creation)</h2>
+                <h2 className="text-2xl font-bold text-pure-green mb-4">Programming guidelines (for coaches and session creation)</h2>
 
                 <h3 className="text-lg font-semibold text-pure-white mt-6 mb-2">1. Time management</h3>
                 <ul className="list-disc list-inside text-gray-300 space-y-1 mb-4">
@@ -177,7 +174,6 @@ export default function GuidelinesPage() {
               </Card>
             </section>
 
-            {/* Standard workout */}
             <section id="standard-workout" className="scroll-mt-24 mb-10">
               <Card className="bg-pure-gray border border-gray-700">
                 <h2 className="text-2xl font-bold text-pure-green mb-4">1. Standard workout (60 minutes)</h2>
@@ -202,7 +198,6 @@ export default function GuidelinesPage() {
               </Card>
             </section>
 
-            {/* Long workout */}
             <section id="long-workout" className="scroll-mt-24 mb-10">
               <Card className="bg-pure-gray border border-gray-700">
                 <h2 className="text-2xl font-bold text-pure-green mb-4">2. Long workout (60 minutes)</h2>
@@ -230,7 +225,6 @@ export default function GuidelinesPage() {
               </Card>
             </section>
 
-            {/* Skill workout */}
             <section id="skill-workout" className="scroll-mt-24 mb-10">
               <Card className="bg-pure-gray border border-gray-700">
                 <h2 className="text-2xl font-bold text-pure-green mb-4">3. Skill workout (60 minutes)</h2>
@@ -252,7 +246,6 @@ export default function GuidelinesPage() {
               </Card>
             </section>
 
-            {/* Double workout */}
             <section id="double-workout" className="scroll-mt-24 mb-10">
               <Card className="bg-pure-gray border border-gray-700">
                 <h2 className="text-2xl font-bold text-pure-green mb-4">4. Double workout (60 minutes)</h2>
@@ -282,6 +275,7 @@ export default function GuidelinesPage() {
           </div>
         </div>
       </div>
-    </>
+      </div>
+    </div>
   );
 }
