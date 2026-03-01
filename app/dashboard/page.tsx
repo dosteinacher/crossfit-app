@@ -37,7 +37,7 @@ export default function DashboardPage() {
         setStats(statsData.stats);
       }
 
-      // Fetch upcoming workouts (full list for weekly overview + first 5 for list)
+      // Fetch upcoming workouts (for weekly overview)
       const workoutsResponse = await fetch('/api/workouts?filter=upcoming');
       if (workoutsResponse.ok) {
         const workoutsData = await workoutsResponse.json();
@@ -69,7 +69,6 @@ export default function DashboardPage() {
     return acc;
   }, {});
   const orderedDayKeys = Object.keys(workoutsByDay).sort();
-  const upcomingWorkouts = allUpcomingWorkouts.slice(0, 5);
 
   return (
     <>
@@ -162,8 +161,8 @@ export default function DashboardPage() {
                           const workoutDate = new Date(workout.date);
                           const now = new Date();
                           return (
-                            <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                              <div className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-lg hover:border-coastal-sky transition">
+                            <Link key={workout.id} href={`/workouts/${workout.id}`} className="block group">
+                              <div className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-lg hover:border-coastal-sky transition hover:shadow-xl">
                                 <div className="flex items-center gap-4 mb-3 flex-nowrap min-w-0">
                                   <div className="text-2xl font-bold text-pure-green shrink-0">
                                     #{index + 1}
@@ -175,7 +174,7 @@ export default function DashboardPage() {
                                     <span className="text-lg font-bold text-pure-white shrink-0 whitespace-nowrap">
                                       {format(workoutDate, 'h:mm a')}
                                     </span>
-                                    <h4 className="text-xl font-bold text-pure-white truncate min-w-0 shrink">
+                                    <h4 className="text-xl font-bold text-pure-white truncate min-w-0 shrink group-hover:whitespace-normal group-hover:break-words">
                                       {workout.title}
                                     </h4>
                                   </div>
@@ -189,7 +188,7 @@ export default function DashboardPage() {
                                 {workout.description && (
                                   <div className="mt-3 bg-pure-dark border border-gray-700 rounded-lg p-3">
                                     <h4 className="text-sm font-bold text-pure-white mb-1">Description</h4>
-                                    <p className="text-sm text-pure-text-light whitespace-pre-wrap line-clamp-4">
+                                    <p className="text-sm text-pure-text-light whitespace-pre-wrap line-clamp-4 group-hover:[line-clamp:unset]">
                                       {workout.description}
                                     </p>
                                   </div>
@@ -219,48 +218,6 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-
-          {/* Upcoming Registered Workouts */}
-          <Card className="bg-pure-gray border-coastal-search">
-            <h2 className="text-2xl font-bold mb-4 text-pure-white">Upcoming Workouts</h2>
-            
-            {upcomingWorkouts.length === 0 ? (
-              <p className="text-gray-300">No upcoming workouts scheduled yet.</p>
-            ) : (
-              <div className="space-y-4">
-                {upcomingWorkouts.map((workout) => (
-                  <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                    <div className="border border-coastal-search rounded-lg p-4 hover:bg-gray-800 hover:border-coastal-sky transition cursor-pointer">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-lg text-pure-white">{workout.title}</h3>
-                            {workout.is_registered && (
-                              <span className="text-xs font-medium px-2 py-1 bg-coastal-day/20 text-coastal-day rounded border border-coastal-day">
-                                Registered
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-400 mt-1">{workout.workout_type}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-coastal-honey">
-                            {format(new Date(workout.date), 'MMM d, yyyy')}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {format(new Date(workout.date), 'h:mm a')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-2 text-sm text-gray-400">
-                        {workout.registered_count}/{workout.max_participants} registered
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </Card>
         </div>
       </div>
     </>
