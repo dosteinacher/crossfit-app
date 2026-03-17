@@ -11,7 +11,6 @@ import { format } from 'date-fns';
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
-  const [stats, setStats] = useState<any>(null);
   const [allUpcomingWorkouts, setAllUpcomingWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,14 +29,7 @@ export default function DashboardPage() {
       const sessionData = await sessionResponse.json();
       setUser(sessionData.user);
 
-      // Fetch stats
-      const statsResponse = await fetch('/api/user/stats');
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setStats(statsData.stats);
-      }
-
-      // Fetch upcoming workouts (for weekly overview)
+      // Fetch upcoming workouts (for weekly overview and This Week count)
       const workoutsResponse = await fetch('/api/workouts?filter=upcoming');
       if (workoutsResponse.ok) {
         const workoutsData = await workoutsResponse.json();
@@ -92,42 +84,27 @@ export default function DashboardPage() {
             Welcome back, {user?.name}!
           </h1>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-br from-coastal-sky to-coastal-search text-white border-coastal-sky">
-              <h3 className="text-sm font-medium opacity-90">Total Workouts</h3>
-              <p className="text-4xl font-bold mt-2">{stats?.total_workouts || 0}</p>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-coastal-search to-coastal-day text-white border-coastal-day">
-              <h3 className="text-sm font-medium opacity-90">Attended</h3>
-              <p className="text-4xl font-bold mt-2">{stats?.attended_workouts || 0}</p>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-coastal-day to-coastal-kombucha text-gray-900 border-coastal-kombucha">
-              <h3 className="text-sm font-medium opacity-90">Upcoming</h3>
-              <p className="text-4xl font-bold mt-2">{stats?.upcoming_workouts || 0}</p>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-coastal-kombucha to-coastal-honey text-gray-900 border-coastal-honey">
-              <h3 className="text-sm font-medium opacity-90">Current Streak</h3>
-              <p className="text-4xl font-bold mt-2">{stats?.current_streak || 0}</p>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Main action cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Link href="/wod">
-              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-coastal-sky bg-pure-gray">
-                <h3 className="text-xl font-bold text-pure-white mb-2">Today&apos;s workout</h3>
-                <p className="text-gray-300">See today&apos;s scheduled workouts</p>
+              <Card className="h-full bg-gradient-to-br from-coastal-sky to-coastal-search text-white border-coastal-sky hover:shadow-xl transition-all cursor-pointer">
+                <h3 className="text-sm font-medium opacity-90">Workout of the Day</h3>
+                <p className="text-2xl font-bold mt-2">View WOD</p>
               </Card>
             </Link>
 
-            <Link href="/archive">
-              <Card className="hover:shadow-xl transition-all cursor-pointer border-2 border-coastal-search hover:border-coastal-honey bg-pure-gray">
-                <h3 className="text-xl font-bold text-pure-white mb-2">Workout Archive</h3>
-                <p className="text-gray-300">Browse your library of templates</p>
+            <Card className="bg-gradient-to-br from-coastal-search to-coastal-day text-white border-coastal-day">
+              <h3 className="text-sm font-medium opacity-90">This Week</h3>
+              <p className="text-4xl font-bold mt-2">
+                {next7Workouts.filter((w: any) => w.is_registered).length}
+              </p>
+              <p className="text-sm opacity-90 mt-1">workouts you&apos;re registered for</p>
+            </Card>
+
+            <Link href="/calendar">
+              <Card className="h-full bg-gradient-to-br from-coastal-day to-coastal-kombucha text-gray-900 border-coastal-kombucha hover:shadow-xl transition-all cursor-pointer">
+                <h3 className="text-sm font-medium opacity-90">Calendar</h3>
+                <p className="text-2xl font-bold mt-2">Open calendar</p>
               </Card>
             </Link>
           </div>
