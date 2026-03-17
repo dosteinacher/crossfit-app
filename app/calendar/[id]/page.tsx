@@ -129,7 +129,9 @@ export default function PollDetailPage() {
     );
   }
 
-  const sortedOptions = [...poll.options].sort((a, b) => b.vote_count - a.vote_count);
+  const sortedOptions = [...poll.options].sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
   const maxVotes = Math.max(...poll.options.map((o: any) => o.vote_count), 1);
 
   return (
