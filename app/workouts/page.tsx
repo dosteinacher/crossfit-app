@@ -7,21 +7,30 @@ import Navbar from '@/components/Navbar';
 import { Card, Loading, Button } from '@/components/ui';
 import { format } from 'date-fns';
 
+type RatingFilter = 'all' | 'unrated' | '1' | '2' | '3' | '4' | '5';
+
 export default function WorkoutsPage() {
   const router = useRouter();
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
+  const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
 
   useEffect(() => {
     checkAuth();
   }, []);
 
   useEffect(() => {
+    if (filter !== 'past') {
+      setRatingFilter('all');
+    }
+  }, [filter]);
+
+  useEffect(() => {
     if (!loading) {
       fetchWorkouts();
     }
-  }, [filter, loading]);
+  }, [filter, loading, ratingFilter]);
 
   const checkAuth = async () => {
     try {
@@ -47,8 +56,14 @@ export default function WorkoutsPage() {
         if (filter === 'past') {
           const now = new Date().toISOString();
           filtered = filtered.filter((w: any) => w.date < now);
+          if (ratingFilter === 'unrated') {
+            filtered = filtered.filter((w: any) => w.rating == null);
+          } else if (ratingFilter !== 'all') {
+            const n = Number(ratingFilter);
+            filtered = filtered.filter((w: any) => Number(w.rating) === n);
+          }
         }
-        
+
         setWorkouts(filtered);
       }
     } catch (error) {
@@ -80,37 +95,56 @@ export default function WorkoutsPage() {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-gray-700">
-            <button
-              onClick={() => setFilter('upcoming')}
-              className={`px-4 py-2 font-medium transition ${
-                filter === 'upcoming'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
-              }`}
-            >
-              Upcoming
-            </button>
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 font-medium transition ${
-                filter === 'all'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter('past')}
-              className={`px-4 py-2 font-medium transition ${
-                filter === 'past'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
-              }`}
-            >
-              Past
-            </button>
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-6 border-b border-gray-700">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setFilter('upcoming')}
+                className={`px-4 py-2 font-medium transition ${
+                  filter === 'upcoming'
+                    ? 'text-pure-green border-b-2 border-pure-green'
+                    : 'text-gray-400 hover:text-pure-white'
+                }`}
+              >
+                Upcoming
+              </button>
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2 font-medium transition ${
+                  filter === 'all'
+                    ? 'text-pure-green border-b-2 border-pure-green'
+                    : 'text-gray-400 hover:text-pure-white'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter('past')}
+                className={`px-4 py-2 font-medium transition ${
+                  filter === 'past'
+                    ? 'text-pure-green border-b-2 border-pure-green'
+                    : 'text-gray-400 hover:text-pure-white'
+                }`}
+              >
+                Past
+              </button>
+            </div>
+            {filter === 'past' && (
+              <select
+                id="workout-rating-filter"
+                aria-label="Filter past workouts by difficulty rating"
+                value={ratingFilter}
+                onChange={(e) => setRatingFilter(e.target.value as RatingFilter)}
+                className="mb-2 rounded-lg border border-gray-700 bg-pure-gray text-pure-text-light px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
+              >
+                <option value="all">All ratings</option>
+                <option value="1">1 — easiest</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5 — hardest</option>
+                <option value="unrated">No rating</option>
+              </select>
+            )}
           </div>
 
           {/* Workouts List */}
