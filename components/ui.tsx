@@ -153,6 +153,7 @@ export function TextArea({
   placeholder,
   rows = 3,
   className = '',
+  textareaClassName = '',
 }: {
   label: string;
   value: string;
@@ -160,6 +161,8 @@ export function TextArea({
   placeholder?: string;
   rows?: number;
   className?: string;
+  /** Extra classes on the textarea (e.g. min-height for long descriptions) */
+  textareaClassName?: string;
 }) {
   return (
     <div className={`mb-4 ${className}`}>
@@ -171,7 +174,7 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="w-full px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky"
+        className={`w-full px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky ${textareaClassName}`}
       />
     </div>
   );

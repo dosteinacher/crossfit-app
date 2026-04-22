@@ -124,6 +124,7 @@ export default function EditWorkoutPage() {
                 onChange={setDescription}
                 placeholder="Describe the workout, movements, and any notes..."
                 rows={16}
+                textareaClassName="min-h-[22rem]"
               />
 
               <div className="mb-4">

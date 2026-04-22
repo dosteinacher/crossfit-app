@@ -426,6 +426,7 @@ function CreateWorkoutForm() {
                 onChange={setDescription}
                 placeholder="Describe the workout, movements, and any notes..."
                 rows={24}
+                textareaClassName="min-h-[28rem]"
               />
 
               <div className="mb-4">
