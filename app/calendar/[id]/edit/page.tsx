@@ -195,7 +195,7 @@ export default function EditPollPage() {
                 value={description}
                 onChange={setDescription}
                 placeholder="Any additional info..."
-                rows={2}
+                rows={8}
               />
 
               <div className="mb-4">

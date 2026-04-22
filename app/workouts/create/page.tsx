@@ -425,7 +425,7 @@ function CreateWorkoutForm() {
                 value={description}
                 onChange={setDescription}
                 placeholder="Describe the workout, movements, and any notes..."
-                rows={6}
+                rows={24}
               />
 
               <div className="mb-4">

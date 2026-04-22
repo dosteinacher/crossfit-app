@@ -123,7 +123,7 @@ export default function EditWorkoutPage() {
                 value={description}
                 onChange={setDescription}
                 placeholder="Describe the workout, movements, and any notes..."
-                rows={4}
+                rows={16}
               />
 
               <div className="mb-4">
