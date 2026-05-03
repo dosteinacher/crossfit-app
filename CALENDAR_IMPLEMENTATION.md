@@ -85,7 +85,7 @@ For development, you can use Resend's test domain.
 ### Test Checklist
 
 1. **Navigate to Calendar Page**
-   - Visit http://localhost:3001
+   - Visit http://localhost:3000 (or your dev URL/port)
    - Click "Calendar" in the navigation
    - Should see calendar grid view
 

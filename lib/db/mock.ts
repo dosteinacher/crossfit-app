@@ -1,5 +1,5 @@
 // Database utility for local development (mock database)
-// In production, this will be replaced with Cloudflare D1
+// Production uses PostgreSQL when POSTGRES_URL / DATABASE_URL is set (see lib/db/index.ts)
 
 import { User, Workout, Registration, Poll, PollOption, PollVote } from '../types';
 import { WorkoutTemplate } from '../workout-templates';

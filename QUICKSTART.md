@@ -2,7 +2,7 @@
 
 ## ⚠️ Node.js Version Requirement
 
-This app requires **Node.js 20.9.0 or higher**. Your current version is 18.14.2.
+This app requires **Node.js 20.9.0 or higher** (see `package.json` / Vercel defaults). Check with `node --version`.
 
 ### Update Node.js
 
@@ -38,6 +38,8 @@ Edit `.env.local`:
 ```bash
 JWT_SECRET=change-this-to-a-random-secure-string
 ADMIN_EMAIL=your@email.com
+# Registration requires invite code; default is PURE2026 unless you set:
+# INVITE_CODE=your-private-code
 NODE_ENV=development
 ```
 
@@ -52,7 +54,7 @@ Visit http://localhost:3000
 
 5. **Create your admin account**
 
-Register using the email you set in `ADMIN_EMAIL`
+Register using the **invite code** (see `INVITE_CODE.md`) and the **same email** as `ADMIN_EMAIL` for admin access.
 
 ## First Steps
 
@@ -68,7 +70,7 @@ The app is fully mobile-responsive. Just visit the URL on your phone!
 ## Need Help?
 
 - Check the [README.md](README.md) for detailed documentation
-- See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment
+- Production: [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md) (overview in [DEPLOYMENT.md](DEPLOYMENT.md))
 - Open an issue on GitHub if you encounter problems
 
 ## Common Issues

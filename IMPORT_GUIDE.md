@@ -12,9 +12,8 @@
 
 2. **Save your file** as `.xlsx` or `.csv` format
 
-3. **Run the import script**:
+3. **Run the import script** (from the project root):
    ```bash
-   cd /Users/dominiksteinacher/Documents/crossfit-app
    node import-workouts.mjs your-workouts.xlsx
    ```
 
@@ -61,7 +60,7 @@ You can:
 
 ## Important Notes
 
-⚠️ **Development Mode**: Since you're running in development mode with an in-memory database, imported workouts will be lost when the server restarts. For permanent storage, you'll need to deploy to Cloudflare with D1 database.
+⚠️ **Development Mode**: With an in-memory database, imported workouts are lost when the server restarts. For permanent storage, run against PostgreSQL (e.g. deploy on Vercel with Neon) or point `.env.local` at a `POSTGRES_URL`.
 
 ## Steps to Import
 

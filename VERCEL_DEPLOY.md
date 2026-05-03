@@ -33,7 +33,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 ADMIN_EMAIL=your@email.com
 
 # Resend Email Service
-RESEND_API_KEY=re_H3PgqqQj_3qPPTZUJW3RaNZbnMQjSknvf
+RESEND_API_KEY=re_your_resend_api_key
 FROM_EMAIL=noreply@crossfit-app.com
 
 # Node Environment

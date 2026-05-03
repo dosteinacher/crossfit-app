@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
-import { Registration } from '@/lib/types';
+import { Registration, Workout } from '@/lib/types';
+import { getChronologicalNeighborIds } from '@/lib/day-navigation';
 
 export async function GET(
   request: NextRequest,
@@ -45,7 +46,13 @@ export async function GET(
       participants,
     };
 
-    return NextResponse.json({ workout: enrichedWorkout });
+    const allForNav = await db.getWorkouts(false);
+    const navigation = getChronologicalNeighborIds(
+      allForNav.map((w: Workout) => ({ id: w.id, date: w.date })),
+      workoutId
+    );
+
+    return NextResponse.json({ workout: enrichedWorkout, navigation });
   } catch (error) {
     console.error('Get workout error:', error);
     return NextResponse.json(

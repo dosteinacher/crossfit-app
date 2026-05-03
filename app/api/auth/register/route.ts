@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Check if this should be an admin (first user or matches ADMIN_EMAIL)
+    // Admin if registration email matches ADMIN_EMAIL (invite code still required)
     const isAdmin = email === process.env.ADMIN_EMAIL;
 
     // Create user

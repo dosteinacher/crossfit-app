@@ -4,23 +4,26 @@ A modern, full-stack web application for managing Crossfit workouts, participant
 
 ## Features
 
-- **User Authentication**: Secure email/password registration and login
-- **Workout Management**: Create, edit, and delete workouts
+- **User Authentication**: Email/password login; registration requires an **invite code** (`INVITE_CODE` env, default `PURE2026` — see `INVITE_CODE.md`)
+- **Workout Management**: Create, edit, and delete workouts; optional results/ratings; **.txt export** (`/api/export/workouts-txt`)
+- **Calendar**: Month/list views, polls for scheduling (`/calendar`)
 - **Registration System**: Register for upcoming workouts
-- **Attendance Tracking**: Track who attended each workout (admin feature)
-- **User Dashboard**: View personal stats and upcoming workouts
-- **Collaborative Editing**: All users can edit workouts
-- **Mobile Responsive**: Fully optimized for mobile devices
-- **Role-Based Access**: Admin controls for managing the platform
+- **Attendance Tracking**: Mark who attended (admin)
+- **User Dashboard**: Stats and upcoming workouts
+- **Collaborative Editing**: All logged-in users can edit workouts
+- **Templates & polls**: Workout templates and date polls (API + UI on calendar flow)
+- **Email (optional)**: Resend + `.ics` invites on create/update/register/delete when `RESEND_API_KEY` / `FROM_EMAIL` are set
+- **Mobile Responsive**: Tailwind layouts
+- **Role-Based Access**: Admin flag (`email === ADMIN_EMAIL` at registration); admin user management (`/admin/users`)
 
 ## Tech Stack
 
 - **Frontend**: Next.js 16 with React and TypeScript
 - **Styling**: Tailwind CSS
 - **Backend**: Next.js API Routes
-- **Database**: Cloudflare D1 (SQLite) / In-memory for local development
+- **Database**: PostgreSQL (e.g. Neon via Vercel) when `POSTGRES_URL` or `DATABASE_URL` is set; in-memory mock for local dev without a DB URL
 - **Authentication**: JWT with HTTP-only cookies
-- **Deployment**: Cloudflare Pages
+- **Deployment**: [Vercel](https://vercel.com) (see `VERCEL_DEPLOY.md`)
 
 ## Getting Started
 
@@ -42,11 +45,18 @@ cd crossfit-app
 npm install
 ```
 
-3. Set up environment variables:
+3. Set up environment variables (minimum):
 ```bash
 # .env.local
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 ADMIN_EMAIL=your@email.com
+# Optional: override default invite code (default is PURE2026)
+# INVITE_CODE=your-private-code
+# Optional: same DB as production locally
+# POSTGRES_URL=...
+# Optional: calendar emails (see VERCEL_DEPLOY.md / CALENDAR_IMPLEMENTATION.md)
+# RESEND_API_KEY=...
+# FROM_EMAIL=noreply@yourdomain.com
 NODE_ENV=development
 ```
 
@@ -59,8 +69,8 @@ npm run dev
 
 ### First Time Setup
 
-1. Register a new account using the email you set in `ADMIN_EMAIL`
-2. This account will have admin privileges
+1. Register with the **invite code** (default `PURE2026` unless you set `INVITE_CODE`)
+2. Use the **same email** as `ADMIN_EMAIL` if you want that account to be **admin**
 3. Create your first workout!
 
 ## Project Structure
@@ -68,16 +78,16 @@ npm run dev
 ```
 crossfit-app/
 ├── app/
-│   ├── api/              # API routes
-│   │   ├── auth/         # Authentication endpoints
-│   │   ├── workouts/     # Workout CRUD endpoints
-│   │   └── user/         # User stats endpoints
-│   ├── dashboard/        # User dashboard page
-│   ├── login/            # Login page
-│   ├── register/         # Registration page
-│   ├── workouts/         # Workout pages
-│   │   ├── [id]/         # Individual workout detail/edit
-│   │   └── create/       # Create workout page
+│   ├── api/              # API routes (auth, workouts, polls, templates, admin, export, …)
+│   ├── dashboard/        # User dashboard
+│   ├── calendar/         # Calendar + polls
+│   ├── archive/          # Past workouts + import
+│   ├── admin/users/      # Admin user management
+│   ├── login/            # Login
+│   ├── register/         # Registration (invite code)
+│   ├── workouts/         # List, create, edit, import
+│   │   ├── [id]/         # Workout detail/edit
+│   │   └── create/       # Create workout
 │   ├── layout.tsx        # Root layout
 │   └── page.tsx          # Homepage
 ├── components/
@@ -86,22 +96,23 @@ crossfit-app/
 ├── lib/
 │   ├── auth.ts           # Authentication utilities
 │   ├── db/               # Database layer
-│   │   ├── index.ts      # Database operations
-│   │   └── schema.sql    # Database schema
+│   │   ├── index.ts      # Picks Postgres vs mock; delegates to adapter
+│   │   ├── postgres.ts   # Production DB (tables created on first use)
+│   │   └── mock.ts       # In-memory dev database
 │   └── types.ts          # TypeScript type definitions
 └── public/               # Static assets
 ```
 
 ## Database Schema
 
-The application uses four main tables:
+PostgreSQL tables created in `lib/db/postgres.ts` include:
 
-- **users**: User accounts with authentication
-- **workouts**: Workout information and schedules
-- **registrations**: User registrations for workouts
-- **workout_edits**: Log of workout modifications
+- **users**, **workouts** (with `sequence` for calendar updates), **registrations**
+- **workout_templates**, **polls**, **poll_options**, **poll_votes**
 
-See `lib/db/schema.sql` for the complete schema.
+The in-memory **mock** DB (`lib/db/mock.ts`) mirrors these features for local dev; it also keeps a simple **workout edit log** in memory only (not persisted in Postgres).
+
+**Note:** There is no `workout_edits` table in PostgreSQL; the `WorkoutEdit` type exists mainly for mock/history-style tracking.
 
 ## API Endpoints
 
@@ -126,64 +137,45 @@ See `lib/db/schema.sql` for the complete schema.
 ### User
 - `GET /api/user/stats` - Get user statistics
 
-## Deployment to Cloudflare Pages
+### Other (non-exhaustive)
+- `GET /api/workouts/today` — today’s workout(s)
+- `POST /api/workouts/[id]/result` — save workout result
+- `GET/POST /api/polls`, `GET/PATCH/DELETE /api/polls/[id]`, `POST /api/polls/vote`, poll options routes
+- `GET/POST /api/templates`, `GET/PATCH/DELETE /api/templates/[id]`
+- `GET /api/users` — list users (authenticated; used for dropdowns, etc.)
+- `GET/POST /api/admin/users`, `PATCH/DELETE /api/admin/users/[id]`
+- `GET /api/export/workouts-txt` — export workouts as text
 
-### 1. Install Wrangler CLI
-```bash
-npm install -g wrangler
-```
+## Deployment (Vercel)
 
-### 2. Login to Cloudflare
-```bash
-wrangler login
-```
+Deploy as a standard Next.js app on Vercel: connect the Git repo, add environment variables (`JWT_SECRET`, `ADMIN_EMAIL`, email keys if used), and attach a Postgres database (Vercel Storage → Neon sets `POSTGRES_URL` automatically).
 
-### 3. Create D1 Database
-```bash
-wrangler d1 create crossfit-db
-```
-
-Copy the database ID and update `wrangler.toml`:
-```toml
-database_id = "your-database-id"
-```
-
-### 4. Initialize Database
-```bash
-wrangler d1 execute crossfit-db --file=./lib/db/schema.sql
-```
-
-### 5. Deploy to Cloudflare Pages
-```bash
-npm run build
-npx wrangler pages deploy .next
-```
-
-### 6. Set Environment Variables
-
-In Cloudflare Dashboard > Pages > Settings > Environment Variables:
-- `JWT_SECRET`: Your secret key
-- `ADMIN_EMAIL`: Admin email address
-- `NODE_ENV`: production
+**Step-by-step:** see [`VERCEL_DEPLOY.md`](./VERCEL_DEPLOY.md).
 
 ## Local Development
 
-The application uses an in-memory mock database for local development. This means:
-- No database setup required for development
-- Data is lost when the server restarts
-- Perfect for testing and development
+Without `POSTGRES_URL` / `DATABASE_URL`, the app uses an in-memory mock database:
 
-For production, the same code automatically uses Cloudflare D1.
+- No database setup required
+- Data is lost when the server restarts
+
+With a Postgres URL in `.env.local`, the app uses the same Postgres adapter as production.
 
 ## Features Roadmap
 
-- [ ] Email notifications for workout reminders
-- [ ] Workout templates library
-- [ ] Performance tracking (PRs)
+Already in the app (not exhaustive): calendar emails via Resend, templates, polls, `.txt` export.
+
+Ideas for later:
+
+- [ ] Automated workout **reminder** emails (distinct from calendar `.ics` invites)
+- [ ] Richer **PR / performance** tracking
 - [ ] Photo uploads for workouts
 - [ ] Social features (comments, likes)
-- [ ] Export workout history
 - [ ] Mobile app (React Native)
+
+## Maintainer context
+
+For stack, auth, invite codes, and deployment facts kept in sync with the codebase, see **[`PROJECT.md`](./PROJECT.md)**. Cursor picks up **`.cursor/rules/crossfit-app.mdc`** automatically.
 
 ## Contributing
 

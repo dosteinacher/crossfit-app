@@ -21,10 +21,34 @@ export default function WorkoutDetailPage() {
   const [resultSaving, setResultSaving] = useState(false);
   const [editResult, setEditResult] = useState('');
   const [editRating, setEditRating] = useState<number | ''>('');
+  const [dayNav, setDayNav] = useState<{
+    previousId: number | null;
+    nextId: number | null;
+  } | null>(null);
 
   useEffect(() => {
     fetchData();
   }, [workoutId]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const el = e.target as HTMLElement | null;
+      if (el?.closest('textarea, input, select, [contenteditable=true]')) {
+        return;
+      }
+      if (e.key === 'ArrowLeft' && dayNav?.previousId != null) {
+        e.preventDefault();
+        router.push(`/workouts/${dayNav.previousId}`);
+      }
+      if (e.key === 'ArrowRight' && dayNav?.nextId != null) {
+        e.preventDefault();
+        router.push(`/workouts/${dayNav.nextId}`);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [dayNav, router]);
 
   const fetchData = async () => {
     try {
@@ -47,6 +71,14 @@ export default function WorkoutDetailPage() {
           setEditResult(typeof w.result === 'string' ? w.result : '');
           const r = w.rating;
           setEditRating(r != null && r >= 1 && r <= 5 ? Number(r) : '');
+          const nav = workoutData.navigation;
+          setDayNav(
+            nav &&
+            typeof nav.previousId !== 'undefined' &&
+            typeof nav.nextId !== 'undefined'
+              ? { previousId: nav.previousId, nextId: nav.nextId }
+              : null
+          );
         } else {
           setError('Workout not found');
         }
@@ -227,8 +259,50 @@ export default function WorkoutDetailPage() {
               </div>
             </div>
 
-            {/* Title and Date */}
-            <h1 className="text-3xl font-bold text-pure-white mb-4">{workout.title}</h1>
+            {/* Title with prev/next workout (schedule order — same day or adjacent days) */}
+            <div className="flex items-start gap-2 sm:gap-4 mb-4">
+              <div className="flex-shrink-0 pt-1">
+                {dayNav?.previousId != null ? (
+                  <Link
+                    href={`/workouts/${dayNav.previousId}`}
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border-2 border-coastal-sky text-coastal-sky hover:bg-coastal-sky/20 transition text-lg font-semibold"
+                    aria-label="Previous workout"
+                    title="Earlier workout (same day or day before)"
+                  >
+                    ←
+                  </Link>
+                ) : (
+                  <span
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-600 text-gray-600 cursor-not-allowed text-lg"
+                    aria-hidden
+                  >
+                    ←
+                  </span>
+                )}
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-pure-white flex-1 min-w-0 text-center sm:text-left leading-tight">
+                {workout.title}
+              </h1>
+              <div className="flex-shrink-0 pt-1">
+                {dayNav?.nextId != null ? (
+                  <Link
+                    href={`/workouts/${dayNav.nextId}`}
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border-2 border-coastal-sky text-coastal-sky hover:bg-coastal-sky/20 transition text-lg font-semibold"
+                    aria-label="Next workout"
+                    title="Later workout (same day or next day)"
+                  >
+                    →
+                  </Link>
+                ) : (
+                  <span
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-600 text-gray-600 cursor-not-allowed text-lg"
+                    aria-hidden
+                  >
+                    →
+                  </span>
+                )}
+              </div>
+            </div>
             
             <div className="flex items-center gap-4 text-pure-text-light mb-6">
               <div>

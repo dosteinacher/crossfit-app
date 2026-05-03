@@ -1,0 +1,15 @@
+---
+description: PURE Crossfit app — stack, auth, deploy, and where docs live
+alwaysApply: true
+---
+
+# crossfit-app context
+
+Read **`PROJECT.md`** at the repo root for full details. Summary:
+
+- **Vercel** + **Postgres** (`POSTGRES_URL` / `DATABASE_URL`); dev without URL uses **in-memory mock** (data resets on restart).
+- **JWT** cookie `auth-token`; **admin** = register with **`email === ADMIN_EMAIL`**. Registration needs **`inviteCode`** matching **`INVITE_CODE`** (default **`PURE2026`** if unset).
+- **`/`** rewrites to **`/home`** in `middleware.ts`.
+- Deep docs: `README.md`, `VERCEL_DEPLOY.md`, `INVITE_CODE.md`, `CALENDAR_IMPLEMENTATION.md`.
+
+Do not put real API keys or secrets in rules or markdown; reference env variable **names** only.

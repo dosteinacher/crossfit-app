@@ -22,7 +22,7 @@ I've created a complete, production-ready web application with:
 The code is committed locally but needs GitHub credentials to push. Run:
 
 ```bash
-cd /Users/dominiksteinacher/Documents/crossfit-app
+cd crossfit-app   # your clone path
 git push origin main
 ```
 
@@ -45,7 +45,7 @@ node --version  # Should show v20.x.x
 ### 3. Install Dependencies and Run
 
 ```bash
-cd /Users/dominiksteinacher/Documents/crossfit-app
+cd crossfit-app
 npm install
 npm run dev
 ```
@@ -78,28 +78,21 @@ Open http://localhost:3000 in your browser!
 - View their attendance history
 - Edit workout details collaboratively
 
-## 🌐 Deploying to Production (Cloudflare)
+## 🌐 Deploying to Production (Vercel)
 
-When ready for production, see the complete guide in `DEPLOYMENT.md`. Quick overview:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Create D1 database: `wrangler d1 create crossfit-db`
-3. Initialize schema: `wrangler d1 execute crossfit-db --file=./lib/db/schema.sql`
-4. Deploy: `npx wrangler pages deploy .next`
-
-**Cost**: FREE for small gyms (Cloudflare free tier is very generous)
+When ready for production, follow **`VERCEL_DEPLOY.md`**. In short: import the repo on [Vercel](https://vercel.com), add env vars (`JWT_SECRET`, `ADMIN_EMAIL`, etc.), create a Vercel Postgres (Neon) database so `POSTGRES_URL` is set, then deploy.
 
 ## 📚 Documentation
 
 - **README.md** - Complete app documentation
 - **QUICKSTART.md** - Quick reference guide
-- **DEPLOYMENT.md** - Detailed deployment instructions
-- **TROUBLESHOOTING.md** - Common issues and solutions (if needed)
+- **VERCEL_DEPLOY.md** - Vercel + Neon deployment steps
+- **DEPLOYMENT.md** / **DEPLOY_QUICK.md** - Short summaries (see `VERCEL_DEPLOY.md` for detail)
 
 ## 🔒 Security Notes
 
 1. **Change JWT_SECRET** - Use a strong random string in production
-2. **Use HTTPS** - Cloudflare provides this automatically
+2. **Use HTTPS** - Enabled by default on Vercel
 3. **Keep dependencies updated** - Run `npm audit` regularly
 
 ## 🎨 Customization
@@ -133,13 +126,13 @@ crossfit-app/
 2. Make sure JWT_SECRET is set
 
 ### Database issues?
-- In development, data is stored in memory and resets on restart (this is normal)
-- In production, use Cloudflare D1 for persistence
+- In development without `POSTGRES_URL`, data is stored in memory and resets on restart (this is normal)
+- In production, use PostgreSQL (e.g. Neon via Vercel) for persistence
 
 ## 💪 Features You Can Add Later
 
 Here are some ideas for future enhancements:
-- Email notifications (using Cloudflare Email Workers)
+- Email notifications (Resend or similar)
 - WhatsApp/Telegram integration
 - Workout templates library
 - PR (Personal Records) tracking
@@ -167,7 +160,7 @@ Here are some ideas for future enhancements:
 - TypeScript (type safety)
 - Tailwind CSS (styling)
 - JWT Authentication
-- Cloudflare D1 (database)
+- PostgreSQL / Neon (database on Vercel)
 
 **All committed to git and ready to push!**
 
