@@ -20,7 +20,7 @@ export function Button({
   const baseClasses = 'px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-pure-green text-black hover:bg-lime-400 font-semibold',
+    primary: 'bg-pure-green text-black hover:bg-pure-accent-light font-semibold',
     secondary: 'bg-coastal-sky text-pure-white hover:bg-coastal-search border border-coastal-day',
     danger: 'bg-red-600 text-pure-white hover:bg-red-700',
   };

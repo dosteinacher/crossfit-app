@@ -5,7 +5,7 @@
 :root {
   --background: #000000;           /* Pure black background */
   --foreground: #f5f5f5;           /* Keep white text */
-  --accent: #c1ff00;               /* Keep PURE green */
+  --accent: #5EB3B3;               /* Coastal teal (navbar logo uses pure-logo / #c1ff00 in CSS vars if needed) */
   --coastal-sky: #5B8DB8;          /* Wide Sky - medium blue */
   --coastal-search: #5F8C9E;       /* Soul Search - teal/blue-gray */
   --coastal-day: #A8C5C5;          /* Casual Day - light blue-gray */

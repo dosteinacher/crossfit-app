@@ -13,7 +13,7 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center mb-16">
             <Link
               href="/register"
-              className="bg-pure-green text-black px-8 py-4 rounded-lg text-xl font-semibold hover:bg-lime-400 transition shadow-lg"
+              className="bg-pure-green text-black px-8 py-4 rounded-lg text-xl font-semibold hover:bg-pure-accent-light transition shadow-lg"
             >
               Get Started
             </Link>

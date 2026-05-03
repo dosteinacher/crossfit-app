@@ -8,7 +8,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'pure-green': '#c1ff00',
+        // Primary UI accent (coastal teal); use pure-logo for navbar wordmark only
+        'pure-green': '#5EB3B3',
+        'pure-logo': '#c1ff00',
+        'pure-accent-light': '#7EC9C9',
         'pure-dark': '#293133',
         'pure-gray': '#1a1a1a',
         'pure-white': '#f5f5f5',

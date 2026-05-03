@@ -72,7 +72,7 @@ export default function Navbar() {
     <nav className="bg-pure-dark border-b-2 border-coastal-sky shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link href="/dashboard" className="text-2xl font-bold text-pure-green">
+          <Link href="/dashboard" className="text-2xl font-bold text-pure-logo">
             PURE
           </Link>
           
@@ -130,7 +130,7 @@ export default function Navbar() {
             )}
             <Link
               href="/workouts/create"
-              className={`bg-pure-green text-black hover:bg-lime-400 px-4 py-2 rounded-lg transition font-semibold ${
+              className={`bg-pure-green text-black hover:bg-pure-accent-light px-4 py-2 rounded-lg transition font-semibold ${
                 pathname === '/workouts/create' ? 'ring-2 ring-coastal-sky' : ''
               }`}
             >
@@ -220,7 +220,7 @@ export default function Navbar() {
           )}
           <Link
             href="/workouts/create"
-            className={`bg-pure-green text-black hover:bg-lime-400 px-4 py-2 rounded-lg transition font-semibold ${
+            className={`bg-pure-green text-black hover:bg-pure-accent-light px-4 py-2 rounded-lg transition font-semibold ${
               pathname === '/workouts/create' ? 'ring-2 ring-coastal-sky' : ''
             }`}
           >
