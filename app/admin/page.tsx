@@ -11,8 +11,9 @@ export default function AdminOverviewPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [annLoading, setAnnLoading] = useState(true);
   const [annTitle, setAnnTitle] = useState('');
   const [annBody, setAnnBody] = useState('');
   const [annSaving, setAnnSaving] = useState(false);
@@ -21,13 +22,15 @@ export default function AdminOverviewPage() {
     if (authLoading) return;
     if (!user) return;
     if (!user.is_admin) { router.push('/dashboard'); return; }
-    Promise.all([
-      fetch('/api/admin/stats').then((r) => r.json()),
-      fetch('/api/announcements').then((r) => r.json()),
-    ]).then(([s, a]) => {
-      setStats(s);
-      setAnnouncements(a.announcements || []);
-    }).finally(() => setLoading(false));
+    // Load announcements and stats independently so the page renders immediately
+    fetch('/api/announcements')
+      .then((r) => r.json())
+      .then((a) => setAnnouncements(a.announcements || []))
+      .finally(() => setAnnLoading(false));
+    fetch('/api/admin/stats')
+      .then((r) => r.json())
+      .then((s) => setStats(s))
+      .finally(() => setStatsLoading(false));
   }, [user, authLoading, router]);
 
   const handlePostAnnouncement = async () => {
@@ -51,7 +54,7 @@ export default function AdminOverviewPage() {
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
   };
 
-  if (authLoading || loading) return <Loading />;
+  if (authLoading || (annLoading && statsLoading)) return <Loading />;
 
   const attendanceRate = stats?.total_registrations > 0
     ? Math.round((stats.attended_registrations / stats.total_registrations) * 100)
@@ -85,6 +88,55 @@ export default function AdminOverviewPage() {
               Manage Users →
             </Link>
           </div>
+
+          {/* Announcements — kept at top for quick access */}
+          <Card className="bg-pure-gray border-gray-700 mb-8">
+            <h2 className="text-xl font-bold text-pure-white mb-4">Announcements</h2>
+            <div className="space-y-3 mb-5">
+              <input
+                type="text"
+                value={annTitle}
+                onChange={(e) => setAnnTitle(e.target.value)}
+                placeholder="Title (e.g. Gym closed this Saturday)"
+                className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm"
+              />
+              <textarea
+                value={annBody}
+                onChange={(e) => setAnnBody(e.target.value)}
+                placeholder="Optional message body…"
+                rows={2}
+                className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm resize-none"
+              />
+              <button
+                onClick={handlePostAnnouncement}
+                disabled={annSaving || !annTitle.trim()}
+                className="px-4 py-2 rounded-lg bg-pure-green text-black font-semibold text-sm hover:bg-pure-accent-light transition disabled:opacity-50"
+              >
+                {annSaving ? 'Posting…' : 'Post Announcement'}
+              </button>
+            </div>
+
+            {announcements.length === 0 ? (
+              <p className="text-pure-text-light text-sm">No active announcements.</p>
+            ) : (
+              <div className="space-y-2">
+                {announcements.map((a: any) => (
+                  <div key={a.id} className="flex items-start justify-between gap-3 bg-pure-dark border border-gray-700 rounded-lg px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-pure-white text-sm">{a.title}</p>
+                      {a.body && <p className="text-pure-text-light text-xs mt-0.5">{a.body}</p>}
+                    </div>
+                    <button
+                      onClick={() => handleRemoveAnnouncement(a.id)}
+                      className="shrink-0 text-xs text-red-400 hover:text-red-300 transition"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
 
           {/* Stats grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -134,54 +186,6 @@ export default function AdminOverviewPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
-            )}
-          </Card>
-          {/* Announcements */}
-          <Card className="bg-pure-gray border-gray-700 mt-6">
-            <h2 className="text-xl font-bold text-pure-white mb-4">Announcements</h2>
-            <div className="space-y-3 mb-5">
-              <input
-                type="text"
-                value={annTitle}
-                onChange={(e) => setAnnTitle(e.target.value)}
-                placeholder="Title (e.g. Gym closed this Saturday)"
-                className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm"
-              />
-              <textarea
-                value={annBody}
-                onChange={(e) => setAnnBody(e.target.value)}
-                placeholder="Optional message body…"
-                rows={2}
-                className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm resize-none"
-              />
-              <button
-                onClick={handlePostAnnouncement}
-                disabled={annSaving || !annTitle.trim()}
-                className="px-4 py-2 rounded-lg bg-pure-green text-black font-semibold text-sm hover:bg-pure-accent-light transition disabled:opacity-50"
-              >
-                {annSaving ? 'Posting…' : 'Post Announcement'}
-              </button>
-            </div>
-
-            {announcements.length === 0 ? (
-              <p className="text-pure-text-light text-sm">No active announcements.</p>
-            ) : (
-              <div className="space-y-2">
-                {announcements.map((a: any) => (
-                  <div key={a.id} className="flex items-start justify-between gap-3 bg-pure-dark border border-gray-700 rounded-lg px-4 py-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold text-pure-white text-sm">{a.title}</p>
-                      {a.body && <p className="text-pure-text-light text-xs mt-0.5">{a.body}</p>}
-                    </div>
-                    <button
-                      onClick={() => handleRemoveAnnouncement(a.id)}
-                      className="shrink-0 text-xs text-red-400 hover:text-red-300 transition"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
               </div>
             )}
           </Card>
