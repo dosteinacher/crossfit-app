@@ -154,7 +154,7 @@ export default function DashboardPage() {
                           const isLoading = registering === workout.id;
 
                           return (
-                            <div key={workout.id} className="bg-pure-gray border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition">
+                            <div key={workout.id} className="relative group/card bg-pure-gray border border-gray-700 rounded-lg p-4 hover:border-gray-500 transition">
                               <div className="flex items-start gap-3">
                                 {/* Left: type + time + title */}
                                 <Link href={`/workouts/${workout.id}`} className="flex-1 min-w-0 group">
@@ -201,6 +201,32 @@ export default function DashboardPage() {
                                     {isLoading ? '…' : workout.is_registered ? 'Unregister' : isFull ? 'Full' : '+ Register'}
                                   </button>
                                 </div>
+                              </div>
+
+                              {/* Hover popover — desktop only */}
+                              <div className="hidden md:block pointer-events-none absolute left-full top-0 ml-3 z-50 w-72 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150">
+                                <div className="bg-[#1a1a1a] border border-gray-600 rounded-xl shadow-2xl p-4">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${typeStyle.badge}`}>
+                                      {workout.workout_type}
+                                    </span>
+                                    <span className="text-xs text-pure-text-light">{format(workoutDate, 'EEEE, MMM d · h:mm a')}</span>
+                                  </div>
+                                  <h4 className="text-base font-bold text-pure-white mb-2 leading-snug">{workout.title}</h4>
+                                  {workout.description ? (
+                                    <p className="text-sm text-pure-text-light mb-3 leading-relaxed">{workout.description}</p>
+                                  ) : (
+                                    <p className="text-sm text-gray-600 mb-3 italic">No description</p>
+                                  )}
+                                  <div className="border-t border-gray-700 pt-3 flex justify-between items-center text-xs text-pure-text-light">
+                                    <span>by {workout.creator_name}</span>
+                                    <span className={workout.registered_count >= workout.max_participants ? 'text-red-400 font-semibold' : 'text-pure-green font-semibold'}>
+                                      {workout.registered_count}/{workout.max_participants} spots
+                                    </span>
+                                  </div>
+                                </div>
+                                {/* Arrow */}
+                                <div className="absolute top-4 -left-1.5 w-3 h-3 bg-[#1a1a1a] border-l border-b border-gray-600 rotate-45" />
                               </div>
                             </div>
                           );
