@@ -116,20 +116,27 @@ export default async function WODPage() {
                   </div>
                 </div>
 
-                {/* Workout description - smaller font for ~16 lines; 2 columns if longer */}
+                {/* Workout description: first 14 newline-separated lines left, rest right; font down 2 steps */}
                 {workout.description && (() => {
-                  const lineCount = workout.description.split('\n').length;
-                  const useTwoColumns = lineCount > 16;
+                  const lines = workout.description.split('\n');
+                  const leftText = lines.slice(0, 14).join('\n');
+                  const rightText = lines.slice(14).join('\n');
+                  const useTwoColumns = lines.length > 14;
+                  const bodyClass =
+                    'text-sm text-pure-text-light whitespace-pre-wrap leading-relaxed';
                   return (
                     <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
-                      <h3 className="text-xl font-bold text-pure-white mb-2">
+                      <h3 className="text-base font-bold text-pure-white mb-2">
                         Description
                       </h3>
-                      <div className={useTwoColumns ? 'columns-2 gap-8' : ''}>
-                        <p className="text-lg text-pure-text-light whitespace-pre-wrap leading-relaxed">
-                          {workout.description}
-                        </p>
-                      </div>
+                      {useTwoColumns ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                          <p className={bodyClass}>{leftText}</p>
+                          <p className={bodyClass}>{rightText}</p>
+                        </div>
+                      ) : (
+                        <p className={bodyClass}>{workout.description}</p>
+                      )}
                     </div>
                   );
                 })()}
