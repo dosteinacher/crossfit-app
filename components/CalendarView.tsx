@@ -61,7 +61,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
       days.push(
         <div
           key={day.toString()}
-          className={`min-h-[120px] border border-gray-700 p-2 ${
+          className={`min-h-[80px] sm:min-h-[120px] border border-gray-700 p-1 sm:p-2 ${
             !isSameMonth(day, monthStart)
               ? 'bg-pure-dark/50 text-gray-600'
               : 'bg-pure-gray text-pure-white'
@@ -153,25 +153,25 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
         </div>
 
         {viewMode === 'calendar' && (
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center justify-end">
             <button
               onClick={prevMonth}
-              className="px-4 py-2 bg-pure-gray border border-gray-700 rounded-lg hover:bg-coastal-search/20 transition text-pure-white"
+              className="px-3 py-2 bg-pure-gray border border-gray-700 rounded-lg hover:bg-coastal-search/20 transition text-pure-white"
             >
               ←
             </button>
-            <h2 className="text-xl font-bold text-pure-white min-w-[200px] text-center">
+            <h2 className="text-lg font-bold text-pure-white min-w-[150px] text-center">
               {format(currentMonth, dateFormat)}
             </h2>
             <button
               onClick={nextMonth}
-              className="px-4 py-2 bg-pure-gray border border-gray-700 rounded-lg hover:bg-coastal-search/20 transition text-pure-white"
+              className="px-3 py-2 bg-pure-gray border border-gray-700 rounded-lg hover:bg-coastal-search/20 transition text-pure-white"
             >
               →
             </button>
             <button
               onClick={goToToday}
-              className="px-4 py-2 bg-coastal-sky text-pure-white rounded-lg hover:bg-coastal-sky/80 transition font-medium ml-2"
+              className="px-3 py-2 bg-coastal-sky text-pure-white rounded-lg hover:bg-coastal-sky/80 transition font-medium"
             >
               Today
             </button>
@@ -180,20 +180,31 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
       </div>
 
       {viewMode === 'calendar' ? (
-        <div className="bg-pure-gray border border-gray-700 rounded-lg overflow-hidden">
-          {/* Day headers */}
-          <div className="grid grid-cols-7 bg-pure-dark border-b border-gray-700">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div
-                key={day}
-                className="p-3 text-center font-bold text-pure-green border-r border-gray-700 last:border-r-0"
-              >
-                {day}
-              </div>
-            ))}
+        <div className="overflow-x-auto">
+          <div className="bg-pure-gray border border-gray-700 rounded-lg overflow-hidden min-w-[560px]">
+            {/* Day headers */}
+            <div className="grid grid-cols-7 bg-pure-dark border-b border-gray-700">
+              {[
+                { full: 'Sun', short: 'S' },
+                { full: 'Mon', short: 'M' },
+                { full: 'Tue', short: 'T' },
+                { full: 'Wed', short: 'W' },
+                { full: 'Thu', short: 'T' },
+                { full: 'Fri', short: 'F' },
+                { full: 'Sat', short: 'S' },
+              ].map(({ full, short }) => (
+                <div
+                  key={full}
+                  className="p-2 sm:p-3 text-center font-bold text-pure-green border-r border-gray-700 last:border-r-0 text-xs sm:text-sm"
+                >
+                  <span className="hidden sm:inline">{full}</span>
+                  <span className="sm:hidden">{short}</span>
+                </div>
+              ))}
+            </div>
+            {/* Calendar grid */}
+            {rows}
           </div>
-          {/* Calendar grid */}
-          {rows}
         </div>
       ) : (
         <div className="space-y-6">

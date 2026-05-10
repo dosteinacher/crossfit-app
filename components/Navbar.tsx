@@ -43,23 +43,17 @@ export default function Navbar() {
 
   if (!user) {
     return (
-      <nav className="bg-blue-600 text-white shadow-lg">
+      <nav className="bg-pure-dark border-b-2 border-coastal-sky shadow-lg">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <Link href="/" className="text-2xl font-bold">
-              Crossfit Workouts
+            <Link href="/login" className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-coastal-sky rounded" aria-label="GO PURE — Login">
+              <Image src="/go-pure-logo.png" alt="PURE" width={140} height={40} className="h-9 w-auto max-h-9 object-contain object-left" priority />
             </Link>
-            <div className="flex gap-4">
-              <Link
-                href="/login"
-                className="hover:bg-blue-700 px-4 py-2 rounded-lg transition"
-              >
+            <div className="flex gap-3">
+              <Link href="/login" className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium">
                 Login
               </Link>
-              <Link
-                href="/register"
-                className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
-              >
+              <Link href="/register" className="px-4 py-2 rounded-lg bg-pure-green text-black hover:bg-pure-accent-light transition font-semibold">
                 Register
               </Link>
             </div>

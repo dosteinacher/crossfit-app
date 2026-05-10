@@ -26,6 +26,9 @@ export default function WorkoutDetailPage() {
     previousId: number | null;
     nextId: number | null;
   } | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (!authLoading) fetchData();
@@ -189,23 +192,24 @@ export default function WorkoutDetailPage() {
   };
 
   const handleDelete = async () => {
-    const reason = prompt('Cancellation reason (optional — will be shown to members):') ?? '';
-    if (reason === null) return; // user hit Escape
-
+    setCancelling(true);
     try {
       const response = await fetch(`/api/workouts/${workoutId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cancellation_reason: reason }),
+        body: JSON.stringify({ cancellation_reason: cancelReason }),
       });
-
       if (response.ok) {
         router.push('/workouts');
       } else {
         setError('Failed to cancel workout');
+        setShowCancelModal(false);
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.');
+      setShowCancelModal(false);
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -261,7 +265,7 @@ export default function WorkoutDetailPage() {
                       <Button variant="secondary" className="text-sm">Edit</Button>
                     </Link>
                     {user?.is_admin && (
-                      <Button variant="danger" onClick={handleDelete} className="text-sm">
+                      <Button variant="danger" onClick={() => setShowCancelModal(true)} className="text-sm">
                         Cancel Workout
                       </Button>
                     )}
@@ -518,6 +522,44 @@ export default function WorkoutDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancel workout modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-pure-gray border border-gray-700 rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-xl font-bold text-pure-white mb-2">Cancel Workout</h2>
+            <p className="text-pure-text-light text-sm mb-4">
+              This will soft-cancel the workout. Registered members will be notified.
+            </p>
+            <label className="block text-sm font-medium text-pure-text-light mb-1">
+              Reason <span className="text-gray-500">(optional)</span>
+            </label>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="e.g. Coach is sick, facility unavailable…"
+              rows={3}
+              className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 mb-5 resize-none"
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
+                disabled={cancelling}
+                className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-gray-700 transition font-medium"
+              >
+                Keep Workout
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={cancelling}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition disabled:opacity-50"
+              >
+                {cancelling ? 'Cancelling…' : 'Yes, Cancel Workout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -15,13 +15,20 @@ export default function WorkoutsPage() {
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   useEffect(() => {
     if (filter !== 'past') {
       setRatingFilter('all');
     }
     setSearch('');
+    setPage(1);
   }, [filter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, ratingFilter]);
 
   useEffect(() => {
     if (!loading) {
@@ -56,7 +63,7 @@ export default function WorkoutsPage() {
   };
 
   const q = search.trim().toLowerCase();
-  const displayedWorkouts = q
+  const filteredWorkouts = q
     ? workouts.filter(
         (w) =>
           w.title?.toLowerCase().includes(q) ||
@@ -64,6 +71,8 @@ export default function WorkoutsPage() {
           w.creator_name?.toLowerCase().includes(q)
       )
     : workouts;
+  const displayedWorkouts = filteredWorkouts.slice(0, page * PAGE_SIZE);
+  const hasMore = displayedWorkouts.length < filteredWorkouts.length;
 
   if (loading) return <Loading />;
 
@@ -153,7 +162,7 @@ export default function WorkoutsPage() {
           </div>
 
           {/* Workouts List */}
-          {displayedWorkouts.length === 0 ? (
+          {filteredWorkouts.length === 0 ? (
             <Card className="bg-pure-gray border-gray-700">
               <p className="text-gray-400 text-center py-8">No workouts found</p>
             </Card>
@@ -197,6 +206,17 @@ export default function WorkoutsPage() {
                   </Card>
                 </Link>
               ))}
+            </div>
+          )}
+
+          {hasMore && (
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                className="px-6 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium"
+              >
+                Load more ({filteredWorkouts.length - displayedWorkouts.length} remaining)
+              </button>
             </div>
           )}
         </div>
