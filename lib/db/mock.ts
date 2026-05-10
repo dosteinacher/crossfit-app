@@ -103,6 +103,11 @@ export class Database {
     return true;
   }
 
+  async updateUserPasswordHash(id: number, password_hash: string): Promise<void> {
+    const user = mockUsers.find((u) => u.id === id);
+    if (user) user.password_hash = password_hash;
+  }
+
   // Workout operations
   async createWorkout(
     title: string,

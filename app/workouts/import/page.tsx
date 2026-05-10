@@ -140,38 +140,38 @@ export default function ImportWorkoutsPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-pure-gray py-8">
         <div className="container mx-auto px-4 max-w-4xl">
-          <h1 className="text-4xl font-bold mb-8 text-gray-800">Import Workouts</h1>
+          <h1 className="text-4xl font-bold mb-8 text-pure-white">Import Workouts</h1>
 
           <Card className="mb-6">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Upload Excel/CSV File</h2>
+            <h2 className="text-2xl font-bold mb-4 text-pure-white">Upload Excel/CSV File</h2>
 
             {error && <ErrorMessage message={error} />}
             {success && <SuccessMessage message={success} />}
 
             {stats && (
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-bold text-blue-800 mb-2">Import Results:</h3>
-                <p className="text-green-600">✓ Success: {stats.success} workouts</p>
+              <div className="mb-4 p-4 bg-coastal-sky/10 border border-coastal-sky/30 rounded-lg">
+                <h3 className="font-bold text-coastal-sky mb-2">Import Results:</h3>
+                <p className="text-pure-green">✓ Success: {stats.success} workouts</p>
                 {stats.failed > 0 && (
-                  <p className="text-red-600">✗ Failed: {stats.failed} workouts</p>
+                  <p className="text-red-400">✗ Failed: {stats.failed} workouts</p>
                 )}
               </div>
             )}
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Select File (Excel or CSV)
               </label>
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
                 onChange={handleFileChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-pure-dark text-pure-white focus:outline-none focus:ring-2 focus:ring-pure-green"
               />
               {file && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-gray-400">
                   Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
                 </p>
               )}
@@ -193,87 +193,87 @@ export default function ImportWorkoutsPage() {
           </Card>
 
           <Card>
-            <h2 className="text-xl font-bold mb-4 text-gray-800">File Format Instructions</h2>
+            <h2 className="text-xl font-bold mb-4 text-pure-white">File Format Instructions</h2>
 
             <div className="mb-4">
-              <p className="text-gray-700 mb-2">
+              <p className="text-gray-300 mb-2">
                 Your Excel/CSV file should have these columns:
               </p>
 
               <div className="overflow-x-auto">
-                <table className="min-w-full border border-gray-300 text-sm">
-                  <thead className="bg-gray-100">
+                <table className="min-w-full border border-gray-700 text-sm">
+                  <thead className="bg-pure-dark">
                     <tr>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Column</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Required?</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left">Example</th>
+                      <th className="border border-gray-700 px-4 py-2 text-left text-gray-300">Column</th>
+                      <th className="border border-gray-700 px-4 py-2 text-left text-gray-300">Required?</th>
+                      <th className="border border-gray-700 px-4 py-2 text-left text-gray-300">Example</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="border border-gray-300 px-4 py-2 font-medium">Title</td>
-                      <td className="border border-gray-300 px-4 py-2 text-red-600">
+                      <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">Title</td>
+                      <td className="border border-gray-700 px-4 py-2 text-pure-green">
                         ✅ Required
                       </td>
-                      <td className="border border-gray-300 px-4 py-2">
+                      <td className="border border-gray-700 px-4 py-2 text-gray-300">
                         "Monday Morning WOD"
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-300 px-4 py-2 font-medium">
+                      <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">
                         Description
                       </td>
-                      <td className="border border-gray-300 px-4 py-2">Optional</td>
-                      <td className="border border-gray-300 px-4 py-2">
+                      <td className="border border-gray-700 px-4 py-2 text-gray-400">Optional</td>
+                      <td className="border border-gray-700 px-4 py-2 text-gray-300">
                         "For Time: 21-15-9..."
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-300 px-4 py-2 font-medium">Type</td>
-                      <td className="border border-gray-300 px-4 py-2">Optional</td>
-                      <td className="border border-gray-300 px-4 py-2">
+                      <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">Type</td>
+                      <td className="border border-gray-700 px-4 py-2 text-gray-400">Optional</td>
+                      <td className="border border-gray-700 px-4 py-2 text-gray-300">
                         "HIIT", "Strength", etc.
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-300 px-4 py-2 font-medium">Date</td>
-                      <td className="border border-gray-300 px-4 py-2 text-red-600">
+                      <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">Date</td>
+                      <td className="border border-gray-700 px-4 py-2 text-pure-green">
                         ✅ Required
                       </td>
-                      <td className="border border-gray-300 px-4 py-2">
+                      <td className="border border-gray-700 px-4 py-2 text-gray-300">
                         "2024-01-15" or "01/15/2024"
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-300 px-4 py-2 font-medium">Time</td>
-                      <td className="border border-gray-300 px-4 py-2">Optional (default: 09:00)</td>
-                      <td className="border border-gray-300 px-4 py-2">
+                      <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">Time</td>
+                      <td className="border border-gray-700 px-4 py-2 text-gray-400">Optional (default: 09:00)</td>
+                      <td className="border border-gray-700 px-4 py-2 text-gray-300">
                         "06:00" or "6:00 AM"
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-300 px-4 py-2 font-medium">
+                      <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">
                         Max Participants
                       </td>
-                      <td className="border border-gray-300 px-4 py-2">
+                      <td className="border border-gray-700 px-4 py-2 text-gray-400">
                         Optional (default: 20)
                       </td>
-                      <td className="border border-gray-300 px-4 py-2">20</td>
+                      <td className="border border-gray-700 px-4 py-2 text-gray-300">20</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-bold text-blue-800 mb-2">📥 Download Template</h3>
-              <p className="text-gray-700 mb-3">
+            <div className="bg-coastal-sky/10 border border-coastal-sky/30 rounded-lg p-4">
+              <h3 className="font-bold text-coastal-sky mb-2">📥 Download Template</h3>
+              <p className="text-gray-300 mb-3">
                 Want to see an example? Download our template with sample workouts:
               </p>
               <a
                 href="/workouts-template.csv"
                 download
-                className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                className="inline-block bg-coastal-sky text-white px-4 py-2 rounded-lg hover:bg-coastal-search transition"
               >
                 Download Template CSV
               </a>

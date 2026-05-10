@@ -208,53 +208,53 @@ export default function ImportCustomPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-pure-gray py-8">
         <div className="container mx-auto px-4 max-w-4xl">
-          <h1 className="text-4xl font-bold mb-8 text-gray-800">Import Your Crossfit Workouts</h1>
+          <h1 className="text-4xl font-bold mb-8 text-pure-white">Import Your Crossfit Workouts</h1>
 
           <Card className="mb-6">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Upload Your Excel File</h2>
+            <h2 className="text-2xl font-bold mb-4 text-pure-white">Upload Your Excel File</h2>
 
             {error && <ErrorMessage message={error} />}
             {success && <SuccessMessage message={success} />}
 
             {stats && (
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-bold text-blue-800 mb-2">Import Results:</h3>
-                <p className="text-green-600 text-lg">✓ Success: {stats.success} workouts imported!</p>
+              <div className="mb-4 p-4 bg-coastal-sky/10 border border-coastal-sky/30 rounded-lg">
+                <h3 className="font-bold text-coastal-sky mb-2">Import Results:</h3>
+                <p className="text-pure-green text-lg">✓ Success: {stats.success} workouts imported!</p>
                 {stats.failed > 0 && (
-                  <p className="text-orange-600">⚠ Skipped: {stats.failed} rows</p>
+                  <p className="text-yellow-400">⚠ Skipped: {stats.failed} rows</p>
                 )}
               </div>
             )}
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Select Your Excel File
               </label>
               <input
                 type="file"
                 accept=".xlsx,.xls"
                 onChange={handleFileChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-pure-dark text-pure-white focus:outline-none focus:ring-2 focus:ring-pure-green"
               />
               {file && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-gray-400">
                   Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
                 </p>
               )}
             </div>
 
             {preview.length > 0 && (
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-bold text-gray-800 mb-2">Preview (first few rows):</h3>
+              <div className="mb-6 p-4 bg-pure-dark rounded-lg">
+                <h3 className="font-bold text-pure-white mb-2">Preview (first few rows):</h3>
                 <div className="space-y-2 text-sm">
                   {preview.map((row, idx) => (
-                    <div key={idx} className="border-b border-gray-200 pb-2">
-                      <p className="font-medium text-blue-600">{row.dateTime}</p>
-                      {row.warmUp && <p className="text-gray-600 text-xs">Warm-up: {row.warmUp.substring(0, 50)}...</p>}
-                      {row.strength && <p className="text-gray-600 text-xs">Strength: {row.strength.substring(0, 50)}...</p>}
-                      {row.teamOf2 && <p className="text-gray-600 text-xs">Team of 2: {row.teamOf2.substring(0, 50)}...</p>}
+                    <div key={idx} className="border-b border-gray-700 pb-2">
+                      <p className="font-medium text-coastal-sky">{row.dateTime}</p>
+                      {row.warmUp && <p className="text-gray-400 text-xs">Warm-up: {row.warmUp.substring(0, 50)}...</p>}
+                      {row.strength && <p className="text-gray-400 text-xs">Strength: {row.strength.substring(0, 50)}...</p>}
+                      {row.teamOf2 && <p className="text-gray-400 text-xs">Team of 2: {row.teamOf2.substring(0, 50)}...</p>}
                     </div>
                   ))}
                 </div>
@@ -277,25 +277,25 @@ export default function ImportCustomPage() {
           </Card>
 
           <Card>
-            <h2 className="text-xl font-bold mb-4 text-gray-800">How This Import Works</h2>
+            <h2 className="text-xl font-bold mb-4 text-pure-white">How This Import Works</h2>
 
-            <div className="space-y-4 text-gray-700">
+            <div className="space-y-4 text-gray-300">
               <p>
                 This import tool is designed specifically for your Excel format with columns:
               </p>
-              
+
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li><strong>Date Time</strong> - Workout date and time (e.g., "19.01 00:00")</li>
-                <li><strong>Crossfitters</strong> - Participant names (for reference)</li>
-                <li><strong>Warm Up</strong> - Warm-up exercises</li>
-                <li><strong>Strength</strong> - Strength work</li>
-                <li><strong>Team of 2</strong> - Partner workouts</li>
-                <li><strong>Solo Workout</strong> - Individual WODs</li>
-                <li><strong>Team of 3</strong> - Team workouts</li>
+                <li><strong className="text-pure-white">Date Time</strong> - Workout date and time (e.g., "19.01 00:00")</li>
+                <li><strong className="text-pure-white">Crossfitters</strong> - Participant names (for reference)</li>
+                <li><strong className="text-pure-white">Warm Up</strong> - Warm-up exercises</li>
+                <li><strong className="text-pure-white">Strength</strong> - Strength work</li>
+                <li><strong className="text-pure-white">Team of 2</strong> - Partner workouts</li>
+                <li><strong className="text-pure-white">Solo Workout</strong> - Individual WODs</li>
+                <li><strong className="text-pure-white">Team of 3</strong> - Team workouts</li>
               </ul>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                <h3 className="font-bold text-blue-800 mb-2">📋 What Happens:</h3>
+              <div className="bg-coastal-sky/10 border border-coastal-sky/30 rounded-lg p-4 mt-4">
+                <h3 className="font-bold text-coastal-sky mb-2">📋 What Happens:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Each row becomes one workout</li>
                   <li>All sections (Warm Up, Strength, etc.) are combined into the description</li>
@@ -305,8 +305,8 @@ export default function ImportCustomPage() {
                 </ul>
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                <h3 className="font-bold text-green-800 mb-2">✅ Tips:</h3>
+              <div className="bg-pure-green/10 border border-pure-green/30 rounded-lg p-4 mt-4">
+                <h3 className="font-bold text-pure-green mb-2">✅ Tips:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Make sure your Excel has the same column structure as shown above</li>
                   <li>Empty rows will be skipped automatically</li>

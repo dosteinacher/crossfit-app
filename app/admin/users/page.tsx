@@ -171,7 +171,7 @@ export default function UsersAdminPage() {
           </Card>
 
           <div className="mt-6 text-sm text-gray-400">
-            <p>💡 <strong>Tip:</strong> To add new users, share the invite code <span className="text-pure-green font-mono">PURE2026</span> with them.</p>
+            <p>💡 <strong>Tip:</strong> To add new users, share the invite code with them. You can change it anytime in your Vercel environment variables (<span className="font-mono">INVITE_CODE</span>).</p>
           </div>
         </div>
       </div>

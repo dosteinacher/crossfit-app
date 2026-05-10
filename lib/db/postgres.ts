@@ -158,6 +158,12 @@ export class PostgresDatabase {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
+  async updateUserPasswordHash(id: number, password_hash: string): Promise<void> {
+    await sql`
+      UPDATE users SET password_hash = ${password_hash} WHERE id = ${id}
+    `;
+  }
+
   // Workout operations
   async createWorkout(
     title: string,
