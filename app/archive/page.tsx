@@ -6,17 +6,14 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Loading, Button } from '@/components/ui';
 import { WorkoutTemplate } from '@/lib/workout-templates';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ArchivePage() {
+  const { loading } = useAuth();
   const router = useRouter();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -26,23 +23,9 @@ export default function ArchivePage() {
 
   useEffect(() => {
     if (!loading && searchQuery === '') {
-      // Refetch when search is cleared
       fetchTemplates();
     }
   }, [searchQuery, loading]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/session');
-      if (!response.ok) {
-        router.push('/login');
-        return;
-      }
-      setLoading(false);
-    } catch (error) {
-      router.push('/login');
-    }
-  };
 
   const fetchTemplates = async () => {
     try {

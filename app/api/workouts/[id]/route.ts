@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
 import { Registration, Workout } from '@/lib/types';
 import { getChronologicalNeighborIds } from '@/lib/day-navigation';
+import { notifyWorkoutUpdate, notifyWorkoutCancellation } from '@/lib/email';
 
 export async function GET(
   request: NextRequest,
@@ -46,6 +47,7 @@ export async function GET(
       participants,
     };
 
+    // Only include non-deleted workouts in navigation
     const allForNav = await db.getWorkouts(false);
     const navigation = getChronologicalNeighborIds(
       allForNav.map((w: Workout) => ({ id: w.id, date: w.date })),
@@ -55,10 +57,7 @@ export async function GET(
     return NextResponse.json({ workout: enrichedWorkout, navigation });
   } catch (error) {
     console.error('Get workout error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -78,12 +77,8 @@ export async function PUT(
     const body = await request.json();
     const { title, description, workout_type, date, max_participants } = body;
 
-    // Validate input
     if (!title || !date) {
-      return NextResponse.json(
-        { error: 'Title and date are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Title and date are required' }, { status: 400 });
     }
 
     const updatedWorkout = await db.updateWorkout(
@@ -100,13 +95,29 @@ export async function PUT(
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
     }
 
+    // Send update emails to all registered users (fire-and-forget)
+    const organizer = await db.getUserById(session.id);
+    if (organizer) {
+      const registrations = await db.getRegistrationsForWorkout(workoutId);
+      const attendees = (
+        await Promise.all(registrations.map((r: Registration) => db.getUserById(r.user_id)))
+      )
+        .filter(Boolean)
+        .map((u) => ({ email: u!.email, name: u!.name }));
+
+      if (attendees.length > 0) {
+        notifyWorkoutUpdate(
+          { ...updatedWorkout, sequence: updatedWorkout.sequence ?? 0 },
+          { email: organizer.email, name: organizer.name },
+          attendees
+        ).catch((err) => console.error('Update email error:', err));
+      }
+    }
+
     return NextResponse.json({ workout: updatedWorkout });
   } catch (error) {
     console.error('Update workout error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -120,7 +131,6 @@ export async function DELETE(
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Only admins can delete workouts
     if (!session.is_admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -128,17 +138,43 @@ export async function DELETE(
     const { id } = await params;
     const workoutId = parseInt(id);
 
-    const success = await db.deleteWorkout(workoutId);
-    if (!success) {
+    // Get data before soft-deleting so we can send cancellation emails
+    const workout = await db.getWorkoutById(workoutId);
+    if (!workout) {
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Workout deleted successfully' });
+    const registrations = await db.getRegistrationsForWorkout(workoutId);
+    const organizer = await db.getUserById(session.id);
+
+    const body = await request.json().catch(() => ({}));
+    const cancellationReason: string = body.cancellation_reason || '';
+
+    const success = await db.softDeleteWorkout(workoutId, cancellationReason);
+    if (!success) {
+      return NextResponse.json({ error: 'Workout not found or already cancelled' }, { status: 404 });
+    }
+
+    // Send cancellation emails (fire-and-forget)
+    if (organizer && registrations.length > 0) {
+      const attendees = (
+        await Promise.all(registrations.map((r: Registration) => db.getUserById(r.user_id)))
+      )
+        .filter(Boolean)
+        .map((u) => ({ email: u!.email, name: u!.name }));
+
+      if (attendees.length > 0) {
+        notifyWorkoutCancellation(
+          { ...workout, sequence: (workout.sequence ?? 0) + 1 },
+          { email: organizer.email, name: organizer.name },
+          attendees
+        ).catch((err) => console.error('Cancel email error:', err));
+      }
+    }
+
+    return NextResponse.json({ message: 'Workout cancelled successfully' });
   } catch (error) {
     console.error('Delete workout error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

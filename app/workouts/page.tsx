@@ -1,24 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Loading, Button } from '@/components/ui';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 
 type RatingFilter = 'all' | 'unrated' | '1' | '2' | '3' | '4' | '5';
 
 export default function WorkoutsPage() {
-  const router = useRouter();
+  const { loading } = useAuth();
   const [workouts, setWorkouts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     if (filter !== 'past') {
@@ -31,19 +26,6 @@ export default function WorkoutsPage() {
       fetchWorkouts();
     }
   }, [filter, loading, ratingFilter]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/session');
-      if (!response.ok) {
-        router.push('/login');
-        return;
-      }
-      setLoading(false);
-    } catch (error) {
-      router.push('/login');
-    }
-  };
 
   const fetchWorkouts = async () => {
     try {

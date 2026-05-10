@@ -140,11 +140,12 @@ export class Database {
   }
 
   async getWorkouts(filterPast: boolean = false): Promise<Workout[]> {
+    const active = mockWorkouts.filter((w) => !w.deleted_at);
     if (filterPast) {
       const now = new Date().toISOString();
-      return mockWorkouts.filter((w) => w.date >= now).sort((a, b) => a.date.localeCompare(b.date));
+      return active.filter((w) => w.date >= now).sort((a, b) => a.date.localeCompare(b.date));
     }
-    return mockWorkouts.sort((a, b) => b.date.localeCompare(a.date));
+    return active.sort((a, b) => b.date.localeCompare(a.date));
   }
 
   async getWorkoutsByDateRange(startDate: string, endDate: string): Promise<Workout[]> {
@@ -184,13 +185,17 @@ export class Database {
     return workout;
   }
 
-  async deleteWorkout(id: number): Promise<boolean> {
-    const index = mockWorkouts.findIndex((w) => w.id === id);
-    if (index === -1) return false;
-    mockWorkouts.splice(index, 1);
-    // Also delete associated registrations
-    mockRegistrations = mockRegistrations.filter((r) => r.workout_id !== id);
+  async softDeleteWorkout(id: number, cancellation_reason: string = ''): Promise<boolean> {
+    const workout = mockWorkouts.find((w) => w.id === id && !w.deleted_at);
+    if (!workout) return false;
+    workout.deleted_at = new Date().toISOString();
+    workout.cancellation_reason = cancellation_reason;
+    workout.sequence = (workout.sequence ?? 0) + 1;
     return true;
+  }
+
+  async deleteWorkout(id: number): Promise<boolean> {
+    return this.softDeleteWorkout(id);
   }
 
   async updateWorkoutResultAndRating(

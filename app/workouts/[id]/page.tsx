@@ -6,14 +6,15 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Loading, Button, ErrorMessage, SuccessMessage } from '@/components/ui';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function WorkoutDetailPage() {
   const router = useRouter();
   const params = useParams();
   const workoutId = params.id as string;
+  const { user, loading: authLoading } = useAuth();
 
   const [workout, setWorkout] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -27,8 +28,8 @@ export default function WorkoutDetailPage() {
   } | null>(null);
 
   useEffect(() => {
-    fetchData();
-  }, [workoutId]);
+    if (!authLoading) fetchData();
+  }, [workoutId, authLoading]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -52,15 +53,6 @@ export default function WorkoutDetailPage() {
 
   const fetchData = async () => {
     try {
-      // Check authentication
-      const sessionResponse = await fetch('/api/auth/session');
-      if (!sessionResponse.ok) {
-        router.push('/login');
-        return;
-      }
-      const sessionData = await sessionResponse.json();
-      setUser(sessionData.user);
-
       // Fetch workout
       const workoutResponse = await fetch(`/api/workouts/${workoutId}`);
       if (workoutResponse.ok) {
@@ -143,17 +135,27 @@ export default function WorkoutDetailPage() {
 
   const handleMarkAttendance = async (userId: number, attended: boolean) => {
     try {
-      const response = await fetch(`/api/workouts/${workoutId}/attendance`, {
+      await fetch(`/api/workouts/${workoutId}/attendance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId, attended }),
       });
-
-      if (response.ok) {
-        fetchData();
-      }
+      fetchData();
     } catch (error) {
       console.error('Mark attendance error:', error);
+    }
+  };
+
+  const handleMarkAllAttendance = async (attended: boolean) => {
+    try {
+      await fetch(`/api/workouts/${workoutId}/attendance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bulk: true, attended }),
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Bulk attendance error:', error);
     }
   };
 
@@ -187,17 +189,20 @@ export default function WorkoutDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this workout?')) return;
+    const reason = prompt('Cancellation reason (optional — will be shown to members):') ?? '';
+    if (reason === null) return; // user hit Escape
 
     try {
       const response = await fetch(`/api/workouts/${workoutId}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cancellation_reason: reason }),
       });
 
       if (response.ok) {
         router.push('/workouts');
       } else {
-        setError('Failed to delete workout');
+        setError('Failed to cancel workout');
       }
     } catch (error) {
       setError('An error occurred. Please try again.');
@@ -246,15 +251,21 @@ export default function WorkoutDetailPage() {
                 )}
               </div>
               <div className="flex gap-2">
-                <Link href={`/workouts/${workoutId}/edit`}>
-                  <Button variant="secondary" className="text-sm">
-                    Edit
-                  </Button>
-                </Link>
-                {user?.is_admin && (
-                  <Button variant="danger" onClick={handleDelete} className="text-sm">
-                    Delete
-                  </Button>
+                {workout.deleted_at ? (
+                  <span className="text-sm font-medium px-3 py-1 bg-red-900/40 text-red-300 border border-red-700/50 rounded">
+                    Cancelled
+                  </span>
+                ) : (
+                  <>
+                    <Link href={`/workouts/${workoutId}/edit`}>
+                      <Button variant="secondary" className="text-sm">Edit</Button>
+                    </Link>
+                    {user?.is_admin && (
+                      <Button variant="danger" onClick={handleDelete} className="text-sm">
+                        Cancel Workout
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -314,6 +325,16 @@ export default function WorkoutDetailPage() {
                 {format(new Date(workout.date), 'h:mm a')}
               </div>
             </div>
+
+            {/* Cancellation notice */}
+            {workout.deleted_at && (
+              <div className="mb-6 p-4 bg-red-900/20 border border-red-700/40 rounded-lg">
+                <p className="text-red-300 font-medium">This workout has been cancelled.</p>
+                {workout.cancellation_reason && (
+                  <p className="text-red-400/80 text-sm mt-1">{workout.cancellation_reason}</p>
+                )}
+              </div>
+            )}
 
             {/* Description */}
             {workout.description && (
@@ -433,10 +454,28 @@ export default function WorkoutDetailPage() {
 
             {/* Participants List */}
             <div>
-              <h2 className="text-xl font-bold text-pure-white mb-4">
-                Participants ({(workout.participants || []).length})
-              </h2>
-              
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-pure-white">
+                  Participants ({(workout.participants || []).length})
+                </h2>
+                {isPastWorkout && user?.is_admin && (workout.participants || []).length > 0 && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleMarkAllAttendance(true)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-pure-green/20 text-pure-green border border-pure-green/40 hover:bg-pure-green/30 transition font-medium"
+                    >
+                      ✓ All attended
+                    </button>
+                    <button
+                      onClick={() => handleMarkAllAttendance(false)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-400 border border-gray-600 hover:bg-gray-700 transition font-medium"
+                    >
+                      ✗ Clear all
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {(workout.participants || []).length === 0 ? (
                 <p className="text-pure-text-light">No participants yet</p>
               ) : (

@@ -1,42 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import CalendarView from '@/components/CalendarView';
 import { Card, Loading, Button } from '@/components/ui';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function CalendarPage() {
-  const router = useRouter();
+  const { loading } = useAuth();
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [pollFilter, setPollFilter] = useState<'all' | 'active' | 'closed'>('active');
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     if (!loading) {
       fetchData();
     }
   }, [pollFilter, loading]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/session');
-      if (!response.ok) {
-        router.push('/login');
-        return;
-      }
-      setLoading(false);
-    } catch (error) {
-      router.push('/login');
-    }
-  };
 
   const fetchData = async () => {
     try {

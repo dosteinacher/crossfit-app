@@ -1,48 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import { Card, Loading } from '@/components/ui';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading } = useAuth();
   const [allUpcomingWorkouts, setAllUpcomingWorkouts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [workoutsLoading, setWorkoutsLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!user) return;
+    fetch('/api/workouts?filter=upcoming')
+      .then((r) => r.json())
+      .then((data) => setAllUpcomingWorkouts(data.workouts || []))
+      .catch(console.error)
+      .finally(() => setWorkoutsLoading(false));
+  }, [user]);
 
-  const fetchData = async () => {
-    try {
-      // Check authentication
-      const sessionResponse = await fetch('/api/auth/session');
-      if (!sessionResponse.ok) {
-        router.push('/login');
-        return;
-      }
-      const sessionData = await sessionResponse.json();
-      setUser(sessionData.user);
-
-      // Fetch upcoming workouts (for weekly overview and This Week count)
-      const workoutsResponse = await fetch('/api/workouts?filter=upcoming');
-      if (workoutsResponse.ok) {
-        const workoutsData = await workoutsResponse.json();
-        setAllUpcomingWorkouts(workoutsData.workouts || []);
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <Loading />;
+  if (loading || workoutsLoading) return <Loading />;
 
   // Next 7 days (today through today+6), grouped by day; only days with at least one workout
   const now = new Date();

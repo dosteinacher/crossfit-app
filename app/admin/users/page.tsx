@@ -6,48 +6,27 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Loading, Button, ErrorMessage, SuccessMessage } from '@/components/ui';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function UsersAdminPage() {
   const router = useRouter();
+  const { user: currentUser, loading } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    checkAuthAndFetchUsers();
-  }, []);
-
-  const checkAuthAndFetchUsers = async () => {
-    try {
-      // Check if admin
-      const sessionResponse = await fetch('/api/auth/session');
-      if (!sessionResponse.ok) {
-        router.push('/login');
-        return;
-      }
-      const sessionData = await sessionResponse.json();
-      setCurrentUser(sessionData.user);
-
-      if (!sessionData.user.is_admin) {
-        router.push('/dashboard');
-        return;
-      }
-
-      // Fetch all users
-      const usersResponse = await fetch('/api/admin/users');
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        setUsers(usersData.users);
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-      setError('Failed to load users');
-    } finally {
-      setLoading(false);
+    if (loading) return;
+    if (!currentUser) return; // useAuth already redirects to /login
+    if (!currentUser.is_admin) {
+      router.push('/dashboard');
+      return;
     }
-  };
+    fetch('/api/admin/users')
+      .then((r) => r.json())
+      .then((data) => setUsers(data.users || []))
+      .catch(() => setError('Failed to load users'));
+  }, [currentUser, loading, router]);
 
   const handleDeleteUser = async (userId: number, userName: string) => {
     if (!confirm(`Are you sure you want to delete ${userName}? This cannot be undone.`)) {
@@ -64,7 +43,11 @@ export default function UsersAdminPage() {
 
       if (response.ok) {
         setSuccess(`${userName} has been deleted`);
-        checkAuthAndFetchUsers(); // Refresh list
+        // Refresh list
+        fetch('/api/admin/users')
+          .then((r) => r.json())
+          .then((data) => setUsers(data.users || []))
+          .catch(console.error);
       } else {
         const data = await response.json();
         setError(data.error || 'Failed to delete user');

@@ -192,13 +192,14 @@ export class PostgresDatabase {
     let result;
     if (filterPast) {
       result = await sql`
-        SELECT * FROM workouts 
-        WHERE date >= NOW() 
+        SELECT * FROM workouts
+        WHERE date >= NOW() AND (deleted_at IS NULL OR deleted_at > NOW())
         ORDER BY date ASC
       `;
     } else {
       result = await sql`
-        SELECT * FROM workouts 
+        SELECT * FROM workouts
+        WHERE (deleted_at IS NULL OR deleted_at > NOW())
         ORDER BY date DESC
       `;
     }
@@ -237,11 +238,31 @@ export class PostgresDatabase {
     return result.rows[0] ? this.mapWorkout(result.rows[0]) : null;
   }
 
-  async deleteWorkout(id: number): Promise<boolean> {
+  async softDeleteWorkout(id: number, cancellation_reason: string = ''): Promise<boolean> {
+    // Migrate: add deleted_at and cancellation_reason columns if they don't exist
+    try {
+      await sql`ALTER TABLE workouts ADD COLUMN deleted_at TIMESTAMP NULL`;
+    } catch (e: any) { if (e?.code !== '42701') throw e; }
+    try {
+      await sql`ALTER TABLE workouts ADD COLUMN cancellation_reason TEXT NULL`;
+    } catch (e: any) { if (e?.code !== '42701') throw e; }
+    try {
+      await sql`ALTER TABLE workouts ADD COLUMN sequence INTEGER DEFAULT 0`;
+    } catch (e: any) { if (e?.code !== '42701') throw e; }
+
     const result = await sql`
-      DELETE FROM workouts WHERE id = ${id}
+      UPDATE workouts
+      SET deleted_at = NOW(),
+          cancellation_reason = ${cancellation_reason},
+          sequence = COALESCE(sequence, 0) + 1,
+          updated_at = NOW()
+      WHERE id = ${id} AND deleted_at IS NULL
     `;
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async deleteWorkout(id: number): Promise<boolean> {
+    return this.softDeleteWorkout(id);
   }
 
   async updateWorkoutResultAndRating(
@@ -567,6 +588,9 @@ export class PostgresDatabase {
       updated_at: toIso(row.updated_at),
       result: row.result ?? null,
       rating: row.rating != null ? row.rating : null,
+      deleted_at: row.deleted_at ? toIso(row.deleted_at) : null,
+      cancellation_reason: row.cancellation_reason ?? null,
+      sequence: row.sequence ?? 0,
     };
   }
 

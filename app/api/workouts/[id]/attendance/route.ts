@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
+import { Registration } from '@/lib/types';
 
 export async function POST(
   request: NextRequest,
@@ -12,7 +13,6 @@ export async function POST(
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Only admins can mark attendance
     if (!session.is_admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -21,8 +21,18 @@ export async function POST(
     const workoutId = parseInt(id);
 
     const body = await request.json();
-    const { user_id, attended } = body;
 
+    // Bulk mode: { bulk: true, attended: boolean } — marks all participants
+    if (body.bulk === true && typeof body.attended === 'boolean') {
+      const registrations = await db.getRegistrationsForWorkout(workoutId);
+      await Promise.all(
+        registrations.map((reg: Registration) => db.markAttendance(workoutId, reg.user_id, body.attended))
+      );
+      return NextResponse.json({ message: `All participants marked as ${body.attended ? 'attended' : 'not attended'}` });
+    }
+
+    // Single mode: { user_id: number, attended: boolean }
+    const { user_id, attended } = body;
     if (typeof user_id !== 'number' || typeof attended !== 'boolean') {
       return NextResponse.json(
         { error: 'user_id and attended are required' },
@@ -32,18 +42,12 @@ export async function POST(
 
     const success = await db.markAttendance(workoutId, user_id, attended);
     if (!success) {
-      return NextResponse.json(
-        { error: 'Registration not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
     }
 
     return NextResponse.json({ message: 'Attendance marked successfully' });
   } catch (error) {
     console.error('Mark attendance error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

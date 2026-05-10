@@ -21,6 +21,8 @@ module.exports = {
         'coastal-day': '#A8C5C5',       // Casual Day - light blue-gray
         'coastal-kombucha': '#C9B59A',  // Kombucha - warm beige
         'coastal-honey': '#D4BB7A',     // Honey Tea - golden honey
+        // Semantic aliases
+        'pure-text-light': '#9CA3AF',   // gray-400 — secondary text throughout app
       },
     },
   },

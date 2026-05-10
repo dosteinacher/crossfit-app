@@ -20,7 +20,10 @@ export interface Workout {
   created_at: string;
   updated_at: string;
   result?: string | null;
-  rating?: number | null; // 1-5 difficulty
+  rating?: number | null;
+  deleted_at?: string | null;
+  cancellation_reason?: string | null;
+  sequence?: number;
 }
 
 export interface Registration {
