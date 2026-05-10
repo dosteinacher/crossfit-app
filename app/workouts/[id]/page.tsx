@@ -29,6 +29,7 @@ export default function WorkoutDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [edits, setEdits] = useState<Array<{ id: number; editor_name: string; edited_at: string }>>([]);
 
   useEffect(() => {
     if (!authLoading) fetchData();
@@ -74,6 +75,7 @@ export default function WorkoutDetailPage() {
               ? { previousId: nav.previousId, nextId: nav.nextId }
               : null
           );
+          if (Array.isArray(workoutData.edits)) setEdits(workoutData.edits);
         } else {
           setError('Workout not found');
         }
@@ -514,6 +516,19 @@ export default function WorkoutDetailPage() {
               )}
             </div>
           </Card>
+
+          {edits.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-pure-text-light mb-2 uppercase tracking-wide">Edit History</h3>
+              <div className="space-y-1">
+                {edits.map((e) => (
+                  <p key={e.id} className="text-xs text-gray-500">
+                    Edited by <span className="text-pure-text-light">{e.editor_name}</span> · {format(new Date(e.edited_at), 'MMM d, yyyy · h:mm a')}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-6">
             <Link href="/workouts">

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
-import { Workout, Registration } from '@/lib/types';
+import { Workout, Registration, User } from '@/lib/types';
 import { notifyWorkoutCreator, notifyWorkoutRegistration } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
@@ -14,37 +14,37 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const filter = searchParams.get('filter');
 
-    const workouts = await db.getWorkouts(filter === 'upcoming');
+    // 3 queries instead of O(n*m) — fetch all, assemble in memory
+    const [workouts, allUsers, allRegistrations] = await Promise.all([
+      db.getWorkouts(filter === 'upcoming'),
+      db.getAllUsers(),
+      db.getAllRegistrations(),
+    ]);
 
-    // Get registrations for current user
-    const userRegistrations = await db.getRegistrationsForUser(session.id);
-    const registeredWorkoutIds = new Set(userRegistrations.map((r: Registration) => r.workout_id));
+    const usersById = new Map<number, User>(allUsers.map((u: User) => [u.id, u]));
+    const regsByWorkout = new Map<number, Registration[]>();
+    const currentUserRegSet = new Set<number>();
 
-    // Enrich workouts with additional data
-    const enrichedWorkouts = await Promise.all(
-      workouts.map(async (workout: Workout) => {
-        const creator = await db.getUserById(workout.created_by);
-        const registrations = await db.getRegistrationsForWorkout(workout.id);
-        const participants = await Promise.all(
-          registrations.map(async (reg: Registration) => {
-            const user = await db.getUserById(reg.user_id);
-            return {
-              user_id: reg.user_id,
-              user_name: user?.name || 'Unknown',
-              attended: reg.attended,
-            };
-          })
-        );
+    for (const reg of allRegistrations) {
+      if (reg.user_id === session.id) currentUserRegSet.add(reg.workout_id);
+      if (!regsByWorkout.has(reg.workout_id)) regsByWorkout.set(reg.workout_id, []);
+      regsByWorkout.get(reg.workout_id)!.push(reg);
+    }
 
-        return {
-          ...workout,
-          creator_name: creator?.name || 'Unknown',
-          registered_count: registrations.length,
-          is_registered: registeredWorkoutIds.has(workout.id),
-          participants,
-        };
-      })
-    );
+    const enrichedWorkouts = workouts.map((workout: Workout) => {
+      const regs = regsByWorkout.get(workout.id) || [];
+      return {
+        ...workout,
+        creator_name: usersById.get(workout.created_by)?.name || 'Unknown',
+        registered_count: regs.length,
+        is_registered: currentUserRegSet.has(workout.id),
+        participants: regs.map((r: Registration) => ({
+          user_id: r.user_id,
+          user_name: usersById.get(r.user_id)?.name || 'Unknown',
+          attended: r.attended,
+        })),
+      };
+    });
 
     return NextResponse.json({ workouts: enrichedWorkouts });
   } catch (error) {

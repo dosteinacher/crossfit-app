@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Card, Loading } from '@/components/ui';
+import { useAuth } from '@/hooks/useAuth';
 
 const SECTIONS = [
   { id: 'team-guidelines', label: 'Allgemein & Team' },
@@ -15,26 +14,7 @@ const SECTIONS = [
 ] as const;
 
 export default function GuidelinesPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/session');
-      if (!response.ok) {
-        router.push('/login');
-        return;
-      }
-      setLoading(false);
-    } catch {
-      router.push('/login');
-    }
-  };
-
+  const { loading } = useAuth();
   if (loading) return <Loading />;
 
   return (

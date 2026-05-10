@@ -111,6 +111,16 @@ export class PostgresDatabase {
         )
       `;
 
+      // Create workout_edits audit table
+      await sql`
+        CREATE TABLE IF NOT EXISTS workout_edits (
+          id SERIAL PRIMARY KEY,
+          workout_id INTEGER REFERENCES workouts(id) ON DELETE CASCADE,
+          user_id INTEGER REFERENCES users(id),
+          edited_at TIMESTAMP DEFAULT NOW()
+        )
+      `;
+
       tablesInitialized = true;
       console.log('Database tables initialized successfully');
     } catch (error) {
@@ -371,6 +381,56 @@ export class PostgresDatabase {
       WHERE workout_id = ${workout_id} AND user_id = ${user_id}
     `;
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getAllRegistrations(): Promise<Registration[]> {
+    const result = await sql`SELECT * FROM registrations`;
+    return result.rows.map(row => this.mapRegistration(row));
+  }
+
+  async logWorkoutEdit(workout_id: number, user_id: number): Promise<void> {
+    await sql`INSERT INTO workout_edits (workout_id, user_id) VALUES (${workout_id}, ${user_id})`;
+  }
+
+  async getWorkoutEdits(workout_id: number): Promise<Array<{ id: number; user_id: number; editor_name: string; edited_at: string }>> {
+    const result = await sql`
+      SELECT we.id, we.user_id, u.name AS editor_name, we.edited_at
+      FROM workout_edits we
+      JOIN users u ON we.user_id = u.id
+      WHERE we.workout_id = ${workout_id}
+      ORDER BY we.edited_at DESC
+    `;
+    return result.rows.map(r => ({
+      id: r.id,
+      user_id: r.user_id,
+      editor_name: r.editor_name,
+      edited_at: r.edited_at instanceof Date ? r.edited_at.toISOString() : r.edited_at,
+    }));
+  }
+
+  async getAdminStats(): Promise<any> {
+    await this.ensureTablesExist();
+    const stats = await sql`
+      SELECT
+        (SELECT COUNT(*) FROM users)::int AS total_users,
+        (SELECT COUNT(*) FROM workouts WHERE deleted_at IS NULL)::int AS total_workouts,
+        (SELECT COUNT(*) FROM workouts WHERE deleted_at IS NOT NULL)::int AS cancelled_workouts,
+        (SELECT COUNT(*) FROM registrations)::int AS total_registrations,
+        (SELECT COUNT(*) FROM registrations WHERE attended = true)::int AS attended_registrations,
+        (SELECT COUNT(*) FROM workouts WHERE date >= NOW() AND deleted_at IS NULL)::int AS upcoming_workouts,
+        (SELECT COUNT(*) FROM workouts WHERE date >= DATE_TRUNC('month', NOW()) AND deleted_at IS NULL)::int AS workouts_this_month
+    `;
+    const top = await sql`
+      SELECT u.id, u.name,
+        COUNT(r.id)::int AS total_registered,
+        COUNT(CASE WHEN r.attended THEN 1 END)::int AS attended
+      FROM users u
+      LEFT JOIN registrations r ON u.id = r.user_id
+      GROUP BY u.id, u.name
+      ORDER BY attended DESC, total_registered DESC
+      LIMIT 5
+    `;
+    return { ...stats.rows[0], top_members: top.rows };
   }
 
   async getUserStats(user_id: number): Promise<any> {

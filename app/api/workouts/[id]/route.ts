@@ -48,13 +48,16 @@ export async function GET(
     };
 
     // Only include non-deleted workouts in navigation
-    const allForNav = await db.getWorkouts(false);
+    const [allForNav, edits] = await Promise.all([
+      db.getWorkouts(false),
+      db.getWorkoutEdits(workoutId),
+    ]);
     const navigation = getChronologicalNeighborIds(
       allForNav.map((w: Workout) => ({ id: w.id, date: w.date })),
       workoutId
     );
 
-    return NextResponse.json({ workout: enrichedWorkout, navigation });
+    return NextResponse.json({ workout: enrichedWorkout, navigation, edits });
   } catch (error) {
     console.error('Get workout error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -94,6 +97,9 @@ export async function PUT(
     if (!updatedWorkout) {
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
     }
+
+    // Log the edit (fire-and-forget — don't block response)
+    db.logWorkoutEdit(workoutId, session.id).catch((e: unknown) => console.error('logWorkoutEdit error:', e));
 
     // Send update emails to registered users who opted in (fire-and-forget)
     const organizer = await db.getUserById(session.id);

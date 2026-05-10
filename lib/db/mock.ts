@@ -200,16 +200,6 @@ export class Database {
     workout.date = date;
     workout.max_participants = max_participants;
     workout.updated_at = new Date().toISOString();
-
-    // Log the edit
-    mockWorkoutEdits.push({
-      id: editIdCounter++,
-      workout_id: id,
-      user_id,
-      edited_at: new Date().toISOString(),
-    });
-    globalForDb.editIdCounter = editIdCounter;
-
     return workout;
   }
 
@@ -285,6 +275,66 @@ export class Database {
     return true;
   }
 
+  async getAllRegistrations(): Promise<Registration[]> {
+    return [...mockRegistrations];
+  }
+
+  async logWorkoutEdit(workout_id: number, user_id: number): Promise<void> {
+    mockWorkoutEdits.push({
+      id: editIdCounter++,
+      workout_id,
+      user_id,
+      edited_at: new Date().toISOString(),
+    });
+    globalForDb.editIdCounter = editIdCounter;
+  }
+
+  async getWorkoutEdits(workout_id: number): Promise<Array<{ id: number; user_id: number; editor_name: string; edited_at: string }>> {
+    return mockWorkoutEdits
+      .filter((e) => e.workout_id === workout_id)
+      .sort((a, b) => b.edited_at.localeCompare(a.edited_at))
+      .map((e) => ({
+        id: e.id,
+        user_id: e.user_id,
+        editor_name: mockUsers.find((u) => u.id === e.user_id)?.name || 'Unknown',
+        edited_at: e.edited_at,
+      }));
+  }
+
+  async getAdminStats(): Promise<any> {
+    const now = new Date().toISOString();
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const totalUsers = mockUsers.length;
+    const activeWorkouts = mockWorkouts.filter((w) => !w.deleted_at);
+    const cancelledWorkouts = mockWorkouts.filter((w) => w.deleted_at);
+    const upcomingWorkouts = activeWorkouts.filter((w) => w.date >= now);
+    const thisMonthWorkouts = activeWorkouts.filter((w) => w.date >= monthStart);
+    const totalRegistrations = mockRegistrations.length;
+    const attendedRegistrations = mockRegistrations.filter((r) => r.attended).length;
+
+    const memberMap = new Map<number, { name: string; total_registered: number; attended: number }>();
+    for (const u of mockUsers) memberMap.set(u.id, { name: u.name, total_registered: 0, attended: 0 });
+    for (const r of mockRegistrations) {
+      const m = memberMap.get(r.user_id);
+      if (m) { m.total_registered++; if (r.attended) m.attended++; }
+    }
+    const top_members = [...memberMap.entries()]
+      .map(([id, m]) => ({ id, ...m }))
+      .sort((a, b) => b.attended - a.attended || b.total_registered - a.total_registered)
+      .slice(0, 5);
+
+    return {
+      total_users: totalUsers,
+      total_workouts: activeWorkouts.length,
+      cancelled_workouts: cancelledWorkouts.length,
+      total_registrations: totalRegistrations,
+      attended_registrations: attendedRegistrations,
+      upcoming_workouts: upcomingWorkouts.length,
+      workouts_this_month: thisMonthWorkouts.length,
+      top_members,
+    };
+  }
+
   async getUserStats(user_id: number): Promise<any> {
     const userRegistrations = mockRegistrations.filter((r) => r.user_id === user_id);
     
@@ -299,11 +349,25 @@ export class Database {
     // Count ALL upcoming workouts (not just registered ones)
     const allUpcomingWorkouts = mockWorkouts.filter((w) => w.date >= now);
 
+    const recent_workouts = pastWorkouts
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 10)
+      .map((w) => ({
+        id: w.id,
+        title: w.title,
+        date: w.date,
+        workout_type: w.workout_type,
+        result: w.result ?? null,
+        rating: w.rating ?? null,
+        attended: userRegistrations.find((r) => r.workout_id === w.id)?.attended ?? false,
+      }));
+
     return {
       total_workouts: pastWorkouts.length,
       attended_workouts: attendedWorkouts.length,
       upcoming_workouts: allUpcomingWorkouts.length,
-      current_streak: 0, // TODO: Calculate streak
+      current_streak: 0,
+      recent_workouts,
     };
   }
 

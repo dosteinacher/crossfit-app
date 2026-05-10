@@ -125,14 +125,24 @@ export default function Navbar() {
               Guidelines
             </Link>
             {user.is_admin && (
-              <Link
-                href="/admin/users"
-                className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
-                  pathname === '/admin/users' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
-                }`}
-              >
-                Users
-              </Link>
+              <>
+                <Link
+                  href="/admin"
+                  className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                    pathname === '/admin' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
+                  }`}
+                >
+                  Overview
+                </Link>
+                <Link
+                  href="/admin/users"
+                  className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                    pathname === '/admin/users' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
+                  }`}
+                >
+                  Users
+                </Link>
+              </>
             )}
             <Link
               href="/workouts/create"
@@ -215,14 +225,24 @@ export default function Navbar() {
             Guidelines
           </Link>
           {user.is_admin && (
-            <Link
-              href="/admin/users"
-              className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
-                pathname === '/admin/users' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
-              }`}
-            >
-              Users
-            </Link>
+            <>
+              <Link
+                href="/admin"
+                className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                  pathname === '/admin' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
+                }`}
+              >
+                Overview
+              </Link>
+              <Link
+                href="/admin/users"
+                className={`hover:bg-coastal-search/20 px-4 py-2 rounded-lg transition text-pure-white ${
+                  pathname === '/admin/users' ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
+                }`}
+              >
+                Users
+              </Link>
+            </>
           )}
           <Link
             href="/workouts/create"
