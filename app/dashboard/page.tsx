@@ -120,32 +120,33 @@ export default function DashboardPage() {
                           return (
                             <Link key={workout.id} href={`/workouts/${workout.id}`} className="block group">
                               <div className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-lg hover:border-coastal-sky transition hover:shadow-xl">
-                                <div className="flex items-center gap-4 mb-3 flex-nowrap min-w-0 group-hover:overflow-visible">
-                                  <div className="text-2xl font-bold text-pure-green shrink-0">
+                                <div className="flex items-start gap-3 mb-3">
+                                  <div className="text-2xl font-bold text-pure-green shrink-0 leading-tight pt-0.5">
                                     #{index + 1}
                                   </div>
-                                  <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden group-hover:overflow-visible">
-                                    <span className="text-base font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
-                                      {workout.workout_type}
-                                    </span>
-                                    <span className="text-lg font-bold text-pure-white shrink-0 whitespace-nowrap">
-                                      {format(workoutDate, 'h:mm a')}
-                                    </span>
-                                    <h4 className="text-xl font-bold text-pure-white truncate min-w-0 shrink group-hover:whitespace-normal group-hover:break-words group-hover:overflow-visible">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                      <span className="text-xs font-medium px-2 py-0.5 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
+                                        {workout.workout_type}
+                                      </span>
+                                      <span className="text-sm font-bold text-pure-white shrink-0">
+                                        {format(workoutDate, 'h:mm a')}
+                                      </span>
+                                    </div>
+                                    <h4 className="text-lg font-bold text-pure-white leading-snug">
                                       {workout.title}
                                     </h4>
                                   </div>
-                                  <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-                                    <span className="text-sm text-pure-text-light">Participants</span>
-                                    <span className="text-xl font-bold text-pure-green">
+                                  <div className="flex flex-col items-end shrink-0">
+                                    <span className="text-xl font-bold text-pure-green leading-none">
                                       {workout.registered_count}/{workout.max_participants}
                                     </span>
+                                    <span className="text-xs text-pure-text-light mt-0.5">spots</span>
                                   </div>
                                 </div>
                                 {workout.description && (
-                                  <div className="mt-3 bg-pure-dark border border-gray-700 rounded-lg p-3 overflow-hidden max-h-24 group-hover:max-h-[80rem] group-hover:overflow-visible transition-[max-height] duration-300 ease-out">
-                                    <h4 className="text-sm font-bold text-pure-white mb-1">Description</h4>
-                                    <p className="text-sm text-pure-text-light whitespace-pre-wrap">
+                                  <div className="mt-2 bg-pure-dark border border-gray-700 rounded-lg p-3">
+                                    <p className="text-sm text-pure-text-light line-clamp-3">
                                       {workout.description}
                                     </p>
                                   </div>
