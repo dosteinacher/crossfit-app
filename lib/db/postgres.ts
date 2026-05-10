@@ -38,17 +38,18 @@ export class PostgresDatabase {
         )
       `;
 
-      // Add result and rating columns if they don't exist (migration for existing DBs)
-      try {
-        await sql`ALTER TABLE workouts ADD COLUMN result TEXT`;
-      } catch (e: any) {
-        if (e?.code !== '42701') throw e; // 42701 = column already exists
-      }
-      try {
-        await sql`ALTER TABLE workouts ADD COLUMN rating SMALLINT`;
-      } catch (e: any) {
-        if (e?.code !== '42701') throw e;
-      }
+      // Add columns that may not exist in older DB instances
+      const tryAlter = async (fn: () => Promise<unknown>) => {
+        try { await fn(); } catch (e: any) { if (e?.code !== '42701') throw e; }
+      };
+      await tryAlter(() => sql`ALTER TABLE workouts ADD COLUMN result TEXT`);
+      await tryAlter(() => sql`ALTER TABLE workouts ADD COLUMN rating SMALLINT`);
+      await tryAlter(() => sql`ALTER TABLE workouts ADD COLUMN deleted_at TIMESTAMP NULL`);
+      await tryAlter(() => sql`ALTER TABLE workouts ADD COLUMN cancellation_reason TEXT NULL`);
+      await tryAlter(() => sql`ALTER TABLE workouts ADD COLUMN sequence INTEGER DEFAULT 0`);
+      await tryAlter(() => sql`ALTER TABLE users ADD COLUMN notify_updates BOOLEAN DEFAULT TRUE`);
+      await tryAlter(() => sql`ALTER TABLE users ADD COLUMN notify_cancellations BOOLEAN DEFAULT TRUE`);
+      await tryAlter(() => sql`ALTER TABLE users ADD COLUMN calendar_token TEXT NULL`);
 
       // Create registrations table
       await sql`
@@ -239,6 +240,7 @@ export class PostgresDatabase {
   }
 
   async getWorkouts(filterPast: boolean = false): Promise<Workout[]> {
+    await this.ensureTablesExist();
     let result;
     if (filterPast) {
       result = await sql`
@@ -372,6 +374,7 @@ export class PostgresDatabase {
   }
 
   async getUserStats(user_id: number): Promise<any> {
+    await this.ensureTablesExist();
     const result = await sql`
       SELECT
         COUNT(DISTINCT CASE WHEN w.date < NOW() AND (w.deleted_at IS NULL OR w.deleted_at > NOW()) THEN r.workout_id END) as total_workouts,
