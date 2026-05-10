@@ -1,4 +1,5 @@
 import WodScreenWake from '@/components/WodScreenWake';
+import WodClock from '@/components/WodClock';
 import { db } from '@/lib/db';
 import { format } from 'date-fns';
 import { Metadata } from 'next';
@@ -47,12 +48,11 @@ async function getWorkoutsForToday() {
 
 export default async function WODPage() {
   const workouts = await getWorkoutsForToday();
-  const currentTime = new Date();
 
   return (
     <div className="min-h-screen bg-pure-dark py-4 px-8">
       <WodScreenWake />
-      {/* Header with current time */}
+      {/* Header */}
       <div className="max-w-6xl mx-auto mb-1">
         <div className="flex items-center justify-between mb-2 gap-4">
           <div className="flex items-start gap-4 min-w-0">
@@ -68,17 +68,9 @@ export default async function WODPage() {
               <h1 className="text-4xl font-bold text-pure-green mb-2">
                 Workout of the Day
               </h1>
-              <p className="text-xl text-pure-text-light">
-                {format(currentTime, 'EEEE, MMMM d, yyyy')}
-              </p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold text-pure-white">
-              {format(currentTime, 'h:mm a')}
-            </p>
-            <p className="text-sm text-gray-400 mt-1">Last updated</p>
-          </div>
+          <WodClock />
         </div>
         <div className="h-1 bg-gradient-to-r from-pure-green to-coastal-sky rounded-full"></div>
       </div>
