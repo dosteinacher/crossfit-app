@@ -1,6 +1,8 @@
+import WodScreenWake from '@/components/WodScreenWake';
 import { db } from '@/lib/db';
 import { format } from 'date-fns';
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { Workout } from '@/lib/types';
 
 // ISR: Regenerate page every 30 seconds
@@ -49,16 +51,27 @@ export default async function WODPage() {
 
   return (
     <div className="min-h-screen bg-pure-dark py-4 px-8">
+      <WodScreenWake />
       {/* Header with current time */}
       <div className="max-w-6xl mx-auto mb-1">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-4xl font-bold text-pure-green mb-2">
-              Workout of the Day
-            </h1>
-            <p className="text-xl text-pure-text-light">
-              {format(currentTime, 'EEEE, MMMM d, yyyy')}
-            </p>
+        <div className="flex items-center justify-between mb-2 gap-4">
+          <div className="flex items-start gap-4 min-w-0">
+            <Image
+              src="/go-pure-logo.png"
+              alt="PURE"
+              width={140}
+              height={40}
+              className="h-9 w-auto max-h-9 shrink-0 object-contain object-left navbar-brand-spin"
+              priority
+            />
+            <div className="min-w-0">
+              <h1 className="text-4xl font-bold text-pure-green mb-2">
+                Workout of the Day
+              </h1>
+              <p className="text-xl text-pure-text-light">
+                {format(currentTime, 'EEEE, MMMM d, yyyy')}
+              </p>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-3xl font-bold text-pure-white">

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -72,8 +73,19 @@ export default function Navbar() {
     <nav className="bg-pure-dark border-b-2 border-coastal-sky shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link href="/dashboard" className="text-2xl font-bold text-pure-logo">
-            PURE
+          <Link
+            href="/dashboard"
+            className="flex shrink-0 items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-coastal-sky rounded"
+            aria-label="PURE — Dashboard"
+          >
+            <Image
+              src="/go-pure-logo.png"
+              alt="PURE"
+              width={140}
+              height={40}
+              className="h-9 w-auto max-h-9 object-contain object-left navbar-brand-spin"
+              priority
+            />
           </Link>
           
           {/* Desktop Navigation */}

@@ -42,3 +42,23 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--coastal-sky);
 }
+
+/* Navbar brand: very slow rotation for TV/signage motion; disabled when user prefers reduced motion */
+@keyframes navbar-brand-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.navbar-brand-spin {
+  animation: navbar-brand-spin 100s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar-brand-spin {
+    animation: none;
+  }
+}
