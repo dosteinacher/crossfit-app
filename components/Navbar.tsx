@@ -149,14 +149,14 @@ export default function Navbar() {
               Create
             </Link>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-pure-white font-medium">
+              <Link href="/profile" className="text-sm text-pure-white font-medium hover:text-coastal-sky transition">
                 {user.name}
                 {user.is_admin && (
                   <span className="ml-2 bg-coastal-honey text-black text-xs px-2 py-1 rounded font-semibold">
                     Admin
                   </span>
                 )}
-              </span>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition text-pure-white font-medium"

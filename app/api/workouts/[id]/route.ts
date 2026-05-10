@@ -95,15 +95,21 @@ export async function PUT(
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
     }
 
-    // Send update emails to all registered users (fire-and-forget)
+    // Send update emails to registered users who opted in (fire-and-forget)
     const organizer = await db.getUserById(session.id);
     if (organizer) {
       const registrations = await db.getRegistrationsForWorkout(workoutId);
       const attendees = (
-        await Promise.all(registrations.map((r: Registration) => db.getUserById(r.user_id)))
-      )
-        .filter(Boolean)
-        .map((u) => ({ email: u!.email, name: u!.name }));
+        await Promise.all(
+          registrations.map(async (r: Registration) => {
+            const u = await db.getUserById(r.user_id);
+            if (!u) return null;
+            const prefs = await db.getUserNotificationPrefs(r.user_id);
+            if (prefs.notify_updates === false) return null;
+            return { email: u.email, name: u.name };
+          })
+        )
+      ).filter(Boolean) as { email: string; name: string }[];
 
       if (attendees.length > 0) {
         notifyWorkoutUpdate(
@@ -155,13 +161,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Workout not found or already cancelled' }, { status: 404 });
     }
 
-    // Send cancellation emails (fire-and-forget)
+    // Send cancellation emails to users who opted in (fire-and-forget)
     if (organizer && registrations.length > 0) {
       const attendees = (
-        await Promise.all(registrations.map((r: Registration) => db.getUserById(r.user_id)))
-      )
-        .filter(Boolean)
-        .map((u) => ({ email: u!.email, name: u!.name }));
+        await Promise.all(
+          registrations.map(async (r: Registration) => {
+            const u = await db.getUserById(r.user_id);
+            if (!u) return null;
+            const prefs = await db.getUserNotificationPrefs(r.user_id);
+            if (prefs.notify_cancellations === false) return null;
+            return { email: u.email, name: u.name };
+          })
+        )
+      ).filter(Boolean) as { email: string; name: string }[];
 
       if (attendees.length > 0) {
         notifyWorkoutCancellation(

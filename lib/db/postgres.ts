@@ -164,6 +164,56 @@ export class PostgresDatabase {
     `;
   }
 
+  async updateUserProfile(id: number, name: string): Promise<User | null> {
+    const result = await sql`
+      UPDATE users SET name = ${name} WHERE id = ${id} RETURNING *
+    `;
+    return result.rows[0] ? this.mapUser(result.rows[0]) : null;
+  }
+
+  async updateNotificationPrefs(
+    id: number,
+    notify_updates: boolean,
+    notify_cancellations: boolean
+  ): Promise<void> {
+    try { await sql`ALTER TABLE users ADD COLUMN notify_updates BOOLEAN DEFAULT TRUE`; }
+    catch (e: any) { if (e?.code !== '42701') throw e; }
+    try { await sql`ALTER TABLE users ADD COLUMN notify_cancellations BOOLEAN DEFAULT TRUE`; }
+    catch (e: any) { if (e?.code !== '42701') throw e; }
+    await sql`
+      UPDATE users SET notify_updates = ${notify_updates}, notify_cancellations = ${notify_cancellations}
+      WHERE id = ${id}
+    `;
+  }
+
+  async getOrCreateCalendarToken(id: number): Promise<string> {
+    try { await sql`ALTER TABLE users ADD COLUMN calendar_token TEXT NULL`; }
+    catch (e: any) { if (e?.code !== '42701') throw e; }
+    const existing = await sql`SELECT calendar_token FROM users WHERE id = ${id}`;
+    if (existing.rows[0]?.calendar_token) return existing.rows[0].calendar_token;
+    const token = crypto.randomUUID();
+    await sql`UPDATE users SET calendar_token = ${token} WHERE id = ${id}`;
+    return token;
+  }
+
+  async getUserByCalendarToken(token: string): Promise<User | null> {
+    const result = await sql`SELECT * FROM users WHERE calendar_token = ${token}`;
+    return result.rows[0] ? this.mapUser(result.rows[0]) : null;
+  }
+
+  async getUserNotificationPrefs(id: number): Promise<{ notify_updates: boolean; notify_cancellations: boolean }> {
+    try { await sql`ALTER TABLE users ADD COLUMN notify_updates BOOLEAN DEFAULT TRUE`; }
+    catch (e: any) { if (e?.code !== '42701') throw e; }
+    try { await sql`ALTER TABLE users ADD COLUMN notify_cancellations BOOLEAN DEFAULT TRUE`; }
+    catch (e: any) { if (e?.code !== '42701') throw e; }
+    const result = await sql`SELECT notify_updates, notify_cancellations FROM users WHERE id = ${id}`;
+    const row = result.rows[0];
+    return {
+      notify_updates: row?.notify_updates ?? true,
+      notify_cancellations: row?.notify_cancellations ?? true,
+    };
+  }
+
   // Workout operations
   async createWorkout(
     title: string,
@@ -323,25 +373,33 @@ export class PostgresDatabase {
 
   async getUserStats(user_id: number): Promise<any> {
     const result = await sql`
-      SELECT 
-        COUNT(DISTINCT CASE WHEN w.date < NOW() THEN r.workout_id END) as total_workouts,
+      SELECT
+        COUNT(DISTINCT CASE WHEN w.date < NOW() AND (w.deleted_at IS NULL OR w.deleted_at > NOW()) THEN r.workout_id END) as total_workouts,
         COUNT(DISTINCT CASE WHEN r.attended = true THEN r.workout_id END) as attended_workouts,
-        COUNT(DISTINCT CASE WHEN w.date >= NOW() THEN w.id END) as upcoming_workouts
+        COUNT(DISTINCT CASE WHEN w.date >= NOW() AND (w.deleted_at IS NULL OR w.deleted_at > NOW()) THEN w.id END) as upcoming_workouts
       FROM registrations r
-      LEFT JOIN workouts w ON r.workout_id = w.id
-      WHERE r.user_id = ${user_id} OR w.id IS NOT NULL
+      JOIN workouts w ON r.workout_id = w.id
+      WHERE r.user_id = ${user_id}
     `;
-    
-    const allUpcoming = await sql`
-      SELECT COUNT(*) as count FROM workouts WHERE date >= NOW()
+
+    const recent = await sql`
+      SELECT w.id, w.title, w.date, w.workout_type, w.result, w.rating, r.attended
+      FROM registrations r
+      JOIN workouts w ON r.workout_id = w.id
+      WHERE r.user_id = ${user_id}
+        AND w.date < NOW()
+        AND (w.deleted_at IS NULL OR w.deleted_at > NOW())
+      ORDER BY w.date DESC
+      LIMIT 10
     `;
 
     const stats = result.rows[0];
     return {
       total_workouts: parseInt(stats.total_workouts || '0'),
       attended_workouts: parseInt(stats.attended_workouts || '0'),
-      upcoming_workouts: parseInt(allUpcoming.rows[0].count || '0'),
+      upcoming_workouts: parseInt(stats.upcoming_workouts || '0'),
       current_streak: 0,
+      recent_workouts: recent.rows,
     };
   }
 
@@ -571,6 +629,9 @@ export class PostgresDatabase {
       name: row.name,
       is_admin: row.is_admin,
       created_at: row.created_at.toISOString(),
+      notify_updates: row.notify_updates ?? true,
+      notify_cancellations: row.notify_cancellations ?? true,
+      calendar_token: row.calendar_token ?? null,
     };
   }
 

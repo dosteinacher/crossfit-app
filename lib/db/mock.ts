@@ -108,6 +108,34 @@ export class Database {
     if (user) user.password_hash = password_hash;
   }
 
+  async updateUserProfile(id: number, name: string): Promise<User | null> {
+    const user = mockUsers.find((u) => u.id === id);
+    if (!user) return null;
+    user.name = name;
+    return user;
+  }
+
+  async updateNotificationPrefs(id: number, notify_updates: boolean, notify_cancellations: boolean): Promise<void> {
+    const user = mockUsers.find((u) => u.id === id);
+    if (user) { user.notify_updates = notify_updates; user.notify_cancellations = notify_cancellations; }
+  }
+
+  async getOrCreateCalendarToken(id: number): Promise<string> {
+    const user = mockUsers.find((u) => u.id === id);
+    if (!user) throw new Error('User not found');
+    if (!user.calendar_token) user.calendar_token = crypto.randomUUID();
+    return user.calendar_token;
+  }
+
+  async getUserByCalendarToken(token: string): Promise<User | null> {
+    return mockUsers.find((u) => u.calendar_token === token) || null;
+  }
+
+  async getUserNotificationPrefs(id: number): Promise<{ notify_updates: boolean; notify_cancellations: boolean }> {
+    const user = mockUsers.find((u) => u.id === id);
+    return { notify_updates: user?.notify_updates ?? true, notify_cancellations: user?.notify_cancellations ?? true };
+  }
+
   // Workout operations
   async createWorkout(
     title: string,

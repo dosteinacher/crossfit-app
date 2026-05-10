@@ -14,11 +14,13 @@ export default function WorkoutsPage() {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (filter !== 'past') {
       setRatingFilter('all');
     }
+    setSearch('');
   }, [filter]);
 
   useEffect(() => {
@@ -52,6 +54,16 @@ export default function WorkoutsPage() {
       console.error('Fetch workouts error:', error);
     }
   };
+
+  const q = search.trim().toLowerCase();
+  const displayedWorkouts = q
+    ? workouts.filter(
+        (w) =>
+          w.title?.toLowerCase().includes(q) ||
+          w.description?.toLowerCase().includes(q) ||
+          w.creator_name?.toLowerCase().includes(q)
+      )
+    : workouts;
 
   if (loading) return <Loading />;
 
@@ -129,14 +141,25 @@ export default function WorkoutsPage() {
             )}
           </div>
 
+          {/* Search */}
+          <div className="mb-6">
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, description, or coach…"
+              className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-pure-gray text-pure-white placeholder:text-pure-text-light text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
+            />
+          </div>
+
           {/* Workouts List */}
-          {workouts.length === 0 ? (
+          {displayedWorkouts.length === 0 ? (
             <Card className="bg-pure-gray border-gray-700">
               <p className="text-gray-400 text-center py-8">No workouts found</p>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {workouts.map((workout) => (
+              {displayedWorkouts.map((workout) => (
                 <Link key={workout.id} href={`/workouts/${workout.id}`}>
                   <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-gray border-gray-700">
                     <div className="flex justify-between items-start mb-3">

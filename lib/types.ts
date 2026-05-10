@@ -7,6 +7,9 @@ export interface User {
   name: string;
   is_admin: boolean;
   created_at: string;
+  notify_updates?: boolean;
+  notify_cancellations?: boolean;
+  calendar_token?: string | null;
 }
 
 export interface Workout {
