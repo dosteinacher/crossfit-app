@@ -6,13 +6,14 @@ import Navbar from '@/components/Navbar';
 import { Card, Loading, Button } from '@/components/ui';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
+import { getWorkoutTypeStyle } from '@/lib/workout-colors';
 
 type RatingFilter = 'all' | 'unrated' | '1' | '2' | '3' | '4' | '5';
 
 export default function WorkoutsPage() {
   const { loading } = useAuth();
   const [workouts, setWorkouts] = useState<any[]>([]);
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'mine'>('upcoming');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -43,8 +44,10 @@ export default function WorkoutsPage() {
       if (response.ok) {
         const data = await response.json();
         let filtered = data.workouts;
-        
-        if (filter === 'past') {
+
+        if (filter === 'mine') {
+          filtered = filtered.filter((w: any) => w.is_registered);
+        } else if (filter === 'past') {
           const now = new Date().toISOString();
           filtered = filtered.filter((w: any) => w.date < now);
           if (ratingFilter === 'unrated') {
@@ -130,6 +133,16 @@ export default function WorkoutsPage() {
               >
                 Past
               </button>
+              <button
+                onClick={() => setFilter('mine')}
+                className={`px-4 py-2 font-medium transition ${
+                  filter === 'mine'
+                    ? 'text-pure-green border-b-2 border-pure-green'
+                    : 'text-gray-400 hover:text-pure-white'
+                }`}
+              >
+                My Schedule
+              </button>
             </div>
             {filter === 'past' && (
               <select
@@ -172,7 +185,7 @@ export default function WorkoutsPage() {
                 <Link key={workout.id} href={`/workouts/${workout.id}`}>
                   <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-gray border-gray-700">
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-medium px-2 py-1 bg-blue-900 text-blue-200 rounded">
+                      <span className={`text-xs font-medium px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
                         {workout.workout_type}
                       </span>
                       {workout.is_registered && (

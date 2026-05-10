@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Loading, Button, Input, ErrorMessage, SuccessMessage } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
+import { format, subMonths, startOfMonth } from 'date-fns';
 
 export default function ProfilePage() {
   const { loading: authLoading } = useAuth();
@@ -138,6 +138,56 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
+
+          {/* Monthly progress chart */}
+          {(() => {
+            const months = Array.from({ length: 6 }, (_, i) => {
+              const d = startOfMonth(subMonths(new Date(), 5 - i));
+              return format(d, 'yyyy-MM');
+            });
+            const dataMap = new Map((stats?.monthly_workouts || []).map((m: any) => [m.month, m]));
+            const chartData = months.map((month) => ({
+              month,
+              label: format(new Date(month + '-15'), 'MMM'),
+              registered: (dataMap.get(month) as any)?.registered ?? 0,
+              attended: (dataMap.get(month) as any)?.attended ?? 0,
+            }));
+            const maxVal = Math.max(...chartData.map((d) => d.registered), 1);
+            const hasData = chartData.some((d) => d.registered > 0);
+            if (!hasData) return null;
+            return (
+              <div className="bg-pure-gray border border-gray-700 rounded-lg p-5 mb-6">
+                <h2 className="text-lg font-bold text-pure-white mb-4">Monthly Activity</h2>
+                <div className="flex items-end gap-3 h-28">
+                  {chartData.map(({ month, label, registered, attended }) => (
+                    <div key={month} className="flex-1 flex flex-col items-center gap-1 h-full">
+                      <div className="flex-1 w-full flex items-end gap-0.5">
+                        <div
+                          className="flex-1 bg-coastal-sky/30 rounded-t transition-all"
+                          style={{ height: registered > 0 ? `${(registered / maxVal) * 100}%` : '4px' }}
+                          title={`${registered} registered`}
+                        />
+                        <div
+                          className="flex-1 bg-pure-green rounded-t transition-all"
+                          style={{ height: attended > 0 ? `${(attended / maxVal) * 100}%` : '0' }}
+                          title={`${attended} attended`}
+                        />
+                      </div>
+                      <span className="text-xs text-pure-text-light">{label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-4 mt-3 justify-end">
+                  <span className="flex items-center gap-1.5 text-xs text-pure-text-light">
+                    <span className="w-3 h-3 rounded-sm bg-coastal-sky/30 inline-block" />Registered
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-pure-text-light">
+                    <span className="w-3 h-3 rounded-sm bg-pure-green inline-block" />Attended
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Left column */}

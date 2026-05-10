@@ -14,6 +14,7 @@ const globalForDb = global as typeof globalThis & {
   mockPolls?: Poll[];
   mockPollOptions?: PollOption[];
   mockPollVotes?: PollVote[];
+  mockAnnouncements?: any[];
   userIdCounter?: number;
   workoutIdCounter?: number;
   registrationIdCounter?: number;
@@ -22,6 +23,7 @@ const globalForDb = global as typeof globalThis & {
   pollIdCounter?: number;
   pollOptionIdCounter?: number;
   pollVoteIdCounter?: number;
+  announcementIdCounter?: number;
 };
 
 // In-memory mock database for local development
@@ -33,6 +35,7 @@ let mockWorkoutTemplates = globalForDb.mockWorkoutTemplates || [];
 let mockPolls = globalForDb.mockPolls || [];
 let mockPollOptions = globalForDb.mockPollOptions || [];
 let mockPollVotes = globalForDb.mockPollVotes || [];
+let mockAnnouncements = globalForDb.mockAnnouncements || [];
 
 let userIdCounter = globalForDb.userIdCounter || 1;
 let workoutIdCounter = globalForDb.workoutIdCounter || 1;
@@ -42,6 +45,7 @@ let templateIdCounter = globalForDb.templateIdCounter || 1;
 let pollIdCounter = globalForDb.pollIdCounter || 1;
 let pollOptionIdCounter = globalForDb.pollOptionIdCounter || 1;
 let pollVoteIdCounter = globalForDb.pollVoteIdCounter || 1;
+let announcementIdCounter = globalForDb.announcementIdCounter || 1;
 
 // Always persist to global (needed for serverless environments like Vercel)
 globalForDb.mockUsers = mockUsers;
@@ -52,6 +56,8 @@ globalForDb.mockWorkoutTemplates = mockWorkoutTemplates;
 globalForDb.mockPolls = mockPolls;
 globalForDb.mockPollOptions = mockPollOptions;
 globalForDb.mockPollVotes = mockPollVotes;
+globalForDb.mockAnnouncements = mockAnnouncements;
+globalForDb.announcementIdCounter = announcementIdCounter;
 globalForDb.userIdCounter = userIdCounter;
 globalForDb.workoutIdCounter = workoutIdCounter;
 globalForDb.registrationIdCounter = registrationIdCounter;
@@ -335,6 +341,28 @@ export class Database {
     };
   }
 
+  async getAnnouncements(activeOnly = true): Promise<any[]> {
+    const list = activeOnly ? mockAnnouncements.filter((a) => a.is_active) : mockAnnouncements;
+    return list
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map((a) => ({ ...a, creator_name: mockUsers.find((u) => u.id === a.created_by)?.name || 'Admin' }));
+  }
+
+  async createAnnouncement(title: string, body: string, created_by: number): Promise<any> {
+    const ann = { id: announcementIdCounter++, title, body, created_by, created_at: new Date().toISOString(), is_active: true };
+    mockAnnouncements.push(ann);
+    globalForDb.announcementIdCounter = announcementIdCounter;
+    globalForDb.mockAnnouncements = mockAnnouncements;
+    return ann;
+  }
+
+  async deactivateAnnouncement(id: number): Promise<boolean> {
+    const ann = mockAnnouncements.find((a) => a.id === id);
+    if (!ann) return false;
+    ann.is_active = false;
+    return true;
+  }
+
   async getUserStats(user_id: number): Promise<any> {
     const userRegistrations = mockRegistrations.filter((r) => r.user_id === user_id);
     
@@ -362,12 +390,27 @@ export class Database {
         attended: userRegistrations.find((r) => r.workout_id === w.id)?.attended ?? false,
       }));
 
+    // Monthly stats for last 6 months
+    const monthMap = new Map<string, { registered: number; attended: number }>();
+    for (const w of pastWorkouts) {
+      const month = w.date.slice(0, 7);
+      if (!monthMap.has(month)) monthMap.set(month, { registered: 0, attended: 0 });
+      const m = monthMap.get(month)!;
+      m.registered++;
+      if (userRegistrations.find((r) => r.workout_id === w.id)?.attended) m.attended++;
+    }
+    const monthly_workouts = [...monthMap.entries()]
+      .map(([month, v]) => ({ month, ...v }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .slice(-6);
+
     return {
       total_workouts: pastWorkouts.length,
       attended_workouts: attendedWorkouts.length,
       upcoming_workouts: allUpcomingWorkouts.length,
       current_streak: 0,
       recent_workouts,
+      monthly_workouts,
     };
   }
 

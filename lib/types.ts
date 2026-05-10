@@ -60,6 +60,17 @@ export interface UserStats {
   attended_workouts: number;
   upcoming_workouts: number;
   current_streak: number;
+  monthly_workouts?: Array<{ month: string; registered: number; attended: number }>;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  body: string;
+  created_by: number;
+  creator_name?: string;
+  created_at: string;
+  is_active: boolean;
 }
 
 export interface SessionUser {

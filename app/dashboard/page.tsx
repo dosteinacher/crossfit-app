@@ -7,34 +7,67 @@ import Navbar from '@/components/Navbar';
 import { Card, Loading } from '@/components/ui';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
+import { getWorkoutTypeStyle } from '@/lib/workout-colors';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
-  const [allUpcomingWorkouts, setAllUpcomingWorkouts] = useState<any[]>([]);
-  const [workoutsLoading, setWorkoutsLoading] = useState(true);
+  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [registering, setRegistering] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    fetch('/api/workouts?filter=upcoming')
-      .then((r) => r.json())
-      .then((data) => setAllUpcomingWorkouts(data.workouts || []))
+    Promise.all([
+      fetch('/api/workouts?filter=upcoming').then((r) => r.json()),
+      fetch('/api/announcements').then((r) => r.json()),
+    ])
+      .then(([wData, aData]) => {
+        setWorkouts(wData.workouts || []);
+        setAnnouncements(aData.announcements || []);
+      })
       .catch(console.error)
-      .finally(() => setWorkoutsLoading(false));
+      .finally(() => setDataLoading(false));
   }, [user]);
 
-  if (loading || workoutsLoading) return <Loading />;
+  const handleRegister = async (workoutId: number, isRegistered: boolean) => {
+    setRegistering(workoutId);
+    try {
+      await fetch(`/api/workouts/${workoutId}/register`, {
+        method: isRegistered ? 'DELETE' : 'POST',
+      });
+      setWorkouts((prev) =>
+        prev.map((w) =>
+          w.id === workoutId
+            ? {
+                ...w,
+                is_registered: !isRegistered,
+                registered_count: isRegistered ? w.registered_count - 1 : w.registered_count + 1,
+              }
+            : w
+        )
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRegistering(null);
+    }
+  };
 
-  // Next 7 days (today through today+6), grouped by day; only days with at least one workout
+  if (loading || dataLoading) return <Loading />;
+
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const next7End = new Date(todayStart);
   next7End.setDate(next7End.getDate() + 7);
   next7End.setHours(23, 59, 59, 999);
-  const next7Workouts = allUpcomingWorkouts.filter((w: any) => {
+
+  const next7 = workouts.filter((w: any) => {
     const d = new Date(w.date);
     return d >= todayStart && d <= next7End;
   });
-  const workoutsByDay = next7Workouts.reduce<Record<string, any[]>>((acc, w) => {
+
+  const workoutsByDay = next7.reduce<Record<string, any[]>>((acc, w) => {
     const key = format(new Date(w.date), 'yyyy-MM-dd');
     if (!acc[key]) acc[key] = [];
     acc[key].push(w);
@@ -46,41 +79,44 @@ export default function DashboardPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-pure-dark py-8 relative">
-        {/* Watermark Logo */}
+        {/* Watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          <Image 
-            src="/go-pure-logo.png" 
-            alt="" 
-            width={800} 
-            height={800}
-            className="opacity-[0.07] select-none"
-            style={{ filter: 'grayscale(100%)' }}
-          />
+          <Image src="/go-pure-logo.png" alt="" width={800} height={800} className="opacity-[0.07] select-none" style={{ filter: 'grayscale(100%)' }} />
         </div>
-        
-        {/* Content */}
+
         <div className="container mx-auto px-4 max-w-6xl relative z-10">
-          <h1 className="text-4xl font-bold mb-8 text-pure-white">
+          <h1 className="text-4xl font-bold mb-6 text-pure-white">
             Welcome back, {user?.name}!
           </h1>
 
-          {/* Main action cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Announcements */}
+          {announcements.length > 0 && (
+            <div className="mb-6 space-y-3">
+              {announcements.map((a: any) => (
+                <div key={a.id} className="flex gap-3 items-start bg-coastal-sky/10 border border-coastal-sky/40 rounded-lg px-4 py-3">
+                  <span className="text-coastal-sky mt-0.5 shrink-0 text-lg">📌</span>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-pure-white text-sm">{a.title}</p>
+                    {a.body && <p className="text-pure-text-light text-sm mt-0.5">{a.body}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Quick stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <Link href="/wod">
               <Card className="h-full bg-gradient-to-br from-coastal-sky to-coastal-search text-white border-coastal-sky hover:shadow-xl transition-all cursor-pointer">
                 <h3 className="text-sm font-medium opacity-90">Workout of the Day</h3>
                 <p className="text-2xl font-bold mt-2">View WOD</p>
               </Card>
             </Link>
-
             <Card className="bg-gradient-to-br from-coastal-search to-coastal-day text-white border-coastal-day">
               <h3 className="text-sm font-medium opacity-90">This Week</h3>
-              <p className="text-4xl font-bold mt-2">
-                {next7Workouts.filter((w: any) => w.is_registered).length}
-              </p>
+              <p className="text-4xl font-bold mt-2">{next7.filter((w: any) => w.is_registered).length}</p>
               <p className="text-sm opacity-90 mt-1">workouts you&apos;re registered for</p>
             </Card>
-
             <Link href="/calendar">
               <Card className="h-full bg-gradient-to-br from-coastal-day to-coastal-kombucha text-gray-900 border-coastal-kombucha hover:shadow-xl transition-all cursor-pointer">
                 <h3 className="text-sm font-medium opacity-90">Calendar</h3>
@@ -89,17 +125,16 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* Weekly Workout Overview (next 7 days, WOD-style) */}
+          {/* Weekly overview */}
           <div className="mb-8">
-            <h2 className="text-4xl font-bold text-pure-green mb-2">Weekly Workout Overview</h2>
-            <p className="text-xl text-pure-text-light mb-4">Next 7 days</p>
+            <h2 className="text-3xl font-bold text-pure-green mb-1">Next 7 Days</h2>
             <div className="h-1 bg-gradient-to-r from-pure-green to-coastal-sky rounded-full mb-6" />
 
             {orderedDayKeys.length === 0 ? (
               <div className="bg-pure-gray border border-gray-700 rounded-lg p-8 text-center">
-                <div className="text-6xl mb-4">💪</div>
-                <h3 className="text-3xl font-bold text-pure-white mb-3">No workouts in the next 7 days</h3>
-                <p className="text-xl text-pure-text-light">Check back later or create a workout!</p>
+                <div className="text-5xl mb-3">💪</div>
+                <h3 className="text-2xl font-bold text-pure-white mb-2">No workouts in the next 7 days</h3>
+                <p className="text-pure-text-light">Check back later or create a workout!</p>
               </div>
             ) : (
               <div className="space-y-6">
@@ -108,65 +143,66 @@ export default function DashboardPage() {
                   const dayDate = new Date(dayKey + 'T12:00:00');
                   return (
                     <div key={dayKey} className="space-y-3">
-                      <div>
-                        <h3 className="text-2xl font-bold text-pure-green">
-                          {format(dayDate, 'EEEE, MMMM d, yyyy')}
-                        </h3>
-                      </div>
-                      <div className="space-y-4">
-                        {dayWorkouts.map((workout: any, index: number) => {
+                      <h3 className="text-xl font-bold text-pure-green">
+                        {format(dayDate, 'EEEE, MMMM d')}
+                      </h3>
+                      <div className="space-y-3">
+                        {dayWorkouts.map((workout: any) => {
                           const workoutDate = new Date(workout.date);
-                          const now = new Date();
+                          const isFull = workout.registered_count >= workout.max_participants && !workout.is_registered;
+                          const typeStyle = getWorkoutTypeStyle(workout.workout_type);
+                          const isLoading = registering === workout.id;
+
                           return (
-                            <Link key={workout.id} href={`/workouts/${workout.id}`} className="block group">
-                              <div className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-lg hover:border-coastal-sky transition hover:shadow-xl">
-                                <div className="flex items-start gap-3 mb-3">
-                                  <div className="text-2xl font-bold text-pure-green shrink-0 leading-tight pt-0.5">
-                                    #{index + 1}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                                      <span className="text-xs font-medium px-2 py-0.5 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
-                                        {workout.workout_type}
+                            <div key={workout.id} className="bg-pure-gray border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition">
+                              <div className="flex items-start gap-3">
+                                {/* Left: type + time + title */}
+                                <Link href={`/workouts/${workout.id}`} className="flex-1 min-w-0 group">
+                                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${typeStyle.badge}`}>
+                                      {workout.workout_type}
+                                    </span>
+                                    <span className="text-sm font-semibold text-pure-white">
+                                      {format(workoutDate, 'h:mm a')}
+                                    </span>
+                                    {workout.is_registered && (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-pure-green/20 text-pure-green border border-pure-green/40">
+                                        Registered
                                       </span>
-                                      <span className="text-sm font-bold text-pure-white shrink-0">
-                                        {format(workoutDate, 'h:mm a')}
-                                      </span>
-                                    </div>
-                                    <h4 className="text-lg font-bold text-pure-white leading-snug">
-                                      {workout.title}
-                                    </h4>
+                                    )}
                                   </div>
-                                  <div className="flex flex-col items-end shrink-0">
-                                    <span className="text-xl font-bold text-pure-green leading-none">
+                                  <h4 className="text-lg font-bold text-pure-white group-hover:text-coastal-sky transition leading-snug">
+                                    {workout.title}
+                                  </h4>
+                                  {workout.description && (
+                                    <p className="text-sm text-pure-text-light mt-1 line-clamp-2">{workout.description}</p>
+                                  )}
+                                </Link>
+
+                                {/* Right: spots + register button */}
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                  <div className="text-right">
+                                    <span className={`text-lg font-bold ${workout.registered_count >= workout.max_participants ? 'text-red-400' : 'text-pure-green'}`}>
                                       {workout.registered_count}/{workout.max_participants}
                                     </span>
-                                    <span className="text-xs text-pure-text-light mt-0.5">spots</span>
+                                    <p className="text-xs text-pure-text-light">spots</p>
                                   </div>
-                                </div>
-                                {workout.description && (
-                                  <div className="mt-2 bg-pure-dark border border-gray-700 rounded-lg p-3">
-                                    <p className="text-sm text-pure-text-light line-clamp-3">
-                                      {workout.description}
-                                    </p>
-                                  </div>
-                                )}
-                                <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
-                                  <p className="text-sm text-pure-text-light">
-                                    Created by <span className="font-semibold text-pure-white">{workout.creator_name}</span>
-                                  </p>
-                                  {workoutDate < now ? (
-                                    <span className="text-sm font-medium px-2 py-0.5 bg-gray-700 text-gray-400 rounded">
-                                      Completed
-                                    </span>
-                                  ) : (
-                                    <span className="text-sm font-medium px-2 py-0.5 bg-green-900 text-green-200 rounded">
-                                      Upcoming
-                                    </span>
-                                  )}
+                                  <button
+                                    onClick={() => handleRegister(workout.id, workout.is_registered)}
+                                    disabled={isLoading || isFull}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition whitespace-nowrap disabled:opacity-50 ${
+                                      workout.is_registered
+                                        ? 'bg-red-600/20 text-red-300 border border-red-600/40 hover:bg-red-600/30'
+                                        : isFull
+                                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                        : 'bg-pure-green/20 text-pure-green border border-pure-green/40 hover:bg-pure-green/30'
+                                    }`}
+                                  >
+                                    {isLoading ? '…' : workout.is_registered ? 'Unregister' : isFull ? 'Full' : '+ Register'}
+                                  </button>
                                 </div>
                               </div>
-                            </Link>
+                            </div>
                           );
                         })}
                       </div>

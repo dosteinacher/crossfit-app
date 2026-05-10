@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, parseISO } from 'date-fns';
 import { Card } from './ui';
+import { getWorkoutTypeStyle } from '@/lib/workout-colors';
 
 interface Workout {
   id: number;
@@ -75,7 +76,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                   className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 transition ${
                     workout.is_registered
                       ? 'bg-pure-green text-black'
-                      : 'bg-coastal-sky text-pure-white'
+                      : getWorkoutTypeStyle(workout.workout_type).calendarDot + ' text-white'
                   }`}
                 >
                   <div className="font-semibold truncate">{workout.title}</div>
@@ -223,7 +224,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                     <Link key={workout.id} href={`/workouts/${workout.id}`}>
                       <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-gray border-gray-700">
                         <div className="flex justify-between items-start mb-3">
-                          <span className="text-xs font-medium px-2 py-1 bg-blue-900 text-blue-200 rounded">
+                          <span className={`text-xs font-medium px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
                             {workout.workout_type}
                           </span>
                           {workout.is_registered && (

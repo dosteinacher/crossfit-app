@@ -121,6 +121,18 @@ export class PostgresDatabase {
         )
       `;
 
+      // Create announcements table
+      await sql`
+        CREATE TABLE IF NOT EXISTS announcements (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          body TEXT,
+          created_by INTEGER REFERENCES users(id),
+          created_at TIMESTAMP DEFAULT NOW(),
+          is_active BOOLEAN DEFAULT TRUE
+        )
+      `;
+
       tablesInitialized = true;
       console.log('Database tables initialized successfully');
     } catch (error) {
@@ -456,6 +468,21 @@ export class PostgresDatabase {
       LIMIT 10
     `;
 
+    const monthly = await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', w.date), 'YYYY-MM') AS month,
+        COUNT(r.id)::int AS registered,
+        COUNT(CASE WHEN r.attended THEN 1 END)::int AS attended
+      FROM registrations r
+      JOIN workouts w ON r.workout_id = w.id
+      WHERE r.user_id = ${user_id}
+        AND w.date >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        AND w.date < NOW()
+        AND (w.deleted_at IS NULL OR w.deleted_at > NOW())
+      GROUP BY DATE_TRUNC('month', w.date)
+      ORDER BY DATE_TRUNC('month', w.date) ASC
+    `;
+
     const stats = result.rows[0];
     return {
       total_workouts: parseInt(stats.total_workouts || '0'),
@@ -463,7 +490,32 @@ export class PostgresDatabase {
       upcoming_workouts: parseInt(stats.upcoming_workouts || '0'),
       current_streak: 0,
       recent_workouts: recent.rows,
+      monthly_workouts: monthly.rows,
     };
+  }
+
+  // Announcement operations
+  async getAnnouncements(activeOnly = true): Promise<any[]> {
+    await this.ensureTablesExist();
+    const result = activeOnly
+      ? await sql`SELECT a.*, u.name AS creator_name FROM announcements a JOIN users u ON a.created_by = u.id WHERE a.is_active = TRUE ORDER BY a.created_at DESC`
+      : await sql`SELECT a.*, u.name AS creator_name FROM announcements a JOIN users u ON a.created_by = u.id ORDER BY a.created_at DESC`;
+    return result.rows.map((r) => ({
+      ...r,
+      created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+    }));
+  }
+
+  async createAnnouncement(title: string, body: string, created_by: number): Promise<any> {
+    const result = await sql`
+      INSERT INTO announcements (title, body, created_by) VALUES (${title}, ${body}, ${created_by}) RETURNING *
+    `;
+    return result.rows[0];
+  }
+
+  async deactivateAnnouncement(id: number): Promise<boolean> {
+    const result = await sql`UPDATE announcements SET is_active = FALSE WHERE id = ${id}`;
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   // Workout Template operations
