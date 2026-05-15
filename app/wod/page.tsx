@@ -128,10 +128,10 @@ export default async function WODPage() {
                   const rightText = lines.slice(16).join('\n');
                   const useTwoColumns = lines.length > 16;
                   const bodyClass =
-                    'text-xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
+                    'text-2xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
                   return (
                     <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
-                      <h3 className="text-xl font-bold text-pure-white mb-2">
+                      <h3 className="text-2xl font-bold text-pure-white mb-3">
                         Description
                       </h3>
                       {useTwoColumns ? (
