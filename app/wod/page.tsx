@@ -124,9 +124,9 @@ export default async function WODPage() {
                 {/* Workout description: first 16 newline-separated lines left, rest right */}
                 {workout.description && (() => {
                   const lines = workout.description.split('\n');
-                  const leftText = lines.slice(0, 16).join('\n');
-                  const rightText = lines.slice(16).join('\n');
-                  const useTwoColumns = lines.length > 16;
+                  const leftText = lines.slice(0, 10).join('\n');
+                  const rightText = lines.slice(10).join('\n');
+                  const useTwoColumns = lines.length > 10;
                   const bodyClass =
                     'text-2xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
                   return (
