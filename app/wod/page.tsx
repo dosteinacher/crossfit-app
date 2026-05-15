@@ -103,35 +103,35 @@ export default async function WODPage() {
                     #{index + 1}
                   </div>
                   <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden">
-                    <span className="text-lg font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
+                    <span className="text-2xl font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
                       {workout.workout_type}
                     </span>
-                    <span className="text-xl font-bold text-pure-white shrink-0 whitespace-nowrap">
+                    <span className="text-2xl font-bold text-pure-white shrink-0 whitespace-nowrap">
                       {format(workoutDate, 'h:mm a')}
                     </span>
-                    <h2 className="text-2xl font-bold text-pure-white truncate min-w-0 shrink">
+                    <h2 className="text-3xl font-bold text-pure-white truncate min-w-0 shrink">
                       {workout.title}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-                    <span className="text-base text-pure-text-light">Participants</span>
-                    <span className="text-2xl font-bold text-pure-green">
+                    <span className="text-xl text-pure-text-light">Participants</span>
+                    <span className="text-3xl font-bold text-pure-green">
                       {workout.registered_count}/{workout.max_participants}
                     </span>
                   </div>
                 </div>
 
-                {/* Workout description: first 14 newline-separated lines left, rest right; font down 2 steps */}
+                {/* Workout description: first 16 newline-separated lines left, rest right */}
                 {workout.description && (() => {
                   const lines = workout.description.split('\n');
-                  const leftText = lines.slice(0, 14).join('\n');
-                  const rightText = lines.slice(14).join('\n');
-                  const useTwoColumns = lines.length > 14;
+                  const leftText = lines.slice(0, 16).join('\n');
+                  const rightText = lines.slice(16).join('\n');
+                  const useTwoColumns = lines.length > 16;
                   const bodyClass =
-                    'text-sm text-pure-text-light whitespace-pre-wrap leading-relaxed';
+                    'text-xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
                   return (
                     <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
-                      <h3 className="text-base font-bold text-pure-white mb-2">
+                      <h3 className="text-xl font-bold text-pure-white mb-2">
                         Description
                       </h3>
                       {useTwoColumns ? (
@@ -148,19 +148,19 @@ export default async function WODPage() {
 
                 {/* Workout footer */}
                 <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
-                  <p className="text-base text-pure-text-light">
+                  <p className="text-xl text-pure-text-light">
                     Created by <span className="font-semibold text-pure-white">{workout.creator_name}</span>
                   </p>
                   {workoutDate < now ? (
-                    <span className="text-base font-medium px-3 py-1 bg-gray-700 text-gray-400 rounded-lg">
+                    <span className="text-xl font-medium px-3 py-1 bg-gray-700 text-gray-400 rounded-lg">
                       Completed
                     </span>
                   ) : workoutDate > now ? (
-                    <span className="text-base font-medium px-3 py-1 bg-green-900 text-green-200 rounded-lg">
+                    <span className="text-xl font-medium px-3 py-1 bg-green-900 text-green-200 rounded-lg">
                       Upcoming
                     </span>
                   ) : (
-                    <span className="text-base font-medium px-3 py-1 bg-pure-green text-pure-dark rounded-lg">
+                    <span className="text-xl font-medium px-3 py-1 bg-pure-green text-pure-dark rounded-lg">
                       In Progress
                     </span>
                   )}
