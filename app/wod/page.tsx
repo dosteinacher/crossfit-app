@@ -135,7 +135,7 @@ export default async function WODPage() {
                         Description
                       </h3>
                       {useTwoColumns ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        <div className="grid grid-cols-2 gap-8">
                           <p className={bodyClass}>{leftText}</p>
                           <p className={bodyClass}>{rightText}</p>
                         </div>
