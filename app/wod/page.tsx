@@ -121,11 +121,9 @@ export default async function WODPage() {
                   </div>
                 </div>
 
-                {/* Workout description: first 16 newline-separated lines left, rest right */}
+                {/* Workout description: two balanced columns when long enough */}
                 {workout.description && (() => {
                   const lines = workout.description.split('\n');
-                  const leftText = lines.slice(0, 12).join('\n');
-                  const rightText = lines.slice(12).join('\n');
                   const useTwoColumns = lines.length > 12;
                   const bodyClass =
                     'text-xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
@@ -135,9 +133,8 @@ export default async function WODPage() {
                         Description
                       </h3>
                       {useTwoColumns ? (
-                        <div className="grid grid-cols-2 gap-8">
-                          <p className={bodyClass}>{leftText}</p>
-                          <p className={bodyClass}>{rightText}</p>
+                        <div className="columns-2 gap-8">
+                          <p className={bodyClass}>{workout.description}</p>
                         </div>
                       ) : (
                         <p className={bodyClass}>{workout.description}</p>
