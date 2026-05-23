@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Rewrite root to /home so the request is served (works around root 404 in some environments)
   if (request.nextUrl.pathname === '/') {
     return NextResponse.rewrite(new URL('/home', request.url));
