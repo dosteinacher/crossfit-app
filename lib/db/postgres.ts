@@ -1,6 +1,6 @@
 // Postgres database adapter using Neon
 import { sql } from '@vercel/postgres';
-import { User, Workout, Registration, Poll, PollOption, PollVote } from '../types';
+import { User, Workout, Registration, Poll, PollOption, PollVote, Guest } from '../types';
 import { WorkoutTemplate } from '../workout-templates';
 
 // Global flag to track if tables are initialized
@@ -130,6 +130,16 @@ export class PostgresDatabase {
           created_by INTEGER REFERENCES users(id),
           created_at TIMESTAMP DEFAULT NOW(),
           is_active BOOLEAN DEFAULT TRUE
+        )
+      `;
+
+      // Create workout_guests table
+      await sql`
+        CREATE TABLE IF NOT EXISTS workout_guests (
+          id SERIAL PRIMARY KEY,
+          workout_id INTEGER REFERENCES workouts(id) ON DELETE CASCADE,
+          name VARCHAR(255) NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW()
         )
       `;
 
@@ -747,6 +757,38 @@ export class PostgresDatabase {
       notify_updates: row.notify_updates ?? true,
       notify_cancellations: row.notify_cancellations ?? true,
       calendar_token: row.calendar_token ?? null,
+    };
+  }
+
+  // Guest operations
+  async addGuest(workout_id: number, name: string): Promise<Guest> {
+    await this.ensureTablesExist();
+    const result = await sql`
+      INSERT INTO workout_guests (workout_id, name) VALUES (${workout_id}, ${name}) RETURNING *
+    `;
+    return this.mapGuest(result.rows[0]);
+  }
+
+  async getGuestsForWorkout(workout_id: number): Promise<Guest[]> {
+    await this.ensureTablesExist();
+    const result = await sql`
+      SELECT * FROM workout_guests WHERE workout_id = ${workout_id} ORDER BY created_at ASC
+    `;
+    return result.rows.map((r) => this.mapGuest(r));
+  }
+
+  async deleteGuest(id: number): Promise<boolean> {
+    await this.ensureTablesExist();
+    const result = await sql`DELETE FROM workout_guests WHERE id = ${id}`;
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  private mapGuest(row: any): Guest {
+    return {
+      id: row.id,
+      workout_id: row.workout_id,
+      name: row.name,
+      created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
     };
   }
 

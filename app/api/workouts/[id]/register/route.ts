@@ -31,12 +31,15 @@ export async function POST(
       );
     }
 
-    const registration = await db.registerForWorkout(workoutId, session.id);
+    const body = await request.json().catch(() => ({}));
+    const targetUserId = session.is_admin && body.user_id ? body.user_id : session.id;
+
+    const registration = await db.registerForWorkout(workoutId, targetUserId);
 
     // Send calendar invite to registrant
     try {
       const [user, creator] = await Promise.all([
-        db.getUserById(session.id),
+        db.getUserById(targetUserId),
         db.getUserById(workout.created_by),
       ]);
 
@@ -88,7 +91,10 @@ export async function DELETE(
     const { id } = await params;
     const workoutId = parseInt(id);
 
-    const success = await db.unregisterFromWorkout(workoutId, session.id);
+    const body = await request.json().catch(() => ({}));
+    const targetUserId = session.is_admin && body.user_id ? body.user_id : session.id;
+
+    const success = await db.unregisterFromWorkout(workoutId, targetUserId);
     if (!success) {
       return NextResponse.json(
         { error: 'Registration not found' },

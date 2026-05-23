@@ -44,6 +44,13 @@ export interface WorkoutEdit {
   edited_at: string;
 }
 
+export interface Guest {
+  id: number;
+  workout_id: number;
+  name: string;
+  created_at: string;
+}
+
 export interface WorkoutWithDetails extends Workout {
   creator_name: string;
   registered_count: number;
@@ -53,6 +60,7 @@ export interface WorkoutWithDetails extends Workout {
     user_name: string;
     attended: boolean;
   }>;
+  guests: Guest[];
 }
 
 export interface UserStats {

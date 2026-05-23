@@ -30,6 +30,9 @@ export default function WorkoutDetailPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
   const [edits, setEdits] = useState<Array<{ id: number; editor_name: string; edited_at: string }>>([]);
+  const [guests, setGuests] = useState<Array<{ id: number; name: string }>>([]);
+  const [newGuestName, setNewGuestName] = useState('');
+  const [guestLoading, setGuestLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading) fetchData();
@@ -64,6 +67,7 @@ export default function WorkoutDetailPage() {
         const w = workoutData.workout;
         if (w) {
           setWorkout({ ...w, participants: Array.isArray(w.participants) ? w.participants : [] });
+          setGuests(Array.isArray(w.guests) ? w.guests : []);
           setEditResult(typeof w.result === 'string' ? w.result : '');
           const r = w.rating;
           setEditRating(r != null && r >= 1 && r <= 5 ? Number(r) : '');
@@ -212,6 +216,52 @@ export default function WorkoutDetailPage() {
       setShowCancelModal(false);
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleAddGuest = async () => {
+    const name = newGuestName.trim();
+    if (!name) return;
+    setGuestLoading(true);
+    try {
+      const res = await fetch(`/api/workouts/${workoutId}/guests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGuests((prev) => [...prev, data.guest]);
+        setNewGuestName('');
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to add guest');
+      }
+    } catch {
+      setError('Failed to add guest');
+    } finally {
+      setGuestLoading(false);
+    }
+  };
+
+  const handleDeleteGuest = async (guestId: number) => {
+    setGuestLoading(true);
+    try {
+      const res = await fetch(`/api/workouts/${workoutId}/guests`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guest_id: guestId }),
+      });
+      if (res.ok) {
+        setGuests((prev) => prev.filter((g) => g.id !== guestId));
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to remove guest');
+      }
+    } catch {
+      setError('Failed to remove guest');
+    } finally {
+      setGuestLoading(false);
     }
   };
 
@@ -462,7 +512,7 @@ export default function WorkoutDetailPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-pure-white">
-                  Participants ({(workout.participants || []).length})
+                  Participants ({(workout.participants || []).length + guests.length})
                 </h2>
                 {isPastWorkout && user?.is_admin && (workout.participants || []).length > 0 && (
                   <div className="flex gap-2">
@@ -482,7 +532,7 @@ export default function WorkoutDetailPage() {
                 )}
               </div>
 
-              {(workout.participants || []).length === 0 ? (
+              {(workout.participants || []).length === 0 && guests.length === 0 ? (
                 <p className="text-pure-text-light">No participants yet</p>
               ) : (
                 <div className="space-y-2">
@@ -512,8 +562,45 @@ export default function WorkoutDetailPage() {
                       )}
                     </div>
                   ))}
+                  {guests.map((guest) => (
+                    <div
+                      key={guest.id}
+                      className="flex justify-between items-center bg-pure-dark border border-coastal-search rounded-lg p-3"
+                    >
+                      <span className="font-medium text-pure-white">
+                        {guest.name}
+                        <span className="ml-2 text-xs text-gray-400 font-normal">Guest</span>
+                      </span>
+                      <button
+                        onClick={() => handleDeleteGuest(guest.id)}
+                        disabled={guestLoading}
+                        className="text-red-400 hover:text-red-300 text-xs font-medium disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
+
+              {/* Add guest */}
+              <div className="mt-4 flex gap-2">
+                <input
+                  type="text"
+                  value={newGuestName}
+                  onChange={(e) => setNewGuestName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddGuest())}
+                  placeholder="Guest name..."
+                  className="flex-1 px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                />
+                <button
+                  onClick={handleAddGuest}
+                  disabled={!newGuestName.trim() || guestLoading}
+                  className="px-4 py-2 bg-pure-green text-black text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-40"
+                >
+                  Add Guest
+                </button>
+              </div>
             </div>
           </Card>
 

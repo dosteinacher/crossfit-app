@@ -28,16 +28,19 @@ export async function GET(
     const userRegistrations = await db.getRegistrationsForUser(session.id);
     const isRegistered = userRegistrations.some((r: Registration) => r.workout_id === workoutId);
 
-    const participants = await Promise.all(
-      registrations.map(async (reg: Registration) => {
-        const user = await db.getUserById(reg.user_id);
-        return {
-          user_id: reg.user_id,
-          user_name: user?.name || 'Unknown',
-          attended: reg.attended,
-        };
-      })
-    );
+    const [participants, guests] = await Promise.all([
+      Promise.all(
+        registrations.map(async (reg: Registration) => {
+          const user = await db.getUserById(reg.user_id);
+          return {
+            user_id: reg.user_id,
+            user_name: user?.name || 'Unknown',
+            attended: reg.attended,
+          };
+        })
+      ),
+      db.getGuestsForWorkout(workoutId),
+    ]);
 
     const enrichedWorkout = {
       ...workout,
@@ -45,6 +48,7 @@ export async function GET(
       registered_count: registrations.length,
       is_registered: isRegistered,
       participants,
+      guests,
     };
 
     // Only include non-deleted workouts in navigation
