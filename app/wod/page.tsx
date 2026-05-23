@@ -127,15 +127,18 @@ export default async function WODPage() {
                     right column blank. */}
                 {workout.description && (() => {
                   const lines = workout.description.split('\n');
-                  const useTwoColumns = lines.length > 12;
+                  // Up to 15 lines: single column. More: 15 on left, rest on right.
+                  const LEFT_MAX = 15;
+                  const useTwoColumns = lines.length > LEFT_MAX;
                   const bodyClass =
                     'text-xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
 
                   let leftText = workout.description;
                   let rightText = '';
                   if (useTwoColumns) {
-                    // Split at midpoint, but prefer breaking on a blank line if one is near
-                    let splitAt = Math.ceil(lines.length / 2);
+                    // Aim for 15 on the left, but nudge to a nearby blank line so
+                    // logical sections stay together (search ±3 lines around 15).
+                    let splitAt = LEFT_MAX;
                     for (let i = 0; i < 3; i++) {
                       if (lines[splitAt - 1] !== undefined && lines[splitAt - 1].trim() === '') break;
                       if (lines[splitAt + i] !== undefined && lines[splitAt + i].trim() === '') {
