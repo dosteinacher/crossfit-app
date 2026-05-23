@@ -51,6 +51,15 @@ export interface Guest {
   created_at: string;
 }
 
+export interface WorkoutPost {
+  id: number;
+  workout_id: number;
+  user_id: number;
+  message: string;
+  image_url: string | null;
+  created_at: string;
+}
+
 export interface WorkoutWithDetails extends Workout {
   creator_name: string;
   registered_count: number;

@@ -169,9 +169,26 @@ Ideas for later:
 
 - [ ] Automated workout **reminder** emails (distinct from calendar `.ics` invites)
 - [ ] Richer **PR / performance** tracking
-- [ ] Photo uploads for workouts
-- [ ] Social features (comments, likes)
+- [x] Photo uploads for workouts (Highlights feed)
+- [x] Social features (per-workout messages + photos)
 - [ ] Mobile app (React Native)
+
+## Highlights (social feed) — setup
+
+Each workout has a "Highlights" feed where members can post a short message and an optional photo.
+
+To enable photo uploads in production, three one-time steps in the Vercel dashboard:
+
+1. **Create a Blob store**: Project → Storage → Create → Blob. Vercel auto-injects `BLOB_READ_WRITE_TOKEN` as an env var; no code change needed.
+2. **Set `CRON_SECRET`**: Settings → Environment Variables → add `CRON_SECRET` with any random long string. Vercel Cron sends it as a Bearer token to authorize the nightly cleanup job.
+3. **Set a Spend Cap** (highly recommended): Settings → Billing → Spend Management → set to `$0`. Vercel will pause the project rather than ever charge you if usage somehow crosses the free tier.
+
+Photos are:
+- **Compressed client-side** before upload (max 1600px / JPEG 0.8 ≈ ~150–300 KB each)
+- **Capped at 5 MB** server-side
+- **Auto-deleted after 1 year** by a daily cron (`/api/cron/cleanup-photos`, runs 03:00 UTC, configured in `vercel.json`)
+
+At 4 active members posting ~1 photo/day, lifetime storage stays under ~300 MB — comfortably inside Vercel's 1 GB free Blob tier.
 
 ## Maintainer context
 

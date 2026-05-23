@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import { Card, Loading, Button, ErrorMessage, SuccessMessage } from '@/components/ui';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
+import { compressImage } from '@/lib/compress-image';
 
 export default function WorkoutDetailPage() {
   const router = useRouter();
@@ -33,6 +34,12 @@ export default function WorkoutDetailPage() {
   const [guests, setGuests] = useState<Array<{ id: number; name: string }>>([]);
   const [newGuestName, setNewGuestName] = useState('');
   const [guestLoading, setGuestLoading] = useState(false);
+  const [posts, setPosts] = useState<Array<{ id: number; user_id: number; user_name: string; message: string; image_url: string | null; created_at: string }>>([]);
+  const [postMessage, setPostMessage] = useState('');
+  const [postImage, setPostImage] = useState<File | null>(null);
+  const [postSubmitting, setPostSubmitting] = useState(false);
+  const [postError, setPostError] = useState('');
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading) fetchData();
@@ -80,6 +87,12 @@ export default function WorkoutDetailPage() {
               : null
           );
           if (Array.isArray(workoutData.edits)) setEdits(workoutData.edits);
+
+          // Fetch posts in parallel — don't block workout render
+          fetch(`/api/workouts/${workoutId}/posts`)
+            .then((r) => (r.ok ? r.json() : { posts: [] }))
+            .then((d) => setPosts(Array.isArray(d.posts) ? d.posts : []))
+            .catch(() => {});
         } else {
           setError('Workout not found');
         }
@@ -262,6 +275,54 @@ export default function WorkoutDetailPage() {
       setError('Failed to remove guest');
     } finally {
       setGuestLoading(false);
+    }
+  };
+
+  const handleSubmitPost = async () => {
+    const trimmed = postMessage.trim();
+    if (!trimmed && !postImage) {
+      setPostError('Add a message or photo');
+      return;
+    }
+    setPostError('');
+    setPostSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('message', trimmed);
+      if (postImage) {
+        const compressed = await compressImage(postImage);
+        fd.append('image', compressed);
+      }
+      const res = await fetch(`/api/workouts/${workoutId}/posts`, {
+        method: 'POST',
+        body: fd,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPosts((prev) => [data.post, ...prev]);
+        setPostMessage('');
+        setPostImage(null);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setPostError(data.error || 'Failed to post');
+      }
+    } catch {
+      setPostError('Failed to post');
+    } finally {
+      setPostSubmitting(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    try {
+      const res = await fetch(`/api/workouts/${workoutId}/posts/${postId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setPosts((prev) => prev.filter((p) => p.id !== postId));
+      }
+    } catch {
+      // ignore
     }
   };
 
@@ -604,6 +665,93 @@ export default function WorkoutDetailPage() {
             </div>
           </Card>
 
+          {/* Highlights — social feed */}
+          <Card className="mt-6">
+            <h2 className="text-xl font-bold text-pure-white mb-4">
+              Highlights {posts.length > 0 && <span className="text-pure-text-light text-sm font-normal">({posts.length})</span>}
+            </h2>
+
+            {/* New post form */}
+            <div className="mb-6 space-y-2">
+              <textarea
+                value={postMessage}
+                onChange={(e) => setPostMessage(e.target.value)}
+                placeholder="Share a message about this workout..."
+                rows={2}
+                className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green resize-none"
+              />
+              <div className="flex items-center gap-3">
+                <label className="text-xs text-pure-text-light cursor-pointer hover:text-pure-white">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setPostImage(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                  {postImage ? `📎 ${postImage.name}` : '📷 Add photo'}
+                </label>
+                {postImage && (
+                  <button
+                    type="button"
+                    onClick={() => setPostImage(null)}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    Remove
+                  </button>
+                )}
+                <button
+                  onClick={handleSubmitPost}
+                  disabled={postSubmitting || (!postMessage.trim() && !postImage)}
+                  className="ml-auto px-4 py-2 bg-pure-green text-black text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-40"
+                >
+                  {postSubmitting ? 'Posting…' : 'Post'}
+                </button>
+              </div>
+              {postError && <p className="text-xs text-red-400">{postError}</p>}
+            </div>
+
+            {/* Feed */}
+            {posts.length === 0 ? (
+              <p className="text-pure-text-light text-sm">No highlights yet. Be the first!</p>
+            ) : (
+              <div className="space-y-4">
+                {posts.map((p) => (
+                  <div key={p.id} className="bg-pure-dark border border-gray-700 rounded-lg p-3">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <p className="font-semibold text-pure-white text-sm">{p.user_name}</p>
+                        <p className="text-xs text-gray-500">{format(new Date(p.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                      </div>
+                      {(p.user_id === user?.id || user?.is_admin) && (
+                        <button
+                          onClick={() => handleDeletePost(p.id)}
+                          className="text-xs text-red-400 hover:text-red-300"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                    {p.message && <p className="text-pure-white text-sm whitespace-pre-wrap mb-2">{p.message}</p>}
+                    {p.image_url && (
+                      <button
+                        type="button"
+                        onClick={() => setLightboxUrl(p.image_url)}
+                        className="block w-full"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={p.image_url}
+                          alt="Highlight"
+                          className="rounded-lg max-h-96 w-auto object-contain mx-auto hover:opacity-90 transition"
+                        />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
           {edits.length > 0 && (
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-pure-text-light mb-2 uppercase tracking-wide">Edit History</h3>
@@ -624,6 +772,17 @@ export default function WorkoutDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox for photo highlights */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 cursor-pointer"
+          onClick={() => setLightboxUrl(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightboxUrl} alt="Highlight" className="max-w-full max-h-full object-contain" />
+        </div>
+      )}
 
       {/* Cancel workout modal */}
       {showCancelModal && (

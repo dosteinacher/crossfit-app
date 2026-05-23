@@ -1,6 +1,6 @@
 // Postgres database adapter using Neon
 import { sql } from '@vercel/postgres';
-import { User, Workout, Registration, Poll, PollOption, PollVote, Guest } from '../types';
+import { User, Workout, Registration, Poll, PollOption, PollVote, Guest, WorkoutPost } from '../types';
 import { WorkoutTemplate } from '../workout-templates';
 
 // Global flag to track if tables are initialized
@@ -139,6 +139,18 @@ export class PostgresDatabase {
           id SERIAL PRIMARY KEY,
           workout_id INTEGER REFERENCES workouts(id) ON DELETE CASCADE,
           name VARCHAR(255) NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `;
+
+      // Create workout_posts table (social messages + optional photos)
+      await sql`
+        CREATE TABLE IF NOT EXISTS workout_posts (
+          id SERIAL PRIMARY KEY,
+          workout_id INTEGER REFERENCES workouts(id) ON DELETE CASCADE,
+          user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+          message TEXT,
+          image_url TEXT,
           created_at TIMESTAMP DEFAULT NOW()
         )
       `;
@@ -787,6 +799,71 @@ export class PostgresDatabase {
     await this.ensureTablesExist();
     const result = await sql`SELECT * FROM workout_guests ORDER BY created_at ASC`;
     return result.rows.map((r) => this.mapGuest(r));
+  }
+
+  // Workout post operations
+  async createWorkoutPost(workout_id: number, user_id: number, message: string, image_url: string | null): Promise<WorkoutPost> {
+    await this.ensureTablesExist();
+    const result = await sql`
+      INSERT INTO workout_posts (workout_id, user_id, message, image_url)
+      VALUES (${workout_id}, ${user_id}, ${message}, ${image_url})
+      RETURNING *
+    `;
+    return this.mapWorkoutPost(result.rows[0]);
+  }
+
+  async getWorkoutPosts(workout_id: number): Promise<Array<WorkoutPost & { user_name: string }>> {
+    await this.ensureTablesExist();
+    const result = await sql`
+      SELECT p.*, u.name AS user_name
+      FROM workout_posts p
+      LEFT JOIN users u ON p.user_id = u.id
+      WHERE p.workout_id = ${workout_id}
+      ORDER BY p.created_at DESC
+    `;
+    return result.rows.map((r) => ({ ...this.mapWorkoutPost(r), user_name: r.user_name || 'Unknown' }));
+  }
+
+  async getWorkoutPostById(id: number): Promise<WorkoutPost | null> {
+    await this.ensureTablesExist();
+    const result = await sql`SELECT * FROM workout_posts WHERE id = ${id}`;
+    return result.rows[0] ? this.mapWorkoutPost(result.rows[0]) : null;
+  }
+
+  async deleteWorkoutPost(id: number): Promise<boolean> {
+    await this.ensureTablesExist();
+    const result = await sql`DELETE FROM workout_posts WHERE id = ${id}`;
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getExpiredWorkoutPosts(olderThanDays: number): Promise<WorkoutPost[]> {
+    await this.ensureTablesExist();
+    const result = await sql`
+      SELECT * FROM workout_posts
+      WHERE created_at < NOW() - (${olderThanDays} || ' days')::interval
+        AND image_url IS NOT NULL
+    `;
+    return result.rows.map((r) => this.mapWorkoutPost(r));
+  }
+
+  async deleteExpiredWorkoutPosts(olderThanDays: number): Promise<number> {
+    await this.ensureTablesExist();
+    const result = await sql`
+      DELETE FROM workout_posts
+      WHERE created_at < NOW() - (${olderThanDays} || ' days')::interval
+    `;
+    return result.rowCount || 0;
+  }
+
+  private mapWorkoutPost(row: any): WorkoutPost {
+    return {
+      id: row.id,
+      workout_id: row.workout_id,
+      user_id: row.user_id,
+      message: row.message ?? '',
+      image_url: row.image_url ?? null,
+      created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    };
   }
 
   private mapGuest(row: any): Guest {
