@@ -14,21 +14,27 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const filter = searchParams.get('filter');
 
-    // 3 queries instead of O(n*m) — fetch all, assemble in memory
-    const [workouts, allUsers, allRegistrations] = await Promise.all([
+    // 4 queries instead of O(n*m) — fetch all, assemble in memory
+    const [workouts, allUsers, allRegistrations, allGuests] = await Promise.all([
       db.getWorkouts(filter === 'upcoming'),
       db.getAllUsers(),
       db.getAllRegistrations(),
+      db.getAllGuests(),
     ]);
 
     const usersById = new Map<number, User>(allUsers.map((u: User) => [u.id, u]));
     const regsByWorkout = new Map<number, Registration[]>();
     const currentUserRegSet = new Set<number>();
+    const guestsByWorkout = new Map<number, typeof allGuests>();
 
     for (const reg of allRegistrations) {
       if (reg.user_id === session.id) currentUserRegSet.add(reg.workout_id);
       if (!regsByWorkout.has(reg.workout_id)) regsByWorkout.set(reg.workout_id, []);
       regsByWorkout.get(reg.workout_id)!.push(reg);
+    }
+    for (const guest of allGuests) {
+      if (!guestsByWorkout.has(guest.workout_id)) guestsByWorkout.set(guest.workout_id, []);
+      guestsByWorkout.get(guest.workout_id)!.push(guest);
     }
 
     const enrichedWorkouts = workouts.map((workout: Workout) => {
@@ -43,6 +49,7 @@ export async function GET(request: NextRequest) {
           user_name: usersById.get(r.user_id)?.name || 'Unknown',
           attended: r.attended,
         })),
+        guests: guestsByWorkout.get(workout.id) || [],
       };
     });
 

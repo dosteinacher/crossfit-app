@@ -17,6 +17,8 @@ export default function AdminOverviewPage() {
   const [annTitle, setAnnTitle] = useState('');
   const [annBody, setAnnBody] = useState('');
   const [annSaving, setAnnSaving] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -54,6 +56,45 @@ export default function AdminOverviewPage() {
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
   };
 
+  const handleCopySchedule = async () => {
+    setCopying(true);
+    try {
+      const res = await fetch('/api/workouts?filter=upcoming');
+      const data = await res.json();
+      const workouts = (data.workouts || []).filter((w: any) => !w.deleted_at);
+
+      if (workouts.length === 0) {
+        await navigator.clipboard.writeText('No upcoming workouts planned.');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+
+      const lines: string[] = ['Planned Workouts\n'];
+      for (const w of workouts) {
+        const d = new Date(w.date);
+        const dateStr = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        lines.push(`${dateStr}, ${timeStr} – ${w.title} (${w.workout_type})`);
+
+        const names: string[] = [
+          ...(w.participants || []).map((p: any) => p.user_name),
+          ...(w.guests || []).map((g: any) => `${g.name} (Guest)`),
+        ];
+        lines.push(names.length > 0 ? `Attendees: ${names.join(', ')}` : 'Attendees: –');
+        lines.push('');
+      }
+
+      await navigator.clipboard.writeText(lines.join('\n').trimEnd());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // silently ignore clipboard errors
+    } finally {
+      setCopying(false);
+    }
+  };
+
   if (authLoading || (annLoading && statsLoading)) return <Loading />;
 
   const attendanceRate = stats?.total_registrations > 0
@@ -81,12 +122,21 @@ export default function AdminOverviewPage() {
               <h1 className="text-4xl font-bold text-pure-white">Admin Overview</h1>
               <p className="text-pure-text-light mt-1">Gym at a glance</p>
             </div>
-            <Link
-              href="/admin/users"
-              className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium text-sm"
-            >
-              Manage Users →
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleCopySchedule}
+                disabled={copying}
+                className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium text-sm disabled:opacity-50"
+              >
+                {copied ? '✓ Copied!' : copying ? 'Copying…' : 'Copy Schedule'}
+              </button>
+              <Link
+                href="/admin/users"
+                className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium text-sm"
+              >
+                Manage Users →
+              </Link>
+            </div>
           </div>
 
           {/* Announcements — kept at top for quick access */}

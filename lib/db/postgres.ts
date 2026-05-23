@@ -783,6 +783,12 @@ export class PostgresDatabase {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
+  async getAllGuests(): Promise<Guest[]> {
+    await this.ensureTablesExist();
+    const result = await sql`SELECT * FROM workout_guests ORDER BY created_at ASC`;
+    return result.rows.map((r) => this.mapGuest(r));
+  }
+
   private mapGuest(row: any): Guest {
     return {
       id: row.id,
