@@ -121,20 +121,45 @@ export default async function WODPage() {
                   </div>
                 </div>
 
-                {/* Workout description: two balanced columns when long enough */}
+                {/* Workout description: manually split into two columns when long enough.
+                    Manual split is used (instead of CSS columns-2) because some Smart-TV
+                    browsers refuse to break a single <p> across columns, leaving the
+                    right column blank. */}
                 {workout.description && (() => {
                   const lines = workout.description.split('\n');
                   const useTwoColumns = lines.length > 12;
                   const bodyClass =
                     'text-xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
+
+                  let leftText = workout.description;
+                  let rightText = '';
+                  if (useTwoColumns) {
+                    // Split at midpoint, but prefer breaking on a blank line if one is near
+                    let splitAt = Math.ceil(lines.length / 2);
+                    for (let i = 0; i < 3; i++) {
+                      if (lines[splitAt - 1] !== undefined && lines[splitAt - 1].trim() === '') break;
+                      if (lines[splitAt + i] !== undefined && lines[splitAt + i].trim() === '') {
+                        splitAt = splitAt + i + 1; // include the blank in the left side
+                        break;
+                      }
+                      if (lines[splitAt - i - 1] !== undefined && lines[splitAt - i - 1].trim() === '') {
+                        splitAt = splitAt - i;
+                        break;
+                      }
+                    }
+                    leftText = lines.slice(0, splitAt).join('\n').replace(/\s+$/, '');
+                    rightText = lines.slice(splitAt).join('\n').replace(/^\s+/, '');
+                  }
+
                   return (
                     <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
                       <h3 className="text-2xl font-bold text-pure-white mb-3">
                         Description
                       </h3>
                       {useTwoColumns ? (
-                        <div className="columns-2 gap-8">
-                          <p className={bodyClass}>{workout.description}</p>
+                        <div className="grid grid-cols-2 gap-8">
+                          <p className={bodyClass}>{leftText}</p>
+                          <p className={bodyClass}>{rightText}</p>
                         </div>
                       ) : (
                         <p className={bodyClass}>{workout.description}</p>
