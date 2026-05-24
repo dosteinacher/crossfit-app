@@ -17,6 +17,10 @@ export default function PollDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [user, setUser] = useState<any>(null);
+  const [newDate, setNewDate] = useState('');
+  const [newTime, setNewTime] = useState('');
+  const [newLabel, setNewLabel] = useState('');
+  const [addingOption, setAddingOption] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -91,6 +95,38 @@ export default function PollDetailPage() {
       }
     } catch (error) {
       setError('An error occurred. Please try again.');
+    }
+  };
+
+  const handleAddOption = async () => {
+    setError('');
+    setSuccess('');
+    if (!newDate || !newTime) {
+      setError('Please pick both a date and a time');
+      return;
+    }
+    setAddingOption(true);
+    try {
+      const isoDate = new Date(`${newDate}T${newTime}`).toISOString();
+      const res = await fetch(`/api/polls/${pollId}/options`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: isoDate, label: newLabel.trim() || undefined }),
+      });
+      if (res.ok) {
+        setSuccess('Date added — voters will be notified by email');
+        setNewDate('');
+        setNewTime('');
+        setNewLabel('');
+        fetchData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to add date');
+      }
+    } catch {
+      setError('Failed to add date');
+    } finally {
+      setAddingOption(false);
     }
   };
 
@@ -262,6 +298,40 @@ export default function PollDetailPage() {
                 </div>
               ))}
             </div>
+
+            {/* Add a new date — open to all logged-in users while poll is active */}
+            {poll.status === 'active' && (
+              <div className="mt-6 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-bold text-pure-white mb-3">Add a date</h3>
+                <p className="text-sm text-gray-400 mb-3">
+                  Propose another time slot. Everyone who has voted (and the poll creator) will get an email so they can vote on it.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  />
+                  <input
+                    type="time"
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                    className="px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  />
+                  <input
+                    type="text"
+                    value={newLabel}
+                    onChange={(e) => setNewLabel(e.target.value)}
+                    placeholder="Label (optional)"
+                    className="px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  />
+                </div>
+                <Button onClick={handleAddOption} disabled={addingOption || !newDate || !newTime}>
+                  {addingOption ? 'Adding…' : 'Add date & notify voters'}
+                </Button>
+              </div>
+            )}
           </Card>
 
           <div className="mt-6">

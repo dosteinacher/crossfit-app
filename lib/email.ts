@@ -242,3 +242,71 @@ export async function notifyWorkoutCancellation(
 ): Promise<EmailResult[]> {
   return sendCalendarInvites(workout, organizer, attendees, 'cancel');
 }
+
+/**
+ * Notify users that a new date was added to a poll.
+ * Sent to the poll creator + everyone who already voted (minus the person who added).
+ */
+export async function notifyPollOptionAdded(
+  poll: { id: number; title: string },
+  newOption: { date: string; label?: string | null },
+  addedBy: UserData,
+  recipients: UserData[]
+): Promise<EmailResult[]> {
+  const resendClient = getResendClient();
+  if (!resendClient) {
+    console.warn('RESEND_API_KEY not configured, skipping poll notification');
+    return [];
+  }
+  if (recipients.length === 0) return [];
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://go-pure.ch';
+  const pollUrl = `${appUrl}/calendar/${poll.id}`;
+
+  const when = new Date(newOption.date);
+  const whenStr = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(when);
+
+  const subject = `New date added to poll: ${poll.title}`;
+  const htmlBody = `
+    <h2>New date added to poll</h2>
+    <p><strong>${addedBy.name}</strong> just added a new date option to the poll <strong>${poll.title}</strong>:</p>
+    <p style="font-size: 1.1em; padding: 12px; background: #f4f4f4; border-radius: 6px;">
+      📅 ${whenStr}${newOption.label ? ` &mdash; ${newOption.label}` : ''}
+    </p>
+    <p>
+      <a href="${pollUrl}" style="display: inline-block; padding: 10px 18px; background: #4ade80; color: #000; text-decoration: none; border-radius: 6px; font-weight: bold;">
+        Open poll & vote
+      </a>
+    </p>
+    <p style="color: #888; font-size: 0.9em;">You're receiving this because you voted in (or created) this poll.</p>
+  `;
+  const textBody = `New date added to poll: ${poll.title}\n\n${addedBy.name} added: ${whenStr}${newOption.label ? ` - ${newOption.label}` : ''}\n\nOpen the poll to vote: ${pollUrl}\n`;
+
+  const results = await Promise.all(
+    recipients.map(async (r): Promise<EmailResult> => {
+      try {
+        const { data, error } = await resendClient.emails.send({
+          from: FROM_EMAIL,
+          to: r.email,
+          subject,
+          html: htmlBody,
+          text: textBody,
+        });
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return { success: true, messageId: data?.id };
+      } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
+      }
+    })
+  );
+  return results;
+}

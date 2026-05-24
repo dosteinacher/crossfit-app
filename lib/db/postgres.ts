@@ -749,12 +749,22 @@ export class PostgresDatabase {
 
   async getUserVotesForPoll(poll_id: number, user_id: number): Promise<number[]> {
     const result = await sql`
-      SELECT pv.poll_option_id 
+      SELECT pv.poll_option_id
       FROM poll_votes pv
       JOIN poll_options po ON pv.poll_option_id = po.id
       WHERE po.poll_id = ${poll_id} AND pv.user_id = ${user_id}
     `;
     return result.rows.map(row => row.poll_option_id);
+  }
+
+  async getDistinctVotersForPoll(poll_id: number): Promise<number[]> {
+    const result = await sql`
+      SELECT DISTINCT pv.user_id
+      FROM poll_votes pv
+      JOIN poll_options po ON pv.poll_option_id = po.id
+      WHERE po.poll_id = ${poll_id}
+    `;
+    return result.rows.map(row => row.user_id);
   }
 
   // Mapping functions to convert DB rows to typed objects

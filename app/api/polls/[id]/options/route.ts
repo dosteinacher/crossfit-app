@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
+import { notifyPollOptionAdded } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -32,6 +33,47 @@ export async function POST(
 
     // Create new poll option
     const option = await db.createPollOption(pollId, date, label);
+
+    // Notify poll creator + everyone who already voted (minus the adder).
+    // Fire-and-forget — don't block the response.
+    (async () => {
+      try {
+        const [adder, voterIds] = await Promise.all([
+          db.getUserById(session.id),
+          db.getDistinctVotersForPoll(pollId),
+        ]);
+        if (!adder) return;
+
+        const recipientIds = new Set<number>(voterIds);
+        if (poll.created_by !== session.id) recipientIds.add(poll.created_by);
+        recipientIds.delete(session.id); // never notify self
+
+        if (recipientIds.size === 0) return;
+
+        const users = (
+          await Promise.all(
+            Array.from(recipientIds).map(async (uid) => {
+              const u = await db.getUserById(uid);
+              if (!u) return null;
+              const prefs = await db.getUserNotificationPrefs(uid);
+              if (prefs.notify_updates === false) return null;
+              return { email: u.email, name: u.name };
+            })
+          )
+        ).filter(Boolean) as { email: string; name: string }[];
+
+        if (users.length === 0) return;
+
+        await notifyPollOptionAdded(
+          { id: poll.id, title: poll.title },
+          { date, label },
+          { email: adder.email, name: adder.name },
+          users
+        );
+      } catch (e) {
+        console.error('Poll option notify error:', e);
+      }
+    })();
 
     return NextResponse.json({ option });
   } catch (error) {
