@@ -7,11 +7,16 @@ export async function GET(request: NextRequest) {
   try {
     const search = request.nextUrl.searchParams.get('search')?.trim().toLowerCase() || '';
 
-    const [workouts, allUsers, allRegistrations] = await Promise.all([
+    const [allWorkouts, allUsers, allRegistrations] = await Promise.all([
       db.getWorkouts(false), // already ordered latest-first
       db.getAllUsers(),
       db.getAllRegistrations(),
     ]);
+
+    // Only show workouts that have already happened — future ones are just
+    // scheduled slots and have no workout content yet.
+    const now = new Date().toISOString();
+    const workouts = allWorkouts.filter((w: Workout) => w.date <= now);
 
     const usersById = new Map<number, User>(allUsers.map((u: User) => [u.id, u]));
     const regCountByWorkout = new Map<number, number>();
