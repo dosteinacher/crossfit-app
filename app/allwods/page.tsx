@@ -83,19 +83,18 @@ export default function AllWodsPage() {
           <div className="space-y-4">
             {workouts.map((workout) => (
               <Card key={workout.id} className="bg-pure-gray border-gray-700">
-                <div className="flex items-center gap-3 flex-wrap mb-2">
+                <div className="flex items-center gap-3 flex-wrap mb-3">
                   <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg">
                     {workout.workout_type}
                   </span>
                   <span className="text-sm text-gray-400">
                     {format(new Date(workout.date), 'MMM d, yyyy · h:mm a')}
                   </span>
-                  <h2 className="text-xl font-bold text-pure-white">{workout.title}</h2>
                 </div>
 
-                {workout.description && (
-                  <p className="text-gray-300 whitespace-pre-wrap mb-3">{workout.description}</p>
-                )}
+                <p className="text-lg text-pure-white whitespace-pre-wrap mb-3">
+                  {workout.description || 'No workout details provided'}
+                </p>
 
                 <div className="flex items-center justify-between text-sm text-gray-400 pt-3 border-t border-gray-700">
                   <span>
