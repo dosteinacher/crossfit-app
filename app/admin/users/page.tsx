@@ -28,6 +28,36 @@ export default function UsersAdminPage() {
       .catch(() => setError('Failed to load users'));
   }, [currentUser, loading, router]);
 
+  const handleToggleAdmin = async (userId: number, userName: string, makeAdmin: boolean) => {
+    const action = makeAdmin ? 'make' : 'remove';
+    if (!confirm(`Are you sure you want to ${action} ${userName} ${makeAdmin ? 'an admin' : 'a member'}?`)) {
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_admin: makeAdmin }),
+      });
+
+      if (response.ok) {
+        setSuccess(`${userName} is now ${makeAdmin ? 'an admin' : 'a member'}`);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, is_admin: makeAdmin } : u))
+        );
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to update user');
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again.');
+    }
+  };
+
   const handleDeleteUser = async (userId: number, userName: string) => {
     if (!confirm(`Are you sure you want to delete ${userName}? This cannot be undone.`)) {
       return;
@@ -133,17 +163,30 @@ export default function UsersAdminPage() {
                           {format(new Date(user.created_at), 'MMM d, yyyy')}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          {user.id !== currentUser?.id ? (
-                            <Button
-                              variant="danger"
-                              onClick={() => handleDeleteUser(user.id, user.name)}
-                              className="text-sm"
-                            >
-                              Delete
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-gray-500">Can't delete yourself</span>
-                          )}
+                          <div className="flex justify-end gap-2">
+                            {user.id !== currentUser?.id ? (
+                              <>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() =>
+                                    handleToggleAdmin(user.id, user.name, !user.is_admin)
+                                  }
+                                  className="text-sm"
+                                >
+                                  {user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                                </Button>
+                                <Button
+                                  variant="danger"
+                                  onClick={() => handleDeleteUser(user.id, user.name)}
+                                  className="text-sm"
+                                >
+                                  Delete
+                                </Button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-gray-500">Can't edit yourself</span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

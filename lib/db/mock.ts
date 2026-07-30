@@ -109,6 +109,13 @@ export class Database {
     return true;
   }
 
+  async setUserAdmin(id: number, is_admin: boolean): Promise<User | null> {
+    const user = mockUsers.find((u) => u.id === id);
+    if (!user) return null;
+    user.is_admin = is_admin;
+    return user;
+  }
+
   async updateUserPasswordHash(id: number, password_hash: string): Promise<void> {
     const user = mockUsers.find((u) => u.id === id);
     if (user) user.password_hash = password_hash;

@@ -203,6 +203,13 @@ export class PostgresDatabase {
     return result.rowCount ? result.rowCount > 0 : false;
   }
 
+  async setUserAdmin(id: number, is_admin: boolean): Promise<User | null> {
+    const result = await sql`
+      UPDATE users SET is_admin = ${is_admin} WHERE id = ${id} RETURNING *
+    `;
+    return result.rows[0] ? this.mapUser(result.rows[0]) : null;
+  }
+
   async updateUserPasswordHash(id: number, password_hash: string): Promise<void> {
     await sql`
       UPDATE users SET password_hash = ${password_hash} WHERE id = ${id}
