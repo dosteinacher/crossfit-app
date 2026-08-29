@@ -105,7 +105,7 @@ export default function UsersAdminPage() {
           {success && <SuccessMessage message={success} />}
 
           <div className="bg-pure-gray border border-pure-green rounded-lg p-4 mb-6">
-            <h3 className="font-bold text-pure-green mb-2">👥 Admin Panel</h3>
+            <h3 className="font-bold text-pure-green mb-2">Admin Panel</h3>
             <p className="text-gray-300">
               Manage all registered users. You can view their details and remove users if needed.
             </p>
@@ -197,7 +197,7 @@ export default function UsersAdminPage() {
           </Card>
 
           <div className="mt-6 text-sm text-gray-400">
-            <p>💡 <strong>Tip:</strong> To add new users, share the invite code with them. You can change it anytime in your Vercel environment variables (<span className="font-mono">INVITE_CODE</span>).</p>
+            <p><strong>Tip:</strong> To add new users, share the invite code with them. You can change it anytime in your Vercel environment variables (<span className="font-mono">INVITE_CODE</span>).</p>
           </div>
         </div>
       </div>

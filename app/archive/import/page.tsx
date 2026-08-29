@@ -138,7 +138,7 @@ export default function ImportArchivePage() {
             <h2 className="text-2xl font-bold mb-4 text-gray-800">Upload Your Excel File</h2>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h3 className="font-bold text-blue-800 mb-2">📚 What This Does:</h3>
+              <h3 className="font-bold text-blue-800 mb-2">What This Does:</h3>
               <p className="text-gray-700">
                 This imports workouts from your Excel columns (Team of 2, Solo Workout, Team of 3) 
                 into your <strong>Workout Archive</strong> - a library of workout templates you can reuse anytime!
@@ -153,7 +153,7 @@ export default function ImportArchivePage() {
 
             {stats && (
               <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h3 className="font-bold text-green-800 mb-2">✅ Import Complete!</h3>
+                <h3 className="font-bold text-green-800 mb-2">Import Complete!</h3>
                 <p className="text-green-600 text-lg">Imported: {stats.success} workout templates</p>
                 {stats.failed > 0 && (
                   <p className="text-orange-600">Skipped: {stats.failed} (empty cells)</p>
@@ -206,7 +206,7 @@ export default function ImportArchivePage() {
               </ul>
 
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                <h3 className="font-bold text-green-800 mb-2">✨ After Import:</h3>
+                <h3 className="font-bold text-green-800 mb-2">After Import:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>All workouts saved as templates in your archive</li>
                   <li>Browse them anytime in the "Archive" page</li>

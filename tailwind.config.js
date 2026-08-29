@@ -8,19 +8,24 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Primary UI accent (coastal teal); use pure-logo for navbar wordmark only
-        'pure-green': '#5EB3B3',
+        // "Signal on black": one high-energy accent (lime, matches the logo), everything
+        // else desaturated to neutral grays. See PROJECT.md for the design rationale.
+        'pure-green': '#c1ff00',        // Primary signal color — CTAs, active/positive states
         'pure-logo': '#c1ff00',
-        'pure-accent-light': '#7EC9C9',
-        'pure-dark': '#293133',
-        'pure-gray': '#1a1a1a',
+        'pure-accent-light': '#d9ff66', // Lighter lime — hover state of the primary signal
+        'pure-dark': '#1c2126',         // Gunmetal — navbar/input surfaces
+        'pure-gray': '#17191c',         // Near-black with a whisper of steel-blue — card surfaces
         'pure-white': '#f5f5f5',
-        // Coastal Palette from Behr
-        'coastal-sky': '#5B8DB8',      // Wide Sky - medium blue
-        'coastal-search': '#5F8C9E',    // Soul Search - teal/blue-gray
-        'coastal-day': '#A8C5C5',       // Casual Day - light blue-gray
-        'coastal-kombucha': '#C9B59A',  // Kombucha - warm beige
-        'coastal-honey': '#D4BB7A',     // Honey Tea - golden honey
+        // Former "coastal" palette, now a cool steel/slate gray ramp (blue undertone instead
+        // of neutral zinc) for a "black steel" feel — same relative lightness as before so
+        // hierarchy is unchanged; only the lime accent carries actual color/energy.
+        'coastal-sky': '#94a3b8',       // slate-400 — secondary text, badges, borders
+        'coastal-search': '#64748b',    // slate-500 — hover backgrounds, secondary borders
+        'coastal-day': '#cbd5e1',       // slate-300 — light labels/text
+        'coastal-kombucha': '#475569',  // slate-600 — decorative gradient layering only
+        // Kept as a distinct semantic color (not neutralized): mid-tier stat/rating indicator,
+        // sits between pure-green (good) and red (bad) — e.g. attendance rate tiers, ratings.
+        'coastal-honey': '#D4BB7A',
         // Semantic aliases
         'pure-text-light': '#9CA3AF',   // gray-400 — secondary text throughout app
       },

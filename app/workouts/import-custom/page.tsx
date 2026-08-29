@@ -295,7 +295,7 @@ export default function ImportCustomPage() {
               </ul>
 
               <div className="bg-coastal-sky/10 border border-coastal-sky/30 rounded-lg p-4 mt-4">
-                <h3 className="font-bold text-coastal-sky mb-2">📋 What Happens:</h3>
+                <h3 className="font-bold text-coastal-sky mb-2">What Happens:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Each row becomes one workout</li>
                   <li>All sections (Warm Up, Strength, etc.) are combined into the description</li>
@@ -306,7 +306,7 @@ export default function ImportCustomPage() {
               </div>
 
               <div className="bg-pure-green/10 border border-pure-green/30 rounded-lg p-4 mt-4">
-                <h3 className="font-bold text-pure-green mb-2">✅ Tips:</h3>
+                <h3 className="font-bold text-pure-green mb-2">Tips:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   <li>Make sure your Excel has the same column structure as shown above</li>
                   <li>Empty rows will be skipped automatically</li>

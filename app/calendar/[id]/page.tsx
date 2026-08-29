@@ -216,7 +216,7 @@ export default function PollDetailPage() {
             {poll.template && (
               <div className="bg-purple-900 border border-purple-700 rounded-lg p-3 mb-6">
                 <p className="text-purple-200 text-sm">
-                  <strong>📋 Linked Workout:</strong> {poll.template.title}
+                  <strong>Linked Workout:</strong> {poll.template.title}
                 </p>
               </div>
             )}

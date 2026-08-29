@@ -237,7 +237,7 @@ function CreateWorkoutForm() {
           {templateId && (
             <div className="bg-purple-900 border border-purple-700 rounded-lg p-4 mb-6">
               <p className="text-purple-200">
-                <strong>📚 Using template!</strong> Edit as needed and schedule for a specific date/time.
+                <strong>Using template!</strong> Edit as needed and schedule for a specific date/time.
               </p>
             </div>
           )}

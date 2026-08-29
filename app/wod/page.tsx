@@ -79,7 +79,6 @@ export default async function WODPage() {
       <div className="max-w-6xl mx-auto space-y-4 mt-2">
         {workouts.length === 0 ? (
           <div className="bg-pure-gray border border-gray-700 rounded-lg p-8 text-center">
-            <div className="text-6xl mb-4">💪</div>
             <h2 className="text-3xl font-bold text-pure-white mb-3">
               No Workouts Scheduled
             </h2>

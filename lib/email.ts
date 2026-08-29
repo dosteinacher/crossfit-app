@@ -132,7 +132,7 @@ Your calendar has been updated with the latest details.
           ${workout.workout_type ? `<p><strong>Type:</strong> ${workout.workout_type}</p>` : ''}
           ${workout.description ? `<p><strong>Description:</strong> ${workout.description}</p>` : ''}
           <p>The workout has been added to your calendar automatically.</p>
-          <p>See you there! 💪</p>
+          <p>See you there!</p>
         `;
         textBody = `
 Workout Invitation
@@ -146,7 +146,7 @@ ${workout.description ? `Description: ${workout.description}` : ''}
 
 The workout has been added to your calendar automatically.
 
-See you there! 💪
+See you there!
         `;
     }
 
@@ -278,7 +278,7 @@ export async function notifyPollOptionAdded(
     <h2>New date added to poll</h2>
     <p><strong>${addedBy.name}</strong> just added a new date option to the poll <strong>${poll.title}</strong>:</p>
     <p style="font-size: 1.1em; padding: 12px; background: #f4f4f4; border-radius: 6px;">
-      📅 ${whenStr}${newOption.label ? ` &mdash; ${newOption.label}` : ''}
+      ${whenStr}${newOption.label ? ` &mdash; ${newOption.label}` : ''}
     </p>
     <p>
       <a href="${pollUrl}" style="display: inline-block; padding: 10px 18px; background: #4ade80; color: #000; text-decoration: none; border-radius: 6px; font-weight: bold;">

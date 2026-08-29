@@ -72,7 +72,7 @@ export default function CalendarPage() {
             </div>
 
             <div className="bg-pure-gray border border-pure-green rounded-lg p-4 mb-6">
-              <h3 className="font-bold text-pure-green mb-2">📊 Weekly Planning</h3>
+              <h3 className="font-bold text-pure-green mb-2">Weekly Planning</h3>
               <p className="text-gray-300">
                 Create polls to find the best times for workouts. Everyone can vote for times they're available!
               </p>
@@ -154,8 +154,8 @@ export default function CalendarPage() {
                           )}
 
                           <div className="flex items-center gap-4 text-sm text-gray-400">
-                            <span>📊 {poll.option_count} time slots</span>
-                            <span>👥 {poll.total_voters} voters</span>
+                            <span>{poll.option_count} time slots</span>
+                            <span>{poll.total_voters} voters</span>
                             <span>by {poll.creator_name}</span>
                           </div>
                         </div>

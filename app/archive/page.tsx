@@ -79,7 +79,7 @@ export default function ArchivePage() {
           </div>
 
           <div className="bg-pure-gray border border-pure-green rounded-lg p-4 mb-6">
-            <h3 className="font-bold text-pure-green mb-2">📚 Your Workout Library</h3>
+            <h3 className="font-bold text-pure-green mb-2">Your Workout Library</h3>
             <p className="text-gray-300">
               Browse all your workout templates. Click "Use Template" to schedule it for a specific date and time!
             </p>

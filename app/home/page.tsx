@@ -27,7 +27,6 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
             <div className="bg-pure-gray bg-opacity-80 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-              <div className="text-4xl mb-4">📅</div>
               <h3 className="text-xl font-bold mb-2 text-pure-white">Schedule Workouts</h3>
               <p className="opacity-90 text-gray-300">
                 Create and manage workout schedules for your community
@@ -35,7 +34,6 @@ export default function HomePage() {
             </div>
 
             <div className="bg-pure-gray bg-opacity-80 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-              <div className="text-4xl mb-4">✅</div>
               <h3 className="text-xl font-bold mb-2 text-pure-white">Track Attendance</h3>
               <p className="opacity-90 text-gray-300">
                 Keep track of who attended and monitor your progress
@@ -43,7 +41,6 @@ export default function HomePage() {
             </div>
 
             <div className="bg-pure-gray bg-opacity-80 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-              <div className="text-4xl mb-4">👥</div>
               <h3 className="text-xl font-bold mb-2 text-pure-white">Community Driven</h3>
               <p className="opacity-90 text-gray-300">
                 Everyone can create and edit workouts collaboratively

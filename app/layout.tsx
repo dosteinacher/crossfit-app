@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Bebas_Neue } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
+// Bold display font for headings (gym-poster energy); exposed as --font-display,
+// applied globally to h1/h2/h3 in globals.css.
+const bebasNeue = Bebas_Neue({ subsets: ['latin'], weight: '400', variable: '--font-display' });
 
 export const metadata: Metadata = {
   title: 'PURE Workouts',
@@ -16,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${bebasNeue.variable}`}>
         {/* Watermark background - high z-index to appear above page backgrounds */}
         <div 
           className="fixed inset-0 pointer-events-none"

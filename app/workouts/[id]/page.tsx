@@ -688,7 +688,7 @@ export default function WorkoutDetailPage() {
                     onChange={(e) => setPostImage(e.target.files?.[0] || null)}
                     className="hidden"
                   />
-                  {postImage ? `📎 ${postImage.name}` : '📷 Add photo'}
+                  {postImage ? postImage.name : 'Add photo'}
                 </label>
                 {postImage && (
                   <button

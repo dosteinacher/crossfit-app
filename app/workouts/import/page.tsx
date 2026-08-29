@@ -213,7 +213,7 @@ export default function ImportWorkoutsPage() {
                     <tr>
                       <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">Title</td>
                       <td className="border border-gray-700 px-4 py-2 text-pure-green">
-                        ✅ Required
+                        Required
                       </td>
                       <td className="border border-gray-700 px-4 py-2 text-gray-300">
                         "Monday Morning WOD"
@@ -238,7 +238,7 @@ export default function ImportWorkoutsPage() {
                     <tr>
                       <td className="border border-gray-700 px-4 py-2 font-medium text-pure-white">Date</td>
                       <td className="border border-gray-700 px-4 py-2 text-pure-green">
-                        ✅ Required
+                        Required
                       </td>
                       <td className="border border-gray-700 px-4 py-2 text-gray-300">
                         "2024-01-15" or "01/15/2024"
@@ -266,7 +266,7 @@ export default function ImportWorkoutsPage() {
             </div>
 
             <div className="bg-coastal-sky/10 border border-coastal-sky/30 rounded-lg p-4">
-              <h3 className="font-bold text-coastal-sky mb-2">📥 Download Template</h3>
+              <h3 className="font-bold text-coastal-sky mb-2">Download Template</h3>
               <p className="text-gray-300 mb-3">
                 Want to see an example? Download our template with sample workouts:
               </p>

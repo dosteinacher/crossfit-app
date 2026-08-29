@@ -188,7 +188,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-pure-gray text-pure-white rounded-lg shadow-lg border border-coastal-search p-6 ${className}`}>
+    <div className={`bg-gradient-to-b from-[#1e2126] to-pure-gray text-pure-white rounded-lg border border-coastal-search/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_10px_15px_-3px_rgba(0,0,0,0.4)] p-6 ${className}`}>
       {children}
     </div>
   );

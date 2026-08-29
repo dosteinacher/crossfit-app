@@ -143,7 +143,6 @@ export default function DashboardPage() {
                   transition={{ duration: 0.35 }}
                   className="flex gap-3 items-start bg-coastal-sky/10 border border-coastal-sky/40 rounded-xl px-4 py-3"
                 >
-                  <span className="text-coastal-sky mt-0.5 shrink-0 text-lg">📌</span>
                   <div className="min-w-0">
                     <p className="font-semibold text-pure-white text-sm">{a.title}</p>
                     {a.body && <p className="text-pure-text-light text-sm mt-0.5">{a.body}</p>}
@@ -256,9 +255,6 @@ export default function DashboardPage() {
                 transition={{ duration: 0.4, delay: 0.3 }}
                 className="bg-pure-gray border border-gray-700 rounded-xl p-12 text-center"
               >
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-pure-green/10 border border-pure-green/20 flex items-center justify-center">
-                  <span className="text-4xl">💪</span>
-                </div>
                 <h3 className="text-2xl font-bold text-pure-white mb-2">Rest week!</h3>
                 <p className="text-pure-text-light">No workouts in the next 7 days. Check back soon or create one!</p>
               </motion.div>

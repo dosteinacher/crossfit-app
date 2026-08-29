@@ -139,7 +139,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                 : 'text-gray-400 hover:text-pure-white'
             }`}
           >
-            📅 Calendar
+            Calendar
           </button>
           <button
             onClick={() => setViewMode('list')}
@@ -149,7 +149,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                 : 'text-gray-400 hover:text-pure-white'
             }`}
           >
-            📋 List
+            List
           </button>
         </div>
 
