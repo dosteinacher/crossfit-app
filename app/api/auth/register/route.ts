@@ -15,15 +15,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check invite code — INVITE_CODE must be set in environment variables
-    const validInviteCode = process.env.INVITE_CODE;
-    if (!validInviteCode) {
-      console.error('INVITE_CODE environment variable is not set');
-      return NextResponse.json(
-        { error: 'Registration is currently unavailable. Contact the admin.' },
-        { status: 503 }
-      );
-    }
+    // Check invite code — INVITE_CODE env overrides the default (see INVITE_CODE.md)
+    const validInviteCode = process.env.INVITE_CODE || 'PURE2026';
     if (inviteCode !== validInviteCode) {
       return NextResponse.json(
         { error: 'Invalid invite code. Ask your gym admin for the code.' },
