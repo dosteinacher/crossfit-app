@@ -34,7 +34,7 @@ module.exports = {
         // Mid-tier semantic stat/rating colour, darkened so it stays legible on white.
         'coastal-honey': '#8A6D1F',
         // Semantic aliases
-        'pure-text-light': '#5B6470',   // Secondary text throughout the app
+        'pure-text-light': '#48505C',   // Secondary text throughout the app (7.2:1 on the card tint)
       },
     },
   },

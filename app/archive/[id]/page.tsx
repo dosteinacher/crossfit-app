@@ -116,7 +116,7 @@ export default function TemplateDetailPage() {
             {/* Description */}
             <div className="mb-6">
               <h2 className="text-xl font-bold text-pure-ink mb-2">Workout</h2>
-              <p className="text-gray-600 whitespace-pre-wrap">{template.description}</p>
+              <p className="text-pure-ink whitespace-pre-wrap">{template.description}</p>
             </div>
 
             {/* Actions */}

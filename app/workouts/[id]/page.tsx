@@ -457,7 +457,7 @@ export default function WorkoutDetailPage() {
             {workout.description && (
               <div className="mb-6">
                 <h2 className="text-xl font-bold text-pure-ink mb-2">Description</h2>
-                <p className="text-pure-text-light whitespace-pre-wrap">{workout.description}</p>
+                <p className="text-pure-ink whitespace-pre-wrap">{workout.description}</p>
               </div>
             )}
 
@@ -555,7 +555,7 @@ export default function WorkoutDetailPage() {
                 ) : (
                   <div className="space-y-2">
                     {workout.result ? (
-                      <p className="text-pure-text-light whitespace-pre-wrap">{workout.result}</p>
+                      <p className="text-pure-ink whitespace-pre-wrap">{workout.result}</p>
                     ) : (
                       <p className="text-pure-text-light">No result recorded yet.</p>
                     )}
