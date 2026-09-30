@@ -75,7 +75,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                 <div
                   className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 transition ${
                     workout.is_registered
-                      ? 'bg-pure-green text-black'
+                      ? 'bg-pure-green text-black ring-1 ring-pure-accent-ink'
                       : getWorkoutTypeStyle(workout.workout_type).chip
                   }`}
                 >
