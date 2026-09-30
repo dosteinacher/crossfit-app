@@ -133,11 +133,11 @@ export default function CreatePollPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-3xl">
-          <h1 className="text-4xl font-bold text-pure-white mb-8">Create Availability Poll</h1>
+          <h1 className="text-4xl font-bold text-pure-ink mb-8">Create Availability Poll</h1>
 
-          <Card className="bg-pure-gray border-gray-700">
+          <Card className="bg-pure-surface border-gray-200">
             {error && <ErrorMessage message={error} />}
             {success && <SuccessMessage message={success} />}
 
@@ -149,7 +149,7 @@ export default function CreatePollPage() {
                 onChange={setStartDate}
                 required
               />
-              <p className="text-sm text-gray-400 mb-4">
+              <p className="text-sm text-pure-text-light mb-4">
                 Mon–Fri: 8am, 12pm, 6pm. Saturday: 9am, 10am, 11am. Sunday: no slots. You can remove or add slots below.
               </p>
 
@@ -171,17 +171,17 @@ export default function CreatePollPage() {
               />
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-pure-white mb-1">
+                <label className="block text-sm font-medium text-pure-ink mb-1">
                   Link to Workout Template (Optional)
                 </label>
                 <select
                   value={templateId}
                   onChange={(e) => setTemplateId(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                 >
                   <option value="">TBD - Decide later</option>
                   {templates.map((template) => (
-                    <option key={template.id} value={template.id} className="bg-pure-dark text-pure-white">
+                    <option key={template.id} value={template.id} className="bg-pure-bg text-pure-ink">
                       {template.title}
                     </option>
                   ))}
@@ -190,8 +190,8 @@ export default function CreatePollPage() {
 
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-sm font-medium text-pure-white">
-                    Time Slot Options <span className="text-red-500">*</span>
+                  <label className="text-sm font-medium text-pure-ink">
+                    Time Slot Options <span className="text-red-600">*</span>
                   </label>
                   <Button type="button" onClick={addOption} variant="secondary" className="text-sm">
                     + Add Time Slot
@@ -204,13 +204,13 @@ export default function CreatePollPage() {
                     const optionDate = option.date ? new Date(option.date + 'T12:00:00') : null;
                     const timeLabel = option.time === '08:00' ? '8am' : option.time === '12:00' ? '12pm' : option.time === '18:00' ? '6pm' : option.time === '09:00' ? '9am' : option.time === '10:00' ? '10am' : option.time === '11:00' ? '11am' : option.time;
                     return (
-                      <div key={index} className="bg-pure-dark border border-gray-700 rounded-lg p-4">
+                      <div key={index} className="bg-pure-bg border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
                             {isFilled ? (
                               <>
                                 <div className="md:col-span-2 flex items-center">
-                                  <span className="text-pure-white font-medium">
+                                  <span className="text-pure-ink font-medium">
                                     {optionDate ? format(optionDate, 'EEE d MMM') : ''}, {timeLabel}
                                   </span>
                                 </div>
@@ -252,7 +252,7 @@ export default function CreatePollPage() {
                           <button
                             type="button"
                             onClick={() => removeOption(index)}
-                            className="mt-7 text-red-400 hover:text-red-300 transition shrink-0"
+                            className="mt-7 text-red-600 hover:text-red-700 transition shrink-0"
                             title="Remove slot"
                           >
                             ✕
@@ -264,7 +264,7 @@ export default function CreatePollPage() {
                 </div>
               </div>
 
-              <p className="text-sm text-gray-400 mt-4">
+              <p className="text-sm text-pure-text-light mt-4">
                 Click Create Poll to publish. Your poll will then appear under &quot;Active&quot; on the Calendar page so others can vote.
               </p>
               <div className="flex gap-4 mt-6">

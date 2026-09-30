@@ -46,14 +46,18 @@ export default function Navbar() {
 
   if (!user) {
     return (
-      <nav className="sticky top-0 z-50 bg-pure-dark border-b-2 border-coastal-sky shadow-lg">
+      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
-            <Link href="/login" className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-coastal-sky rounded" aria-label="GO PURE — Login">
-              <Image src="/go-pure-logo.png" alt="PURE" width={120} height={36} className="h-8 w-auto object-contain object-left" priority />
+            <Link href="/login" className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-pure-accent-ink rounded-lg" aria-label="GO PURE — Login">
+              {/* The logo artwork is white + lime, so on a light page it needs a dark
+                  lockup chip to stay visible instead of being recoloured. */}
+              <span className="inline-flex items-center rounded-lg bg-black px-3 py-1.5">
+                <Image src="/go-pure-logo.png" alt="PURE" width={120} height={36} className="h-7 w-auto object-contain object-left" priority />
+              </span>
             </Link>
             <div className="flex gap-2">
-              <Link href="/login" className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium text-sm">
+              <Link href="/login" className="px-4 py-2 rounded-lg border border-gray-300 text-pure-ink hover:bg-gray-100 transition font-medium text-sm">
                 Login
               </Link>
               <Link href="/register" className="px-4 py-2 rounded-lg bg-pure-green text-black hover:bg-pure-accent-light transition font-semibold text-sm">
@@ -67,28 +71,31 @@ export default function Navbar() {
   }
 
   const navLinkClass = (href: string) =>
-    `block px-4 py-2 rounded-lg transition text-pure-white hover:bg-coastal-search/20 ${
-      pathname === href ? 'bg-coastal-sky/30 border border-coastal-sky' : ''
+    `block px-4 py-2 rounded-lg transition text-pure-ink hover:bg-gray-100 ${
+      pathname === href ? 'bg-pure-green/25 border border-pure-accent-ink/30 text-pure-accent-ink font-semibold' : ''
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 bg-pure-dark border-b-2 border-coastal-sky shadow-lg">
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4 py-3">
         {/* Top bar */}
         <div className="flex justify-between items-center">
           <Link
             href="/dashboard"
-            className="flex shrink-0 items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-coastal-sky rounded"
+            className="flex shrink-0 items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-pure-accent-ink rounded-lg"
             aria-label="PURE — Dashboard"
           >
-            <Image
-              src="/go-pure-logo.png"
-              alt="PURE"
-              width={120}
-              height={36}
-              className="h-8 w-auto object-contain object-left navbar-brand-spin"
-              priority
-            />
+            {/* Dark lockup chip: the artwork is white + lime and would disappear on the light navbar. */}
+            <span className="inline-flex items-center rounded-lg bg-black px-3 py-1.5">
+              <Image
+                src="/go-pure-logo.png"
+                alt="PURE"
+                width={120}
+                height={36}
+                className="h-7 w-auto object-contain object-left navbar-brand-spin"
+                priority
+              />
+            </span>
           </Link>
 
           {/* Desktop links */}
@@ -102,23 +109,23 @@ export default function Navbar() {
             <Link
               href="/workouts/create"
               className={`bg-pure-green text-black hover:bg-pure-accent-light px-4 py-2 rounded-lg transition font-semibold ml-1 ${
-                pathname === '/workouts/create' ? 'ring-2 ring-coastal-sky' : ''
+                pathname === '/workouts/create' ? 'ring-2 ring-pure-accent-ink/50' : ''
               }`}
             >
               + Create
             </Link>
-            <div className="flex items-center gap-3 ml-2 pl-2 border-l border-gray-700">
-              <Link href="/profile" className="text-sm text-pure-white font-medium hover:text-coastal-sky transition whitespace-nowrap">
+            <div className="flex items-center gap-3 ml-2 pl-2 border-l border-gray-200">
+              <Link href="/profile" className="text-sm text-pure-ink font-medium hover:text-coastal-sky transition whitespace-nowrap">
                 {user.name}
                 {user.is_admin && (
-                  <span className="ml-2 bg-coastal-honey text-black text-xs px-2 py-0.5 rounded font-semibold">
+                  <span className="ml-2 bg-coastal-honey text-white text-xs px-2 py-0.5 rounded font-semibold">
                     Admin
                   </span>
                 )}
               </Link>
               <button
                 onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition text-pure-white font-medium text-sm whitespace-nowrap"
+                className="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition text-white font-medium text-sm whitespace-nowrap"
               >
                 Logout
               </button>
@@ -127,14 +134,14 @@ export default function Navbar() {
 
           {/* Mobile: right side */}
           <div className="md:hidden flex items-center gap-2">
-            <Link href="/profile" className="text-sm text-pure-white font-medium hover:text-coastal-sky transition truncate max-w-[100px]">
+            <Link href="/profile" className="text-sm text-pure-ink font-medium hover:text-coastal-sky transition truncate max-w-[100px]">
               {user.name}
             </Link>
             <button
               onClick={() => setMenuOpen((o) => !o)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={menuOpen}
-              className="p-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition"
+              className="p-2 rounded-lg border border-gray-300 text-pure-ink hover:bg-gray-100 transition"
             >
               {menuOpen ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +158,7 @@ export default function Navbar() {
 
         {/* Mobile dropdown menu */}
         {menuOpen && (
-          <div className="md:hidden mt-3 pb-1 border-t border-gray-700 pt-3 flex flex-col gap-1">
+          <div className="md:hidden mt-3 pb-1 border-t border-gray-200 pt-3 flex flex-col gap-1">
             {NAV_LINKS.map(({ href, label }) => (
               <Link key={href} href={href} className={navLinkClass(href)}>{label}</Link>
             ))}
@@ -163,7 +170,7 @@ export default function Navbar() {
                 ))}
               </>
             )}
-            <div className="mt-1 pt-2 border-t border-gray-700 flex gap-2">
+            <div className="mt-1 pt-2 border-t border-gray-200 flex gap-2">
               <Link
                 href="/workouts/create"
                 className="flex-1 text-center bg-pure-green text-black hover:bg-pure-accent-light px-4 py-2 rounded-lg transition font-semibold text-sm"
@@ -172,7 +179,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition text-pure-white font-medium text-sm"
+                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition text-white font-medium text-sm"
               >
                 Logout
               </button>

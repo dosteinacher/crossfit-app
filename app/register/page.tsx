@@ -70,9 +70,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-pure-dark flex items-center justify-center px-4">
-      <Card className="w-full max-w-md bg-pure-gray border-gray-700">
-        <h1 className="text-3xl font-bold text-center mb-6 text-pure-white">
+    <div className="min-h-screen bg-pure-bg flex items-center justify-center px-4">
+      <Card className="w-full max-w-md bg-pure-surface border-gray-200">
+        <h1 className="text-3xl font-bold text-center mb-6 text-pure-ink">
           Register for PURE
         </h1>
         
@@ -134,9 +134,9 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <p className="text-center mt-4 text-gray-400">
+        <p className="text-center mt-4 text-pure-text-light">
           Already have an account?{' '}
-          <Link href="/login" className="text-pure-green hover:underline">
+          <Link href="/login" className="text-pure-accent-ink hover:underline">
             Login here
           </Link>
         </p>

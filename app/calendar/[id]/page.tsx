@@ -154,10 +154,10 @@ export default function PollDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-pure-dark py-8">
+        <div className="min-h-screen bg-pure-bg py-8">
           <div className="container mx-auto px-4 max-w-4xl">
-            <Card className="bg-pure-gray border-gray-700">
-              <p className="text-red-400">Poll not found</p>
+            <Card className="bg-pure-surface border-gray-200">
+              <p className="text-red-600">Poll not found</p>
             </Card>
           </div>
         </div>
@@ -173,21 +173,21 @@ export default function PollDetailPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {error && <ErrorMessage message={error} />}
           {success && <SuccessMessage message={success} />}
 
-          <Card className="bg-pure-gray border-gray-700">
+          <Card className="bg-pure-surface border-gray-200">
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h1 className="text-3xl font-bold text-pure-white mb-2">{poll.title}</h1>
+                <h1 className="text-3xl font-bold text-pure-ink mb-2">{poll.title}</h1>
                 <span
                   className={`text-sm font-medium px-3 py-1 rounded ${
                     poll.status === 'active'
-                      ? 'bg-green-900 text-green-200'
-                      : 'bg-gray-700 text-gray-400'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-pure-text-light'
                   }`}
                 >
                   {poll.status}
@@ -210,41 +210,41 @@ export default function PollDetailPage() {
             </div>
 
             {poll.description && (
-              <p className="text-gray-300 mb-4">{poll.description}</p>
+              <p className="text-gray-600 mb-4">{poll.description}</p>
             )}
 
             {poll.template && (
-              <div className="bg-purple-900 border border-purple-700 rounded-lg p-3 mb-6">
-                <p className="text-purple-200 text-sm">
+              <div className="bg-purple-100 border border-purple-300 rounded-lg p-3 mb-6">
+                <p className="text-purple-700 text-sm">
                   <strong>Linked Workout:</strong> {poll.template.title}
                 </p>
               </div>
             )}
 
-            <div className="text-sm text-gray-400 mb-6">
+            <div className="text-sm text-pure-text-light mb-6">
               Created by {poll.creator_name} on {format(new Date(poll.created_at), 'MMM d, yyyy')}
             </div>
 
             {/* Voting Options */}
             <div className="space-y-3">
-              <h2 className="text-xl font-bold text-pure-white mb-4">
+              <h2 className="text-xl font-bold text-pure-ink mb-4">
                 {poll.status === 'active' ? 'Vote for times you can attend:' : 'Results:'}
               </h2>
 
               {sortedOptions.map((option: any) => (
                 <div
                   key={option.id}
-                  className="bg-pure-dark border border-gray-700 rounded-lg p-4 hover:border-gray-600 transition"
+                  className="bg-pure-bg border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-pure-white">
+                        <h3 className="text-lg font-bold text-pure-ink">
                           {format(new Date(option.date), 'EEEE, MMM d')} at{' '}
                           {format(new Date(option.date), 'h:mm a')}
                         </h3>
                         {option.label && (
-                          <span className="text-xs px-2 py-1 bg-gray-700 text-gray-300 rounded">
+                          <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
                             {option.label}
                           </span>
                         )}
@@ -253,13 +253,13 @@ export default function PollDetailPage() {
                       {/* Vote Bar */}
                       <div className="mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-pure-green transition-all"
                               style={{ width: `${(option.vote_count / maxVotes) * 100}%` }}
                             />
                           </div>
-                          <span className="text-sm font-bold text-pure-green">
+                          <span className="text-sm font-bold text-pure-accent-ink">
                             {option.vote_count}
                           </span>
                         </div>
@@ -267,7 +267,7 @@ export default function PollDetailPage() {
 
                       {/* Voters */}
                       {option.voters.length > 0 && (
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-pure-text-light">
                           {option.voters.join(', ')}
                         </p>
                       )}
@@ -301,9 +301,9 @@ export default function PollDetailPage() {
 
             {/* Add a new date — open to all logged-in users while poll is active */}
             {poll.status === 'active' && (
-              <div className="mt-6 pt-6 border-t border-gray-700">
-                <h3 className="text-lg font-bold text-pure-white mb-3">Add a date</h3>
-                <p className="text-sm text-gray-400 mb-3">
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-bold text-pure-ink mb-3">Add a date</h3>
+                <p className="text-sm text-pure-text-light mb-3">
                   Propose another time slot. Everyone who has voted (and the poll creator) will get an email so they can vote on it.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
@@ -311,20 +311,20 @@ export default function PollDetailPage() {
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    className="px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                    className="px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
                   />
                   <input
                     type="time"
                     value={newTime}
                     onChange={(e) => setNewTime(e.target.value)}
-                    className="px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                    className="px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
                   />
                   <input
                     type="text"
                     value={newLabel}
                     onChange={(e) => setNewLabel(e.target.value)}
                     placeholder="Label (optional)"
-                    className="px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                    className="px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
                   />
                 </div>
                 <Button onClick={handleAddOption} disabled={addingOption || !newDate || !newTime}>

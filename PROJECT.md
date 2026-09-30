@@ -27,6 +27,15 @@ Concise facts about this repo so tools and teammates don’t rely on stale guess
 
 - **`middleware.ts`** rewrites **`/` → `/home`** (root page also composes home).
 
+## Design system
+
+- The app is **light**: off-white page (`pure-bg` `#f4f5f7`), white cards (`pure-surface`), near-black ink (`pure-ink`). Long workout descriptions are the main thing people read, so readability wins over mood.
+- The logo lime **`pure-green` `#c1ff00` is a fill-only signal** — buttons, calendar chips, active states — and always pairs with **dark text**. Lime *text* on white is unreadable, so accent text and icons use **`pure-accent-ink` `#415600`** instead.
+- The `coastal-*` ramp is a cool slate scale for secondary text, labels, borders and decorative fills. `coastal-honey` stays a distinct semantic mid-tier stat/rating colour.
+- Palette lives in **`tailwind.config.js`**; page/body, selection, scrollbar and watermark rules live in **`app/globals.css`**.
+- **`/wod` (gym TV display) stays dark on purpose** — bright signage is unreadable across a room, and `WodScreenWake` paints near-black pixels. It opts out with the `.wod-screen` class (see the `body:has(.wod-screen)` rules in `globals.css`) and uses **literal** colour classes rather than the light tokens.
+- The logo artwork is **white + lime**, so on light surfaces it sits on a **black lockup chip** (navbar) or is knocked down to ink (`filter: brightness(0)`, the page watermark).
+
 ## Where to read more
 
 | Topic | File |

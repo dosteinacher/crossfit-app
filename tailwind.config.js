@@ -8,26 +8,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // "Signal on black": one high-energy accent (lime, matches the logo), everything
-        // else desaturated to neutral grays. See PROJECT.md for the design rationale.
-        'pure-green': '#c1ff00',        // Primary signal color — CTAs, active/positive states
+        // "Signal on paper": the app runs light so long text stays comfortable to read.
+        // The lime logo colour is kept as a fill-only signal (buttons, dots, highlights)
+        // because lime *text* on white is unreadable — use `pure-accent-ink` for that.
+        // The gym TV display at /wod stays dark on purpose and uses literal classes.
+        'pure-green': '#c1ff00',        // Signal fill — CTAs, active/positive states (always with dark text)
         'pure-logo': '#c1ff00',
-        'pure-accent-light': '#d9ff66', // Lighter lime — hover state of the primary signal
-        'pure-dark': '#1c2126',         // Gunmetal — navbar/input surfaces
-        'pure-gray': '#17191c',         // Near-black with a whisper of steel-blue — card surfaces
-        'pure-white': '#f5f5f5',
-        // Former "coastal" palette, now a cool steel/slate gray ramp (blue undertone instead
-        // of neutral zinc) for a "black steel" feel — same relative lightness as before so
-        // hierarchy is unchanged; only the lime accent carries actual color/energy.
-        'coastal-sky': '#94a3b8',       // slate-400 — secondary text, badges, borders
-        'coastal-search': '#64748b',    // slate-500 — hover backgrounds, secondary borders
-        'coastal-day': '#cbd5e1',       // slate-300 — light labels/text
-        'coastal-kombucha': '#475569',  // slate-600 — decorative gradient layering only
-        // Kept as a distinct semantic color (not neutralized): mid-tier stat/rating indicator,
-        // sits between pure-green (good) and red (bad) — e.g. attendance rate tiers, ratings.
-        'coastal-honey': '#D4BB7A',
+        'pure-accent-light': '#aee600', // Hover state of the signal fill (darker, so it reads on white)
+        'pure-accent-ink': '#415600',   // Lime-family ink for accent *text* and icons on light surfaces
+        'pure-bg': '#f4f5f7',           // Page + navbar background — off-white, softer than pure white
+        'pure-surface': '#ffffff',      // Cards, panels, raised surfaces
+        'pure-ink': '#14171a',          // Primary text
+        'pure-white': '#ffffff',        // Literal white — badges and the dark /wod screen
+        // Cool slate ramp, re-pitched for light backgrounds. Same roles as before,
+        // lightness flipped so contrast against paper matches what black gave us.
+        'coastal-sky': '#475569',       // slate-600 — secondary text, filled secondary buttons
+        'coastal-search': '#cbd5e1',    // slate-300 — borders, hover surfaces
+        'coastal-day': '#334155',       // slate-700 — strong labels
+        'coastal-kombucha': '#e2e8f0',  // slate-200 — decorative gradient layering only
+        // Mid-tier semantic stat/rating colour, darkened so it stays legible on white.
+        'coastal-honey': '#8A6D1F',
         // Semantic aliases
-        'pure-text-light': '#9CA3AF',   // gray-400 — secondary text throughout app
+        'pure-text-light': '#5B6470',   // Secondary text throughout the app
       },
     },
   },

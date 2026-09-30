@@ -21,8 +21,8 @@ export function Button({
   
   const variantClasses = {
     primary: 'bg-pure-green text-black hover:bg-pure-accent-light font-semibold',
-    secondary: 'bg-coastal-sky text-pure-white hover:bg-coastal-search border border-coastal-day',
-    danger: 'bg-red-600 text-pure-white hover:bg-red-700',
+    secondary: 'bg-white text-coastal-day hover:bg-gray-100 border border-coastal-search',
+    danger: 'bg-red-600 text-white hover:bg-red-700',
   };
 
   return (
@@ -56,9 +56,9 @@ export function Input({
 }) {
   return (
     <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-pure-white mb-1">
+      <label className="block text-sm font-medium text-pure-ink mb-1">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-red-600 ml-1">*</span>}
       </label>
       <input
         type={type}
@@ -66,7 +66,7 @@ export function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky [color-scheme:dark]"
+        className="w-full px-3 py-2 bg-white border border-coastal-search text-pure-ink placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-accent-ink/40 focus:border-pure-accent-ink"
       />
     </div>
   );
@@ -111,32 +111,32 @@ export function TimeInput({
 
   return (
     <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-pure-white mb-1">
+      <label className="block text-sm font-medium text-pure-ink mb-1">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-red-600 ml-1">*</span>}
       </label>
       <div className="flex gap-2">
         <select
           value={hour}
           onChange={(e) => handleHourChange(e.target.value)}
           required={required}
-          className="flex-1 px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky"
+          className="flex-1 px-3 py-2 bg-white border border-coastal-search text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-accent-ink/40 focus:border-pure-accent-ink"
         >
           {hours.map((h) => (
-            <option key={h} value={h} className="bg-pure-dark text-pure-white">
+            <option key={h} value={h} className="bg-white text-pure-ink">
               {h}
             </option>
           ))}
         </select>
-        <span className="text-pure-white text-2xl flex items-center">:</span>
+        <span className="text-pure-ink text-2xl flex items-center">:</span>
         <select
           value={minute}
           onChange={(e) => handleMinuteChange(e.target.value)}
           required={required}
-          className="flex-1 px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky"
+          className="flex-1 px-3 py-2 bg-white border border-coastal-search text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-accent-ink/40 focus:border-pure-accent-ink"
         >
           {minutes.map((m) => (
-            <option key={m} value={m} className="bg-pure-dark text-pure-white">
+            <option key={m} value={m} className="bg-white text-pure-ink">
               {m}
             </option>
           ))}
@@ -166,7 +166,7 @@ export function TextArea({
 }) {
   return (
     <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-pure-white mb-1">
+      <label className="block text-sm font-medium text-pure-ink mb-1">
         {label}
       </label>
       <textarea
@@ -174,7 +174,7 @@ export function TextArea({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className={`w-full px-3 py-2 bg-pure-dark border border-coastal-search text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coastal-sky ${textareaClassName}`}
+        className={`w-full px-3 py-2 bg-white border border-coastal-search text-pure-ink placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-accent-ink/40 focus:border-pure-accent-ink ${textareaClassName}`}
       />
     </div>
   );
@@ -188,7 +188,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-gradient-to-b from-[#1e2126] to-pure-gray text-pure-white rounded-lg border border-coastal-search/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_10px_15px_-3px_rgba(0,0,0,0.4)] p-6 ${className}`}>
+    <div className={`bg-pure-surface text-pure-ink rounded-lg border border-gray-200 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_-4px_rgba(16,24,40,0.10)] p-6 ${className}`}>
       {children}
     </div>
   );
@@ -196,7 +196,7 @@ export function Card({
 
 export function Loading() {
   return (
-    <div className="flex justify-center items-center min-h-screen bg-pure-dark">
+    <div className="flex justify-center items-center min-h-screen bg-pure-bg">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pure-green"></div>
     </div>
   );
@@ -204,7 +204,7 @@ export function Loading() {
 
 export function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="bg-red-900/30 border border-red-600/50 text-red-300 px-4 py-3 rounded-lg mb-4">
+    <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-4">
       {message}
     </div>
   );
@@ -212,7 +212,7 @@ export function ErrorMessage({ message }: { message: string }) {
 
 export function SuccessMessage({ message }: { message: string }) {
   return (
-    <div className="bg-coastal-day/20 border border-coastal-sky text-coastal-day px-4 py-3 rounded-lg mb-4">
+    <div className="bg-pure-green/20 border border-pure-accent-ink/40 text-pure-accent-ink px-4 py-3 rounded-lg mb-4">
       {message}
     </div>
   );

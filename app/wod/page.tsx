@@ -50,7 +50,7 @@ export default async function WODPage() {
   const workouts = await getWorkoutsForToday();
 
   return (
-    <div className="min-h-screen bg-pure-dark py-4 px-8">
+    <div className="wod-screen min-h-screen bg-black text-[#f5f5f5] py-4 px-8">
       <WodScreenWake />
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-1">
@@ -65,24 +65,24 @@ export default async function WODPage() {
               priority
             />
             <div className="min-w-0">
-              <h1 className="text-4xl font-bold text-pure-green mb-2">
+              <h1 className="text-4xl font-bold text-[#c1ff00] mb-2">
                 Workout of the Day
               </h1>
             </div>
           </div>
           <WodClock />
         </div>
-        <div className="h-1 bg-gradient-to-r from-pure-green to-coastal-sky rounded-full"></div>
+        <div className="h-1 bg-gradient-to-r from-[#c1ff00] to-[#64748b] rounded-full"></div>
       </div>
 
       {/* Workouts */}
       <div className="max-w-6xl mx-auto space-y-4 mt-2">
         {workouts.length === 0 ? (
-          <div className="bg-pure-gray border border-gray-700 rounded-lg p-8 text-center">
-            <h2 className="text-3xl font-bold text-pure-white mb-3">
+          <div className="bg-[#17191c] border border-[#33383d] rounded-lg p-8 text-center">
+            <h2 className="text-3xl font-bold text-[#f5f5f5] mb-3">
               No Workouts Scheduled
             </h2>
-            <p className="text-xl text-pure-text-light">
+            <p className="text-xl text-[#a8b0ba]">
               Check back tomorrow for the next workout!
             </p>
           </div>
@@ -94,27 +94,27 @@ export default async function WODPage() {
             return (
               <div
                 key={workout.id}
-                className="bg-pure-gray border border-gray-700 rounded-lg p-4 shadow-2xl"
+                className="bg-[#17191c] border border-[#33383d] rounded-lg p-4 shadow-2xl"
               >
                 {/* Workout header - all on one line, no wrap */}
                 <div className="flex items-center gap-4 mb-3 flex-nowrap min-w-0">
-                  <div className="text-4xl font-bold text-pure-green shrink-0">
+                  <div className="text-4xl font-bold text-[#c1ff00] shrink-0">
                     #{index + 1}
                   </div>
                   <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden">
-                    <span className="text-2xl font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg shrink-0">
+                    <span className="text-2xl font-medium px-3 py-1 bg-[#64748b]/20 text-[#cbd5e1] border border-[#64748b]/60 rounded-lg shrink-0">
                       {workout.workout_type}
                     </span>
-                    <span className="text-2xl font-bold text-pure-white shrink-0 whitespace-nowrap">
+                    <span className="text-2xl font-bold text-[#f5f5f5] shrink-0 whitespace-nowrap">
                       {format(workoutDate, 'h:mm a')}
                     </span>
-                    <h2 className="text-3xl font-bold text-pure-white truncate min-w-0 shrink">
+                    <h2 className="text-3xl font-bold text-[#f5f5f5] truncate min-w-0 shrink">
                       {workout.title}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-                    <span className="text-xl text-pure-text-light">Participants</span>
-                    <span className="text-3xl font-bold text-pure-green">
+                    <span className="text-xl text-[#a8b0ba]">Participants</span>
+                    <span className="text-3xl font-bold text-[#c1ff00]">
                       {workout.registered_count}/{workout.max_participants}
                     </span>
                   </div>
@@ -130,7 +130,7 @@ export default async function WODPage() {
                   const LEFT_MAX = 15;
                   const useTwoColumns = lines.length > LEFT_MAX;
                   const bodyClass =
-                    'text-xl text-pure-text-light whitespace-pre-wrap leading-relaxed';
+                    'text-xl text-[#a8b0ba] whitespace-pre-wrap leading-relaxed';
 
                   let leftText = workout.description;
                   let rightText = '';
@@ -154,8 +154,8 @@ export default async function WODPage() {
                   }
 
                   return (
-                    <div className="mt-4 bg-pure-dark border border-gray-700 rounded-lg p-4">
-                      <h3 className="text-2xl font-bold text-pure-white mb-3">
+                    <div className="mt-4 bg-[#0c0e10] border border-[#33383d] rounded-lg p-4">
+                      <h3 className="text-2xl font-bold text-[#f5f5f5] mb-3">
                         Description
                       </h3>
                       {useTwoColumns ? (
@@ -171,20 +171,20 @@ export default async function WODPage() {
                 })()}
 
                 {/* Workout footer */}
-                <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between">
-                  <p className="text-xl text-pure-text-light">
-                    Created by <span className="font-semibold text-pure-white">{workout.creator_name}</span>
+                <div className="mt-3 pt-3 border-t border-[#33383d] flex items-center justify-between">
+                  <p className="text-xl text-[#a8b0ba]">
+                    Created by <span className="font-semibold text-[#f5f5f5]">{workout.creator_name}</span>
                   </p>
                   {workoutDate < now ? (
-                    <span className="text-xl font-medium px-3 py-1 bg-gray-700 text-gray-400 rounded-lg">
+                    <span className="text-xl font-medium px-3 py-1 bg-[#2a2f34] text-[#a8b0ba] rounded-lg">
                       Completed
                     </span>
                   ) : workoutDate > now ? (
-                    <span className="text-xl font-medium px-3 py-1 bg-green-900 text-green-200 rounded-lg">
+                    <span className="text-xl font-medium px-3 py-1 bg-[#14532d] text-[#bbf7d0] rounded-lg">
                       Upcoming
                     </span>
                   ) : (
-                    <span className="text-xl font-medium px-3 py-1 bg-pure-green text-pure-dark rounded-lg">
+                    <span className="text-xl font-medium px-3 py-1 bg-[#c1ff00] text-black rounded-lg">
                       In Progress
                     </span>
                   )}
@@ -201,9 +201,9 @@ export default async function WODPage() {
           href="https://go-pure.ch/login"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block bg-pure-gray border border-gray-700 rounded-lg px-6 py-3 hover:border-pure-green hover:bg-pure-dark transition-all duration-300 cursor-pointer"
+          className="inline-block bg-[#17191c] border border-[#33383d] rounded-lg px-6 py-3 hover:border-[#c1ff00] hover:bg-[#0c0e10] transition-all duration-300 cursor-pointer"
         >
-          <p className="text-xl font-bold text-pure-green">
+          <p className="text-xl font-bold text-[#c1ff00]">
             go-pure.ch login
           </p>
         </a>

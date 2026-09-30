@@ -65,10 +65,10 @@ export default function TemplateDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-pure-dark py-8">
+        <div className="min-h-screen bg-pure-bg py-8">
           <div className="container mx-auto px-4 max-w-4xl">
-            <Card className="bg-pure-gray border-gray-700">
-              <p className="text-red-400">Template not found</p>
+            <Card className="bg-pure-surface border-gray-200">
+              <p className="text-red-600">Template not found</p>
             </Card>
           </div>
         </div>
@@ -79,11 +79,11 @@ export default function TemplateDetailPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {error && <ErrorMessage message={error} />}
 
-          <Card className="bg-pure-gray border-gray-700">
+          <Card className="bg-pure-surface border-gray-200">
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -102,9 +102,9 @@ export default function TemplateDetailPage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl font-bold text-pure-white mb-4">{template.title}</h1>
+            <h1 className="text-3xl font-bold text-pure-ink mb-4">{template.title}</h1>
             
-            <div className="flex items-center gap-4 text-gray-400 mb-6">
+            <div className="flex items-center gap-4 text-pure-text-light mb-6">
               <div>
                 <span className="font-medium">Type:</span> {template.workout_type}
               </div>
@@ -115,12 +115,12 @@ export default function TemplateDetailPage() {
 
             {/* Description */}
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-pure-white mb-2">Workout</h2>
-              <p className="text-gray-300 whitespace-pre-wrap">{template.description}</p>
+              <h2 className="text-xl font-bold text-pure-ink mb-2">Workout</h2>
+              <p className="text-gray-600 whitespace-pre-wrap">{template.description}</p>
             </div>
 
             {/* Actions */}
-            <div className="border-t border-gray-700 pt-6 mt-6">
+            <div className="border-t border-gray-200 pt-6 mt-6">
               <div className="flex gap-4">
                 <Button onClick={handleUseTemplate} className="flex-1">
                   Schedule This Workout

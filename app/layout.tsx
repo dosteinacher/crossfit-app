@@ -22,13 +22,16 @@ export default function RootLayout({
       <body className={`${inter.className} ${bebasNeue.variable}`}>
         {/* Watermark background - high z-index to appear above page backgrounds */}
         <div 
-          className="fixed inset-0 pointer-events-none"
+          className="app-watermark fixed inset-0 pointer-events-none"
           style={{
             backgroundImage: 'url(/go-pure-logo.png)',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             backgroundSize: '40%',
-            opacity: 0.05,
+            // The artwork is white + lime; on the light page it has to be knocked
+            // down to ink, otherwise the watermark is invisible.
+            filter: 'brightness(0)',
+            opacity: 0.035,
             zIndex: 40,
           }}
         />

@@ -332,7 +332,7 @@ export default function WorkoutDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-pure-dark py-8">
+        <div className="min-h-screen bg-pure-bg py-8">
           <div className="container mx-auto px-4 max-w-4xl">
             <Card>
               <p className="text-red-600">Workout not found</p>
@@ -349,7 +349,7 @@ export default function WorkoutDetailPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-4xl">
           {error && <ErrorMessage message={error} />}
           {success && <SuccessMessage message={success} />}
@@ -362,14 +362,14 @@ export default function WorkoutDetailPage() {
                   {workout.workout_type}
                 </span>
                 {workout.is_registered && (
-                  <span className="ml-2 text-sm font-medium px-3 py-1 bg-coastal-day text-pure-dark rounded">
+                  <span className="ml-2 text-sm font-medium px-3 py-1 bg-coastal-day text-white rounded">
                     Registered
                   </span>
                 )}
               </div>
               <div className="flex gap-2">
                 {workout.deleted_at ? (
-                  <span className="text-sm font-medium px-3 py-1 bg-red-900/40 text-red-300 border border-red-700/50 rounded">
+                  <span className="text-sm font-medium px-3 py-1 bg-red-100 text-red-700 border border-red-300 rounded">
                     Cancelled
                   </span>
                 ) : (
@@ -401,14 +401,14 @@ export default function WorkoutDetailPage() {
                   </Link>
                 ) : (
                   <span
-                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-600 text-gray-600 cursor-not-allowed text-lg"
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-300 text-gray-600 cursor-not-allowed text-lg"
                     aria-hidden
                   >
                     ←
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-pure-white flex-1 min-w-0 text-center sm:text-left leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-pure-ink flex-1 min-w-0 text-center sm:text-left leading-tight">
                 {workout.title}
               </h1>
               <div className="flex-shrink-0 pt-1">
@@ -423,7 +423,7 @@ export default function WorkoutDetailPage() {
                   </Link>
                 ) : (
                   <span
-                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-600 text-gray-600 cursor-not-allowed text-lg"
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-300 text-gray-600 cursor-not-allowed text-lg"
                     aria-hidden
                   >
                     →
@@ -445,10 +445,10 @@ export default function WorkoutDetailPage() {
 
             {/* Cancellation notice */}
             {workout.deleted_at && (
-              <div className="mb-6 p-4 bg-red-900/20 border border-red-700/40 rounded-lg">
-                <p className="text-red-300 font-medium">This workout has been cancelled.</p>
+              <div className="mb-6 p-4 bg-red-50 border border-red-300 rounded-lg">
+                <p className="text-red-700 font-medium">This workout has been cancelled.</p>
                 {workout.cancellation_reason && (
-                  <p className="text-red-400/80 text-sm mt-1">{workout.cancellation_reason}</p>
+                  <p className="text-red-600/80 text-sm mt-1">{workout.cancellation_reason}</p>
                 )}
               </div>
             )}
@@ -456,26 +456,26 @@ export default function WorkoutDetailPage() {
             {/* Description */}
             {workout.description && (
               <div className="mb-6">
-                <h2 className="text-xl font-bold text-pure-white mb-2">Description</h2>
+                <h2 className="text-xl font-bold text-pure-ink mb-2">Description</h2>
                 <p className="text-pure-text-light whitespace-pre-wrap">{workout.description}</p>
               </div>
             )}
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-pure-dark border border-coastal-search rounded-lg p-4">
+              <div className="bg-pure-bg border border-coastal-search rounded-lg p-4">
                 <p className="text-sm text-pure-text-light">Created by</p>
-                <p className="text-lg font-semibold text-pure-white">{workout.creator_name || 'Unknown'}</p>
+                <p className="text-lg font-semibold text-pure-ink">{workout.creator_name || 'Unknown'}</p>
               </div>
-              <div className="bg-pure-dark border border-coastal-search rounded-lg p-4">
+              <div className="bg-pure-bg border border-coastal-search rounded-lg p-4">
                 <p className="text-sm text-pure-text-light">Participants</p>
-                <p className="text-lg font-semibold text-pure-white">
+                <p className="text-lg font-semibold text-pure-ink">
                   {workout.registered_count}/{workout.max_participants}
                 </p>
               </div>
-              <div className="bg-pure-dark border border-coastal-search rounded-lg p-4">
+              <div className="bg-pure-bg border border-coastal-search rounded-lg p-4">
                 <p className="text-sm text-pure-text-light">Status</p>
-                <p className="text-lg font-semibold text-pure-white">
+                <p className="text-lg font-semibold text-pure-ink">
                   {isPastWorkout ? 'Completed' : isFull ? 'Full' : 'Open'}
                 </p>
               </div>
@@ -508,7 +508,7 @@ export default function WorkoutDetailPage() {
             {/* Result & Rating (past workouts only) */}
             {isPastWorkout && (
               <div className="mb-6 space-y-4">
-                <h2 className="text-xl font-bold text-pure-white">Result & Rating</h2>
+                <h2 className="text-xl font-bold text-pure-ink">Result & Rating</h2>
                 {(workout.is_registered || (user && workout.created_by === user.id)) ? (
                   <>
                     <div>
@@ -520,7 +520,7 @@ export default function WorkoutDetailPage() {
                         onChange={(e) => setEditResult(e.target.value)}
                         placeholder="e.g. 12:34 or 3 rounds + 5 reps"
                         rows={2}
-                        className="w-full px-4 py-2 bg-pure-dark border border-coastal-search rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                        className="w-full px-4 py-2 bg-pure-bg border border-coastal-search rounded-lg text-pure-ink placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
                       />
                     </div>
                     <div>
@@ -557,7 +557,7 @@ export default function WorkoutDetailPage() {
                     {workout.result ? (
                       <p className="text-pure-text-light whitespace-pre-wrap">{workout.result}</p>
                     ) : (
-                      <p className="text-gray-500">No result recorded yet.</p>
+                      <p className="text-pure-text-light">No result recorded yet.</p>
                     )}
                     {workout.rating != null && workout.rating >= 1 && workout.rating <= 5 ? (
                       <p className="text-pure-text-light">
@@ -572,20 +572,20 @@ export default function WorkoutDetailPage() {
             {/* Participants List */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-pure-white">
+                <h2 className="text-xl font-bold text-pure-ink">
                   Participants ({(workout.participants || []).length + guests.length})
                 </h2>
                 {isPastWorkout && user?.is_admin && (workout.participants || []).length > 0 && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleMarkAllAttendance(true)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-pure-green/20 text-pure-green border border-pure-green/40 hover:bg-pure-green/30 transition font-medium"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-pure-green/20 text-pure-accent-ink border border-pure-green/40 hover:bg-pure-green/30 transition font-medium"
                     >
                       ✓ All attended
                     </button>
                     <button
                       onClick={() => handleMarkAllAttendance(false)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-gray-700/50 text-gray-400 border border-gray-600 hover:bg-gray-700 transition font-medium"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-gray-100/50 text-pure-text-light border border-gray-300 hover:bg-gray-100 transition font-medium"
                     >
                       ✗ Clear all
                     </button>
@@ -600,9 +600,9 @@ export default function WorkoutDetailPage() {
                   {(workout.participants || []).map((participant: any) => (
                     <div
                       key={participant.user_id}
-                      className="flex justify-between items-center bg-pure-dark border border-coastal-search rounded-lg p-3"
+                      className="flex justify-between items-center bg-pure-bg border border-coastal-search rounded-lg p-3"
                     >
-                      <span className="font-medium text-pure-white">
+                      <span className="font-medium text-pure-ink">
                         {participant.user_name}
                       </span>
                       {isPastWorkout && user?.is_admin && (
@@ -613,7 +613,7 @@ export default function WorkoutDetailPage() {
                             onChange={(e) =>
                               handleMarkAttendance(participant.user_id, e.target.checked)
                             }
-                            className="w-4 h-4 text-pure-green rounded focus:ring-2 focus:ring-pure-green"
+                            className="w-4 h-4 text-pure-accent-ink rounded focus:ring-2 focus:ring-pure-green"
                           />
                           <span className="text-sm text-pure-text-light">Attended</span>
                         </label>
@@ -626,16 +626,16 @@ export default function WorkoutDetailPage() {
                   {guests.map((guest) => (
                     <div
                       key={guest.id}
-                      className="flex justify-between items-center bg-pure-dark border border-coastal-search rounded-lg p-3"
+                      className="flex justify-between items-center bg-pure-bg border border-coastal-search rounded-lg p-3"
                     >
-                      <span className="font-medium text-pure-white">
+                      <span className="font-medium text-pure-ink">
                         {guest.name}
-                        <span className="ml-2 text-xs text-gray-400 font-normal">Guest</span>
+                        <span className="ml-2 text-xs text-pure-text-light font-normal">Guest</span>
                       </span>
                       <button
                         onClick={() => handleDeleteGuest(guest.id)}
                         disabled={guestLoading}
-                        className="text-red-400 hover:text-red-300 text-xs font-medium disabled:opacity-50"
+                        className="text-red-600 hover:text-red-700 text-xs font-medium disabled:opacity-50"
                       >
                         Remove
                       </button>
@@ -652,7 +652,7 @@ export default function WorkoutDetailPage() {
                   onChange={(e) => setNewGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddGuest())}
                   placeholder="Guest name..."
-                  className="flex-1 px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="flex-1 px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
                 />
                 <button
                   onClick={handleAddGuest}
@@ -667,7 +667,7 @@ export default function WorkoutDetailPage() {
 
           {/* Highlights — social feed */}
           <Card className="mt-6">
-            <h2 className="text-xl font-bold text-pure-white mb-4">
+            <h2 className="text-xl font-bold text-pure-ink mb-4">
               Highlights {posts.length > 0 && <span className="text-pure-text-light text-sm font-normal">({posts.length})</span>}
             </h2>
 
@@ -678,10 +678,10 @@ export default function WorkoutDetailPage() {
                 onChange={(e) => setPostMessage(e.target.value)}
                 placeholder="Share a message about this workout..."
                 rows={2}
-                className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green resize-none"
+                className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green resize-none"
               />
               <div className="flex items-center gap-3">
-                <label className="text-xs text-pure-text-light cursor-pointer hover:text-pure-white">
+                <label className="text-xs text-pure-text-light cursor-pointer hover:text-pure-ink">
                   <input
                     type="file"
                     accept="image/*"
@@ -694,7 +694,7 @@ export default function WorkoutDetailPage() {
                   <button
                     type="button"
                     onClick={() => setPostImage(null)}
-                    className="text-xs text-red-400 hover:text-red-300"
+                    className="text-xs text-red-600 hover:text-red-700"
                   >
                     Remove
                   </button>
@@ -707,7 +707,7 @@ export default function WorkoutDetailPage() {
                   {postSubmitting ? 'Posting…' : 'Post'}
                 </button>
               </div>
-              {postError && <p className="text-xs text-red-400">{postError}</p>}
+              {postError && <p className="text-xs text-red-600">{postError}</p>}
             </div>
 
             {/* Feed */}
@@ -716,22 +716,22 @@ export default function WorkoutDetailPage() {
             ) : (
               <div className="space-y-4">
                 {posts.map((p) => (
-                  <div key={p.id} className="bg-pure-dark border border-gray-700 rounded-lg p-3">
+                  <div key={p.id} className="bg-pure-bg border border-gray-200 rounded-lg p-3">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
-                        <p className="font-semibold text-pure-white text-sm">{p.user_name}</p>
-                        <p className="text-xs text-gray-500">{format(new Date(p.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                        <p className="font-semibold text-pure-ink text-sm">{p.user_name}</p>
+                        <p className="text-xs text-pure-text-light">{format(new Date(p.created_at), 'MMM d, yyyy · h:mm a')}</p>
                       </div>
                       {(p.user_id === user?.id || user?.is_admin) && (
                         <button
                           onClick={() => handleDeletePost(p.id)}
-                          className="text-xs text-red-400 hover:text-red-300"
+                          className="text-xs text-red-600 hover:text-red-700"
                         >
                           Delete
                         </button>
                       )}
                     </div>
-                    {p.message && <p className="text-pure-white text-sm whitespace-pre-wrap mb-2">{p.message}</p>}
+                    {p.message && <p className="text-pure-ink text-sm whitespace-pre-wrap mb-2">{p.message}</p>}
                     {p.image_url && (
                       <button
                         type="button"
@@ -757,7 +757,7 @@ export default function WorkoutDetailPage() {
               <h3 className="text-sm font-semibold text-pure-text-light mb-2 uppercase tracking-wide">Edit History</h3>
               <div className="space-y-1">
                 {edits.map((e) => (
-                  <p key={e.id} className="text-xs text-gray-500">
+                  <p key={e.id} className="text-xs text-pure-text-light">
                     Edited by <span className="text-pure-text-light">{e.editor_name}</span> · {format(new Date(e.edited_at), 'MMM d, yyyy · h:mm a')}
                   </p>
                 ))}
@@ -787,26 +787,26 @@ export default function WorkoutDetailPage() {
       {/* Cancel workout modal */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-pure-gray border border-gray-700 rounded-xl shadow-2xl w-full max-w-md p-6">
-            <h2 className="text-xl font-bold text-pure-white mb-2">Cancel Workout</h2>
+          <div className="bg-pure-surface border border-gray-200 rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 className="text-xl font-bold text-pure-ink mb-2">Cancel Workout</h2>
             <p className="text-pure-text-light text-sm mb-4">
               This will soft-cancel the workout. Registered members will be notified.
             </p>
             <label className="block text-sm font-medium text-pure-text-light mb-1">
-              Reason <span className="text-gray-500">(optional)</span>
+              Reason <span className="text-pure-text-light">(optional)</span>
             </label>
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               placeholder="e.g. Coach is sick, facility unavailable…"
               rows={3}
-              className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 mb-5 resize-none"
+              className="w-full px-4 py-2 bg-pure-bg border border-gray-300 rounded-lg text-pure-ink placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 mb-5 resize-none"
             />
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
                 disabled={cancelling}
-                className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-gray-700 transition font-medium"
+                className="px-4 py-2 rounded-lg border border-gray-300 text-pure-ink hover:bg-gray-100 transition font-medium"
               >
                 Keep Workout
               </button>

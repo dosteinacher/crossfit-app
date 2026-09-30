@@ -103,36 +103,36 @@ export default function AdminOverviewPage() {
 
   const topCards = [
     { label: 'Members', value: stats?.total_users ?? 0, color: 'text-coastal-sky' },
-    { label: 'Active Workouts', value: stats?.total_workouts ?? 0, color: 'text-pure-green' },
+    { label: 'Active Workouts', value: stats?.total_workouts ?? 0, color: 'text-pure-accent-ink' },
     { label: 'This Month', value: stats?.workouts_this_month ?? 0, color: 'text-coastal-honey' },
     { label: 'Upcoming', value: stats?.upcoming_workouts ?? 0, color: 'text-coastal-day' },
     { label: 'Total Sign-ups', value: stats?.total_registrations ?? 0, color: 'text-coastal-sky' },
-    { label: 'Attendance Rate', value: `${attendanceRate}%`, color: 'text-pure-green' },
-    { label: 'Cancelled', value: stats?.cancelled_workouts ?? 0, color: 'text-red-400' },
+    { label: 'Attendance Rate', value: `${attendanceRate}%`, color: 'text-pure-accent-ink' },
+    { label: 'Cancelled', value: stats?.cancelled_workouts ?? 0, color: 'text-red-600' },
     { label: 'Attended Sessions', value: stats?.attended_registrations ?? 0, color: 'text-coastal-honey' },
   ];
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-pure-white">Admin Overview</h1>
+              <h1 className="text-4xl font-bold text-pure-ink">Admin Overview</h1>
               <p className="text-pure-text-light mt-1">Gym at a glance</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleCopySchedule}
                 disabled={copying}
-                className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium text-sm disabled:opacity-50"
+                className="px-4 py-2 rounded-lg border border-gray-300 text-pure-ink hover:bg-pure-surface transition font-medium text-sm disabled:opacity-50"
               >
                 {copied ? '✓ Copied!' : copying ? 'Copying…' : 'Copy Schedule'}
               </button>
               <Link
                 href="/admin/users"
-                className="px-4 py-2 rounded-lg border border-gray-600 text-pure-white hover:bg-pure-gray transition font-medium text-sm"
+                className="px-4 py-2 rounded-lg border border-gray-300 text-pure-ink hover:bg-pure-surface transition font-medium text-sm"
               >
                 Manage Users →
               </Link>
@@ -140,22 +140,22 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Announcements — kept at top for quick access */}
-          <Card className="bg-pure-gray border-gray-700 mb-8">
-            <h2 className="text-xl font-bold text-pure-white mb-4">Announcements</h2>
+          <Card className="bg-pure-surface border-gray-200 mb-8">
+            <h2 className="text-xl font-bold text-pure-ink mb-4">Announcements</h2>
             <div className="space-y-3 mb-5">
               <input
                 type="text"
                 value={annTitle}
                 onChange={(e) => setAnnTitle(e.target.value)}
                 placeholder="Title (e.g. Gym closed this Saturday)"
-                className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm"
+                className="w-full px-4 py-2 bg-pure-bg border border-gray-300 rounded-lg text-pure-ink placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm"
               />
               <textarea
                 value={annBody}
                 onChange={(e) => setAnnBody(e.target.value)}
                 placeholder="Optional message body…"
                 rows={2}
-                className="w-full px-4 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm resize-none"
+                className="w-full px-4 py-2 bg-pure-bg border border-gray-300 rounded-lg text-pure-ink placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green text-sm resize-none"
               />
               <button
                 onClick={handlePostAnnouncement}
@@ -171,14 +171,14 @@ export default function AdminOverviewPage() {
             ) : (
               <div className="space-y-2">
                 {announcements.map((a: any) => (
-                  <div key={a.id} className="flex items-start justify-between gap-3 bg-pure-dark border border-gray-700 rounded-lg px-4 py-3">
+                  <div key={a.id} className="flex items-start justify-between gap-3 bg-pure-bg border border-gray-200 rounded-lg px-4 py-3">
                     <div className="min-w-0">
-                      <p className="font-semibold text-pure-white text-sm">{a.title}</p>
+                      <p className="font-semibold text-pure-ink text-sm">{a.title}</p>
                       {a.body && <p className="text-pure-text-light text-xs mt-0.5">{a.body}</p>}
                     </div>
                     <button
                       onClick={() => handleRemoveAnnouncement(a.id)}
-                      className="shrink-0 text-xs text-red-400 hover:text-red-300 transition"
+                      className="shrink-0 text-xs text-red-600 hover:text-red-700 transition"
                     >
                       Remove
                     </button>
@@ -191,7 +191,7 @@ export default function AdminOverviewPage() {
           {/* Stats grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {topCards.map(({ label, value, color }) => (
-              <div key={label} className="bg-pure-gray border border-gray-700 rounded-lg p-4 text-center">
+              <div key={label} className="bg-pure-surface border border-gray-200 rounded-lg p-4 text-center">
                 <p className={`text-3xl font-bold ${color}`}>{value}</p>
                 <p className="text-sm text-pure-text-light mt-1">{label}</p>
               </div>
@@ -199,15 +199,15 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Top members */}
-          <Card className="bg-pure-gray border-gray-700">
-            <h2 className="text-xl font-bold text-pure-white mb-4">Most Active Members</h2>
+          <Card className="bg-pure-surface border-gray-200">
+            <h2 className="text-xl font-bold text-pure-ink mb-4">Most Active Members</h2>
             {!stats?.top_members?.length ? (
               <p className="text-pure-text-light text-sm">No attendance data yet.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-700 text-left text-sm text-pure-text-light">
+                    <tr className="border-b border-gray-200 text-left text-sm text-pure-text-light">
                       <th className="pb-2 pr-4">#</th>
                       <th className="pb-2 pr-4">Member</th>
                       <th className="pb-2 pr-4 text-right">Sign-ups</th>
@@ -221,13 +221,13 @@ export default function AdminOverviewPage() {
                         ? Math.round((m.attended / m.total_registered) * 100)
                         : 0;
                       return (
-                        <tr key={m.id} className="border-b border-gray-800 last:border-0">
+                        <tr key={m.id} className="border-b border-gray-200 last:border-0">
                           <td className="py-3 pr-4 text-pure-text-light text-sm">{i + 1}</td>
-                          <td className="py-3 pr-4 text-pure-white font-medium">{m.name}</td>
+                          <td className="py-3 pr-4 text-pure-ink font-medium">{m.name}</td>
                           <td className="py-3 pr-4 text-pure-text-light text-right">{m.total_registered}</td>
-                          <td className="py-3 pr-4 text-pure-green font-semibold text-right">{m.attended}</td>
+                          <td className="py-3 pr-4 text-pure-accent-ink font-semibold text-right">{m.attended}</td>
                           <td className="py-3 text-right">
-                            <span className={`text-sm font-semibold ${rate >= 80 ? 'text-pure-green' : rate >= 50 ? 'text-coastal-honey' : 'text-red-400'}`}>
+                            <span className={`text-sm font-semibold ${rate >= 80 ? 'text-pure-accent-ink' : rate >= 50 ? 'text-coastal-honey' : 'text-red-600'}`}>
                               {rate}%
                             </span>
                           </td>

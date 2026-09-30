@@ -3,14 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --background: #000000;           /* Pure black background */
-  --foreground: #f5f5f5;           /* Keep white text */
-  --accent: #c1ff00;               /* Signal lime — the one high-energy accent (matches logo) */
-  --coastal-sky: #94a3b8;          /* slate-400 — steel-blue secondary text/borders */
-  --coastal-search: #64748b;       /* slate-500 — steel-blue hover/borders */
-  --coastal-day: #cbd5e1;          /* slate-300 — steel-blue light labels */
-  --coastal-kombucha: #475569;     /* slate-600 — steel-blue decorative gradients */
-  --coastal-honey: #D4BB7A;        /* Kept distinct: semantic mid-tier stat/rating color */
+  --background: #f4f5f7;           /* Off-white page — softer than pure white for long reading */
+  --foreground: #14171a;           /* Near-black ink */
+  --accent: #c1ff00;               /* Signal lime — fill only (matches logo) */
+  --accent-ink: #415600;           /* Lime-family ink, for accent text on light surfaces */
+  --coastal-sky: #475569;          /* slate-600 — secondary text/borders */
+  --coastal-search: #cbd5e1;       /* slate-300 — hover surfaces/borders */
+  --coastal-day: #334155;          /* slate-700 — strong labels */
+  --coastal-kombucha: #e2e8f0;     /* slate-200 — decorative gradients */
+  --coastal-honey: #8A6D1F;        /* Semantic mid-tier stat/rating color */
 }
 
 body {
@@ -18,6 +19,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
+  /* Keep native form controls, date pickers and scrollbars in light mode even when
+     the OS is set to dark — otherwise they fight the page. */
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Bold display font for all headings — condensed, uppercase, gym-poster energy.
@@ -29,10 +34,10 @@ h1, h2, h3 {
 }
 
 /* Signature lime brand moment on text selection + scrollbar, independent of the
-   now-neutral coastal-* tokens so the accent still reads as intentional, not default. */
+   neutral coastal-* tokens so the accent still reads as intentional, not default. */
 ::selection {
   background: var(--accent);
-  color: #000000;
+  color: #14171a;
 }
 
 ::-webkit-scrollbar {
@@ -40,16 +45,31 @@ h1, h2, h3 {
 }
 
 ::-webkit-scrollbar-track {
-  background: #17191c;
+  background: #e9ebef;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--coastal-search);
+  background: #b6bec9;
   border-radius: 6px;
+  border: 3px solid #e9ebef;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+  background: #8b95a3;
+}
+
+/* The gym TV display at /wod stays dark: bright signage is unreadable across a room,
+   and the screen-wake canvas paints near-black pixels. Scoped via body[data-wod]. */
+body:has(.wod-screen) {
+  background: #000000;
+  color: #f5f5f5;
+  color-scheme: dark;
+}
+
+/* On the dark /wod screen the watermark keeps its original light treatment. */
+body:has(.wod-screen) .app-watermark {
+  filter: none;
+  opacity: 0.05;
 }
 
 /* Navbar brand: very slow rotation for TV/signage motion; disabled when user prefers reduced motion */

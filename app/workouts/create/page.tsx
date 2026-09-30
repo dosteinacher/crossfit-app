@@ -223,10 +223,10 @@ function CreateWorkoutForm() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-2xl">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-pure-white">
+            <h1 className="text-4xl font-bold text-pure-ink">
               {templateId ? 'Schedule from Template' : 'Create New Workout'}
             </h1>
             <Link href="/archive">
@@ -235,8 +235,8 @@ function CreateWorkoutForm() {
           </div>
 
           {templateId && (
-            <div className="bg-purple-900 border border-purple-700 rounded-lg p-4 mb-6">
-              <p className="text-purple-200">
+            <div className="bg-purple-100 border border-purple-300 rounded-lg p-4 mb-6">
+              <p className="text-purple-700">
                 <strong>Using template!</strong> Edit as needed and schedule for a specific date/time.
               </p>
             </div>
@@ -244,24 +244,24 @@ function CreateWorkoutForm() {
 
           {/* Workout generator (optional) */}
           {!templateId && (
-            <div className="mb-6 border border-gray-700 rounded-lg bg-pure-gray overflow-hidden">
+            <div className="mb-6 border border-gray-200 rounded-lg bg-pure-surface overflow-hidden">
               <button
                 type="button"
                 onClick={() => setGenExpanded(!genExpanded)}
-                className="w-full px-4 py-3 flex justify-between items-center text-left text-pure-white font-medium hover:bg-gray-800 transition"
+                className="w-full px-4 py-3 flex justify-between items-center text-left text-pure-ink font-medium hover:bg-gray-100 transition"
               >
                 <span>Help me build a workout</span>
                 <span className="text-xl">{genExpanded ? '−' : '+'}</span>
               </button>
               {genExpanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-gray-700 space-y-4">
+                <div className="px-4 pb-4 pt-2 border-t border-gray-200 space-y-4">
                   {genSuccess && (
-                    <p className="text-sm text-pure-green font-medium">{genSuccess}</p>
+                    <p className="text-sm text-pure-accent-ink font-medium">{genSuccess}</p>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-pure-white mb-1">
-                        How many CrossFitters? (1–6) <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-pure-ink mb-1">
+                        How many CrossFitters? (1–6) <span className="text-red-600">*</span>
                       </label>
                       <input
                         type="number"
@@ -269,12 +269,12 @@ function CreateWorkoutForm() {
                         max={6}
                         value={genAthleteCount}
                         onChange={(e) => setGenAthleteCount(Math.min(6, Math.max(1, Number(e.target.value) || 1)))}
-                        className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg"
+                        className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-pure-white mb-1">
-                        How long? (min) <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-pure-ink mb-1">
+                        How long? (min) <span className="text-red-600">*</span>
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {DURATION_PRESETS.map((d) => (
@@ -284,8 +284,8 @@ function CreateWorkoutForm() {
                             onClick={() => setGenDuration(d)}
                             className={`px-3 py-1 rounded-lg text-sm font-medium ${
                               genDuration === d
-                                ? 'bg-pure-green text-pure-dark'
-                                : 'bg-pure-dark text-pure-white border border-gray-700'
+                                ? 'bg-pure-green text-pure-ink'
+                                : 'bg-pure-bg text-pure-ink border border-gray-200'
                             }`}
                           >
                             {d}
@@ -295,7 +295,7 @@ function CreateWorkoutForm() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-pure-white mb-2">
+                    <label className="block text-sm font-medium text-pure-ink mb-2">
                       Strength included?
                     </label>
                     <div className="flex gap-4 mb-2">
@@ -304,18 +304,18 @@ function CreateWorkoutForm() {
                           type="radio"
                           checked={!genStrengthIncluded}
                           onChange={() => setGenStrengthIncluded(false)}
-                          className="text-pure-green"
+                          className="text-pure-accent-ink"
                         />
-                        <span className="text-pure-white">No</span>
+                        <span className="text-pure-ink">No</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           checked={genStrengthIncluded}
                           onChange={() => setGenStrengthIncluded(true)}
-                          className="text-pure-green"
+                          className="text-pure-accent-ink"
                         />
-                        <span className="text-pure-white">Yes</span>
+                        <span className="text-pure-ink">Yes</span>
                       </label>
                     </div>
                     {genStrengthIncluded && (
@@ -323,10 +323,10 @@ function CreateWorkoutForm() {
                         <select
                           value={genStrengthPreset}
                           onChange={(e) => setGenStrengthPreset(e.target.value)}
-                          className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg mb-2"
+                          className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg mb-2"
                         >
                           {STRENGTH_PRESETS.map((p) => (
-                            <option key={p.label} value={p.value} className="bg-pure-dark">
+                            <option key={p.label} value={p.value} className="bg-pure-bg">
                               {p.label}
                             </option>
                           ))}
@@ -337,23 +337,23 @@ function CreateWorkoutForm() {
                             value={genStrengthCustom}
                             onChange={(e) => setGenStrengthCustom(e.target.value)}
                             placeholder="e.g. Back Squat 5x5"
-                            className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg"
+                            className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg"
                           />
                         )}
                       </div>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-pure-white mb-1">
+                    <label className="block text-sm font-medium text-pure-ink mb-1">
                       Workout format
                     </label>
                     <select
                       value={genFormat}
                       onChange={(e) => setGenFormat(e.target.value as WorkoutFormat)}
-                      className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg"
+                      className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg"
                     >
                       {WORKOUT_FORMATS.map((f) => (
-                        <option key={f.value} value={f.value} className="bg-pure-dark">
+                        <option key={f.value} value={f.value} className="bg-pure-bg">
                           {f.label}
                         </option>
                       ))}
@@ -361,38 +361,38 @@ function CreateWorkoutForm() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-pure-white mb-1">
+                      <label className="block text-sm font-medium text-pure-ink mb-1">
                         Exercises to include (optional)
                       </label>
-                      <div className="bg-pure-dark border border-gray-700 rounded-lg p-2 max-h-32 overflow-y-auto">
+                      <div className="bg-pure-bg border border-gray-200 rounded-lg p-2 max-h-32 overflow-y-auto">
                         {EXERCISES.map((ex) => (
-                          <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-800">
+                          <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100">
                             <input
                               type="checkbox"
                               checked={genIncludeExercises.includes(ex)}
                               onChange={() => toggleGenInclude(ex)}
-                              className="text-pure-green"
+                              className="text-pure-accent-ink"
                             />
-                            <span className="text-sm text-pure-white">{ex}</span>
+                            <span className="text-sm text-pure-ink">{ex}</span>
                           </label>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-pure-white mb-1">
+                      <label className="block text-sm font-medium text-pure-ink mb-1">
                         Exercises to exclude (optional, max 4)
                       </label>
-                      <div className="bg-pure-dark border border-gray-700 rounded-lg p-2 max-h-32 overflow-y-auto">
+                      <div className="bg-pure-bg border border-gray-200 rounded-lg p-2 max-h-32 overflow-y-auto">
                         {EXERCISES.map((ex) => (
-                          <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-800">
+                          <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100">
                             <input
                               type="checkbox"
                               checked={genExcludeExercises.includes(ex)}
                               onChange={() => toggleGenExclude(ex)}
                               disabled={!genExcludeExercises.includes(ex) && genExcludeExercises.length >= 4}
-                              className="text-pure-green"
+                              className="text-pure-accent-ink"
                             />
-                            <span className="text-sm text-pure-white">{ex}</span>
+                            <span className="text-sm text-pure-ink">{ex}</span>
                           </label>
                         ))}
                       </div>
@@ -430,17 +430,17 @@ function CreateWorkoutForm() {
               />
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-pure-white mb-1">
-                  Workout Type <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-pure-ink mb-1">
+                  Workout Type <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={workoutType}
                   onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                   required
                 >
                   {workoutTypes.map((type) => (
-                    <option key={type} value={type} className="bg-pure-dark text-pure-white">
+                    <option key={type} value={type} className="bg-pure-bg text-pure-ink">
                       {type}
                     </option>
                   ))}
@@ -474,18 +474,18 @@ function CreateWorkoutForm() {
               />
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-pure-white mb-1">
+                <label className="block text-sm font-medium text-pure-ink mb-1">
                   Pre-select Attendees (Optional)
                 </label>
-                <p className="text-xs text-gray-400 mb-2">
+                <p className="text-xs text-pure-text-light mb-2">
                   Select users who you know will attend. They'll be auto-registered and receive a calendar invite.
                 </p>
-                <div className="bg-pure-dark border border-gray-700 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <div className="bg-pure-bg border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
                   {users.length === 0 ? (
-                    <p className="text-gray-400 text-sm">Loading users...</p>
+                    <p className="text-pure-text-light text-sm">Loading users...</p>
                   ) : (
                     users.map((user) => (
-                      <label key={user.id} className="flex items-center gap-2 py-2 hover:bg-gray-800 px-2 rounded cursor-pointer">
+                      <label key={user.id} className="flex items-center gap-2 py-2 hover:bg-gray-100 px-2 rounded cursor-pointer">
                         <input
                           type="checkbox"
                           checked={selectedUserIds.includes(user.id)}
@@ -496,17 +496,17 @@ function CreateWorkoutForm() {
                               setSelectedUserIds(selectedUserIds.filter((id) => id !== user.id));
                             }
                           }}
-                          className="w-4 h-4 text-pure-green rounded focus:ring-2 focus:ring-pure-green"
+                          className="w-4 h-4 text-pure-accent-ink rounded focus:ring-2 focus:ring-pure-green"
                         />
-                        <span className="text-sm text-pure-white">
-                          {user.name} <span className="text-gray-400 text-xs">({user.email})</span>
+                        <span className="text-sm text-pure-ink">
+                          {user.name} <span className="text-pure-text-light text-xs">({user.email})</span>
                         </span>
                       </label>
                     ))
                   )}
                 </div>
                 {selectedUserIds.length > 0 && (
-                  <p className="text-xs text-pure-green mt-2">
+                  <p className="text-xs text-pure-accent-ink mt-2">
                     {selectedUserIds.length} user{selectedUserIds.length > 1 ? 's' : ''} selected
                   </p>
                 )}
@@ -519,9 +519,9 @@ function CreateWorkoutForm() {
                       type="checkbox"
                       checked={saveToArchive}
                       onChange={(e) => setSaveToArchive(e.target.checked)}
-                      className="w-4 h-4 text-pure-green rounded focus:ring-2 focus:ring-pure-green"
+                      className="w-4 h-4 text-pure-accent-ink rounded focus:ring-2 focus:ring-pure-green"
                     />
-                    <span className="text-sm text-pure-white">
+                    <span className="text-sm text-pure-ink">
                       Save this workout to Archive (for future reuse)
                     </span>
                   </label>

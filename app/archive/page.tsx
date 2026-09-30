@@ -69,24 +69,24 @@ export default function ArchivePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-pure-white">Workout Archive</h1>
+            <h1 className="text-4xl font-bold text-pure-ink">Workout Archive</h1>
             <Link href="/archive/import">
               <Button>Import from Excel</Button>
             </Link>
           </div>
 
-          <div className="bg-pure-gray border border-pure-green rounded-lg p-4 mb-6">
-            <h3 className="font-bold text-pure-green mb-2">Your Workout Library</h3>
-            <p className="text-gray-300">
+          <div className="bg-pure-surface border border-pure-green rounded-lg p-4 mb-6">
+            <h3 className="font-bold text-pure-accent-ink mb-2">Your Workout Library</h3>
+            <p className="text-gray-600">
               Browse all your workout templates. Click "Use Template" to schedule it for a specific date and time!
             </p>
           </div>
 
           {/* Search */}
-          <Card className="mb-6 bg-pure-gray border-gray-700">
+          <Card className="mb-6 bg-pure-surface border-gray-200">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -94,7 +94,7 @@ export default function ArchivePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1 px-4 py-2 bg-pure-dark border border-gray-600 text-pure-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                className="flex-1 px-4 py-2 bg-pure-bg border border-gray-300 text-pure-ink placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
               />
               {searchQuery && (
                 <Button variant="secondary" onClick={handleClearSearch}>
@@ -104,20 +104,20 @@ export default function ArchivePage() {
               <Button onClick={handleSearch}>Search</Button>
             </div>
             {searchQuery && (
-              <p className="text-sm text-gray-400 mt-2">
-                Searching for: <span className="text-pure-green font-medium">"{searchQuery}"</span>
+              <p className="text-sm text-pure-text-light mt-2">
+                Searching for: <span className="text-pure-accent-ink font-medium">"{searchQuery}"</span>
               </p>
             )}
           </Card>
 
           {/* Filter Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-gray-700 flex-wrap">
+          <div className="flex gap-2 mb-6 border-b border-gray-200 flex-wrap">
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'all'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
+                  ? 'text-pure-accent-ink border-b-2 border-pure-green'
+                  : 'text-pure-text-light hover:text-pure-ink'
               }`}
             >
               All ({templates.length})
@@ -126,8 +126,8 @@ export default function ArchivePage() {
               onClick={() => setFilter('Team of 2')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'Team of 2'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
+                  ? 'text-pure-accent-ink border-b-2 border-pure-green'
+                  : 'text-pure-text-light hover:text-pure-ink'
               }`}
             >
               Team of 2
@@ -136,8 +136,8 @@ export default function ArchivePage() {
               onClick={() => setFilter('Solo')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'Solo'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
+                  ? 'text-pure-accent-ink border-b-2 border-pure-green'
+                  : 'text-pure-text-light hover:text-pure-ink'
               }`}
             >
               Solo
@@ -146,8 +146,8 @@ export default function ArchivePage() {
               onClick={() => setFilter('Team of 3')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'Team of 3'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
+                  ? 'text-pure-accent-ink border-b-2 border-pure-green'
+                  : 'text-pure-text-light hover:text-pure-ink'
               }`}
             >
               Team of 3
@@ -156,8 +156,8 @@ export default function ArchivePage() {
               onClick={() => setFilter('Custom')}
               className={`px-4 py-2 font-medium transition ${
                 filter === 'Custom'
-                  ? 'text-pure-green border-b-2 border-pure-green'
-                  : 'text-gray-400 hover:text-pure-white'
+                  ? 'text-pure-accent-ink border-b-2 border-pure-green'
+                  : 'text-pure-text-light hover:text-pure-ink'
               }`}
             >
               Custom
@@ -166,10 +166,10 @@ export default function ArchivePage() {
 
           {/* Templates Grid */}
           {templates.length === 0 ? (
-            <Card className="bg-pure-gray border-gray-700">
+            <Card className="bg-pure-surface border-gray-200">
               <div className="text-center py-12">
-                <p className="text-gray-300 text-lg mb-4">No workout templates yet</p>
-                <p className="text-gray-400 mb-6">
+                <p className="text-gray-600 text-lg mb-4">No workout templates yet</p>
+                <p className="text-pure-text-light mb-6">
                   Import your workouts from Excel to build your archive!
                 </p>
                 <Link href="/archive/import">
@@ -180,21 +180,21 @@ export default function ArchivePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates.map((template) => (
-                <Card key={template.id} className="h-full flex flex-col bg-pure-gray border-gray-700 hover:border-pure-green transition-all">
+                <Card key={template.id} className="h-full flex flex-col bg-pure-surface border-gray-200 hover:border-pure-green transition-all">
                   <div className="flex justify-between items-start mb-3">
                     <span className="text-xs font-medium px-2 py-1 bg-purple-600 text-white rounded">
                       {template.category}
                     </span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-pure-text-light">
                       Used {template.times_used}x
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-pure-white mb-2">
+                  <h3 className="text-lg font-bold text-pure-ink mb-2">
                     {template.title}
                   </h3>
 
-                  <p className="text-sm text-gray-300 mb-4 line-clamp-4 flex-1 whitespace-pre-wrap">
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-4 flex-1 whitespace-pre-wrap">
                     {template.description}
                   </p>
 

@@ -116,9 +116,9 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-4xl">
-          <h1 className="text-4xl font-bold text-pure-white mb-2">My Profile</h1>
+          <h1 className="text-4xl font-bold text-pure-ink mb-2">My Profile</h1>
           <p className="text-pure-text-light mb-8">{profile?.email}</p>
 
           {error && <ErrorMessage message={error} />}
@@ -128,11 +128,11 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               { label: 'Workouts Registered', value: stats?.total_workouts ?? 0, color: 'text-coastal-sky' },
-              { label: 'Attended', value: stats?.attended_workouts ?? 0, color: 'text-pure-green' },
+              { label: 'Attended', value: stats?.attended_workouts ?? 0, color: 'text-pure-accent-ink' },
               { label: 'Attendance Rate', value: `${attendanceRate}%`, color: 'text-coastal-honey' },
               { label: 'Upcoming', value: stats?.upcoming_workouts ?? 0, color: 'text-coastal-day' },
             ].map(({ label, value, color }) => (
-              <div key={label} className="bg-pure-gray border border-gray-700 rounded-lg p-4 text-center">
+              <div key={label} className="bg-pure-surface border border-gray-200 rounded-lg p-4 text-center">
                 <p className={`text-3xl font-bold ${color}`}>{value}</p>
                 <p className="text-sm text-pure-text-light mt-1">{label}</p>
               </div>
@@ -156,8 +156,8 @@ export default function ProfilePage() {
             const hasData = chartData.some((d) => d.registered > 0);
             if (!hasData) return null;
             return (
-              <div className="bg-pure-gray border border-gray-700 rounded-lg p-5 mb-6">
-                <h2 className="text-lg font-bold text-pure-white mb-4">Monthly Activity</h2>
+              <div className="bg-pure-surface border border-gray-200 rounded-lg p-5 mb-6">
+                <h2 className="text-lg font-bold text-pure-ink mb-4">Monthly Activity</h2>
                 <div className="flex items-end gap-3 h-28">
                   {chartData.map(({ month, label, registered, attended }) => (
                     <div key={month} className="flex-1 flex flex-col items-center gap-1 h-full">
@@ -194,7 +194,7 @@ export default function ProfilePage() {
             <div className="space-y-6">
               {/* Change name */}
               <Card>
-                <h2 className="text-xl font-bold text-pure-white mb-4">Display Name</h2>
+                <h2 className="text-xl font-bold text-pure-ink mb-4">Display Name</h2>
                 <Input
                   label="Name"
                   value={name}
@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
               {/* Change password */}
               <Card>
-                <h2 className="text-xl font-bold text-pure-white mb-4">Change Password</h2>
+                <h2 className="text-xl font-bold text-pure-ink mb-4">Change Password</h2>
                 <div className="space-y-3">
                   <Input
                     label="Current password"
@@ -246,7 +246,7 @@ export default function ProfilePage() {
             <div className="space-y-6">
               {/* Notification preferences */}
               <Card>
-                <h2 className="text-xl font-bold text-pure-white mb-4">Email Notifications</h2>
+                <h2 className="text-xl font-bold text-pure-ink mb-4">Email Notifications</h2>
                 <div className="space-y-4">
                   {[
                     { label: 'Workout updates', sublabel: 'When a workout you\'re registered for is edited', value: notifyUpdates, onChange: setNotifyUpdates },
@@ -261,14 +261,14 @@ export default function ProfilePage() {
                           className="sr-only"
                         />
                         <div
-                          className={`w-10 h-6 rounded-full transition ${value ? 'bg-pure-green' : 'bg-gray-600'}`}
+                          className={`w-10 h-6 rounded-full transition ${value ? 'bg-pure-accent-ink' : 'bg-gray-300'}`}
                           onClick={() => onChange(!value)}
                         >
-                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5' : 'translate-x-1'}`} />
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow ring-1 ring-black/10 transition-transform ${value ? 'translate-x-5' : 'translate-x-1'}`} />
                         </div>
                       </div>
                       <div>
-                        <p className="text-pure-white font-medium text-sm">{label}</p>
+                        <p className="text-pure-ink font-medium text-sm">{label}</p>
                         <p className="text-pure-text-light text-xs mt-0.5">{sublabel}</p>
                       </div>
                     </label>
@@ -281,7 +281,7 @@ export default function ProfilePage() {
 
               {/* Calendar subscription */}
               <Card>
-                <h2 className="text-xl font-bold text-pure-white mb-2">Calendar Subscription</h2>
+                <h2 className="text-xl font-bold text-pure-ink mb-2">Calendar Subscription</h2>
                 <p className="text-pure-text-light text-sm mb-4">
                   Subscribe to your workouts in Google Calendar, Apple Calendar, or Outlook. The feed auto-updates when workouts change.
                 </p>
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                     type="text"
                     readOnly
                     value={calendarUrl}
-                    className="flex-1 px-3 py-2 bg-pure-dark border border-gray-600 rounded-lg text-pure-text-light text-xs font-mono truncate focus:outline-none"
+                    className="flex-1 px-3 py-2 bg-pure-bg border border-gray-300 rounded-lg text-pure-text-light text-xs font-mono truncate focus:outline-none"
                   />
                   <Button onClick={handleCopy} variant="secondary" className="shrink-0">
                     {copied ? '✓ Copied' : 'Copy'}
@@ -306,17 +306,17 @@ export default function ProfilePage() {
           {/* Recent workouts */}
           {stats?.recent_workouts?.length > 0 && (
             <div className="mt-8">
-              <h2 className="text-2xl font-bold text-pure-white mb-4">Recent Workouts</h2>
+              <h2 className="text-2xl font-bold text-pure-ink mb-4">Recent Workouts</h2>
               <div className="space-y-2">
                 {stats.recent_workouts.map((w: any) => (
                   <Link key={w.id} href={`/workouts/${w.id}`} className="block group">
-                    <div className="bg-pure-gray border border-gray-700 rounded-lg p-4 hover:border-coastal-sky transition">
+                    <div className="bg-pure-surface border border-gray-200 rounded-lg p-4 hover:border-coastal-sky transition">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
-                          <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${w.attended ? 'bg-pure-green/20 text-pure-green border border-pure-green/30' : 'bg-gray-700 text-gray-400'}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${w.attended ? 'bg-pure-green/20 text-pure-accent-ink border border-pure-green/30' : 'bg-gray-100 text-pure-text-light'}`}>
                             {w.attended ? '✓ Attended' : 'Registered'}
                           </span>
-                          <span className="text-pure-white font-medium truncate group-hover:text-coastal-sky transition">{w.title}</span>
+                          <span className="text-pure-ink font-medium truncate group-hover:text-coastal-sky transition">{w.title}</span>
                         </div>
                         <div className="flex items-center gap-3 shrink-0 ml-3">
                           {w.rating && (

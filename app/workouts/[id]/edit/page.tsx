@@ -189,9 +189,9 @@ export default function EditWorkoutPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-dark py-8">
+      <div className="min-h-screen bg-pure-bg py-8">
         <div className="container mx-auto px-4 max-w-2xl">
-          <h1 className="text-4xl font-bold mb-8 text-pure-white">Edit Workout</h1>
+          <h1 className="text-4xl font-bold mb-8 text-pure-ink">Edit Workout</h1>
 
           <Card>
             {error && <ErrorMessage message={error} />}
@@ -217,17 +217,17 @@ export default function EditWorkoutPage() {
               />
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-pure-white mb-1">
-                  Workout Type <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-pure-ink mb-1">
+                  Workout Type <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={workoutType}
                   onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                   required
                 >
                   {workoutTypes.map((type) => (
-                    <option key={type} value={type} className="bg-pure-dark text-pure-white">
+                    <option key={type} value={type} className="bg-pure-bg text-pure-ink">
                       {type}
                     </option>
                   ))}
@@ -261,28 +261,28 @@ export default function EditWorkoutPage() {
               />
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-pure-white mb-1">
+                <label className="block text-sm font-medium text-pure-ink mb-1">
                   Participants
                 </label>
                 {participantError && (
-                  <p className="text-red-400 text-xs mb-2">{participantError}</p>
+                  <p className="text-red-600 text-xs mb-2">{participantError}</p>
                 )}
 
                 {participants.length === 0 ? (
-                  <p className="text-gray-400 text-sm mb-3">No participants yet.</p>
+                  <p className="text-pure-text-light text-sm mb-3">No participants yet.</p>
                 ) : (
                   <ul className="mb-3 space-y-1">
                     {participants.map((p) => (
                       <li
                         key={p.user_id}
-                        className="flex items-center justify-between bg-pure-dark border border-gray-700 rounded-lg px-3 py-2"
+                        className="flex items-center justify-between bg-pure-bg border border-gray-200 rounded-lg px-3 py-2"
                       >
-                        <span className="text-sm text-pure-white">{p.user_name}</span>
+                        <span className="text-sm text-pure-ink">{p.user_name}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveParticipant(p.user_id)}
                           disabled={participantLoading}
-                          className="text-red-400 hover:text-red-300 text-xs font-medium disabled:opacity-50"
+                          className="text-red-600 hover:text-red-700 text-xs font-medium disabled:opacity-50"
                         >
                           Remove
                         </button>
@@ -296,11 +296,11 @@ export default function EditWorkoutPage() {
                     <select
                       value={selectedAddUserId}
                       onChange={(e) => setSelectedAddUserId(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-pure-dark border border-gray-700 text-pure-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                      className="flex-1 px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
                     >
                       <option value="">Select a person to add...</option>
                       {unregisteredUsers.map((u) => (
-                        <option key={u.id} value={u.id} className="bg-pure-dark">
+                        <option key={u.id} value={u.id} className="bg-pure-bg">
                           {u.name}
                         </option>
                       ))}
