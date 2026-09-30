@@ -50,11 +50,7 @@ export default function Navbar() {
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <Link href="/login" className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-pure-accent-ink rounded-lg" aria-label="GO PURE — Login">
-              {/* The logo artwork is white + lime, so on a light page it needs a dark
-                  lockup chip to stay visible instead of being recoloured. */}
-              <span className="inline-flex items-center rounded-lg bg-black px-3 py-1.5">
-                <Image src="/go-pure-logo.png" alt="PURE" width={120} height={36} className="h-7 w-auto object-contain object-left" priority />
-              </span>
+              <Image src="/go-pure-logo-dark.png" alt="PURE" width={120} height={36} className="h-8 w-auto object-contain object-left" priority />
             </Link>
             <div className="flex gap-2">
               <Link href="/login" className="px-4 py-2 rounded-lg border border-gray-300 text-pure-ink hover:bg-gray-100 transition font-medium text-sm">
@@ -85,17 +81,14 @@ export default function Navbar() {
             className="flex shrink-0 items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-pure-accent-ink rounded-lg"
             aria-label="PURE — Dashboard"
           >
-            {/* Dark lockup chip: the artwork is white + lime and would disappear on the light navbar. */}
-            <span className="inline-flex items-center rounded-lg bg-black px-3 py-1.5">
-              <Image
-                src="/go-pure-logo.png"
-                alt="PURE"
-                width={120}
-                height={36}
-                className="h-7 w-auto object-contain object-left navbar-brand-spin"
-                priority
-              />
-            </span>
+            <Image
+              src="/go-pure-logo-dark.png"
+              alt="PURE"
+              width={120}
+              height={36}
+              className="h-8 w-auto object-contain object-left navbar-brand-spin"
+              priority
+            />
           </Link>
 
           {/* Desktop links */}

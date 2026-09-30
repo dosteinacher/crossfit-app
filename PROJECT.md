@@ -34,7 +34,7 @@ Concise facts about this repo so tools and teammates don’t rely on stale guess
 - The `coastal-*` ramp is a cool slate scale for secondary text, labels, borders and decorative fills. `coastal-honey` stays a distinct semantic mid-tier stat/rating colour.
 - Palette lives in **`tailwind.config.js`**; page/body, selection, scrollbar and watermark rules live in **`app/globals.css`**.
 - **`/wod` (gym TV display) stays dark on purpose** — bright signage is unreadable across a room, and `WodScreenWake` paints near-black pixels. It opts out with the `.wod-screen` class (see the `body:has(.wod-screen)` rules in `globals.css`) and uses **literal** colour classes rather than the light tokens.
-- The logo artwork is **white + lime**, so on light surfaces it sits on a **black lockup chip** (navbar) or is knocked down to ink (`filter: brightness(0)`, the page watermark).
+- Two logo assets ship: **`go-pure-logo.png`** is the original white + lime artwork and is used only where the background is dark (`/wod`, and the watermark on that screen). **`go-pure-logo-dark.png`** is the ink + olive variant for every light surface — navbar, page headers and the global watermark.
 
 ## Where to read more
 

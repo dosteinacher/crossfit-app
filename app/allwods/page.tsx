@@ -50,7 +50,7 @@ export default function AllWodsPage() {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Image
-            src="/go-pure-logo.png"
+            src="/go-pure-logo-dark.png"
             alt="PURE"
             width={140}
             height={40}

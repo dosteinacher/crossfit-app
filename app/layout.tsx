@@ -24,14 +24,11 @@ export default function RootLayout({
         <div 
           className="app-watermark fixed inset-0 pointer-events-none"
           style={{
-            backgroundImage: 'url(/go-pure-logo.png)',
+            backgroundImage: 'url(/go-pure-logo-dark.png)',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             backgroundSize: '40%',
-            // The artwork is white + lime; on the light page it has to be knocked
-            // down to ink, otherwise the watermark is invisible.
-            filter: 'brightness(0)',
-            opacity: 0.035,
+            opacity: 0.05,
             zIndex: 40,
           }}
         />

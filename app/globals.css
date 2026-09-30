@@ -66,10 +66,12 @@ body:has(.wod-screen) {
   color-scheme: dark;
 }
 
-/* On the dark /wod screen the watermark keeps its original light treatment. */
+/* The dark /wod screen needs the original white + lime artwork instead.
+   The watermark carries inline styles, so these have to win with !important. */
 body:has(.wod-screen) .app-watermark {
-  filter: none;
-  opacity: 0.05;
+  background-image: url(/go-pure-logo.png) !important;
+  filter: none !important;
+  opacity: 0.05 !important;
 }
 
 /* Navbar brand: very slow rotation for TV/signage motion; disabled when user prefers reduced motion */
