@@ -80,7 +80,7 @@ export default function ArchivePage() {
 
           <div className="bg-pure-surface border border-pure-green rounded-lg p-4 mb-6">
             <h3 className="font-bold text-pure-accent-ink mb-2">Your Workout Library</h3>
-            <p className="text-gray-600">
+            <p className="text-pure-text-light">
               Browse all your workout templates. Click "Use Template" to schedule it for a specific date and time!
             </p>
           </div>
@@ -168,7 +168,7 @@ export default function ArchivePage() {
           {templates.length === 0 ? (
             <Card className="bg-pure-surface border-gray-300">
               <div className="text-center py-12">
-                <p className="text-gray-600 text-lg mb-4">No workout templates yet</p>
+                <p className="text-pure-text-light text-lg mb-4">No workout templates yet</p>
                 <p className="text-pure-text-light mb-6">
                   Import your workouts from Excel to build your archive!
                 </p>
@@ -194,7 +194,7 @@ export default function ArchivePage() {
                     {template.title}
                   </h3>
 
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-4 flex-1 whitespace-pre-wrap">
+                  <p className="text-sm text-pure-text-light mb-4 line-clamp-4 flex-1 whitespace-pre-wrap">
                     {template.description}
                   </p>
 

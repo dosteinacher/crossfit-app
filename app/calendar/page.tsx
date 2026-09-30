@@ -73,7 +73,7 @@ export default function CalendarPage() {
 
             <div className="bg-pure-surface border border-pure-green rounded-lg p-4 mb-6">
               <h3 className="font-bold text-pure-accent-ink mb-2">Weekly Planning</h3>
-              <p className="text-gray-600">
+              <p className="text-pure-text-light">
                 Create polls to find the best times for workouts. Everyone can vote for times they're available!
               </p>
             </div>
@@ -116,7 +116,7 @@ export default function CalendarPage() {
             {polls.length === 0 ? (
               <Card className="bg-pure-surface border-gray-300">
                 <div className="text-center py-12">
-                  <p className="text-gray-600 text-lg mb-4">No polls yet</p>
+                  <p className="text-pure-text-light text-lg mb-4">No polls yet</p>
                   <p className="text-pure-text-light mb-6">
                     Create a poll to find the best workout times for your team!
                   </p>

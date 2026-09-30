@@ -210,7 +210,7 @@ export default function PollDetailPage() {
             </div>
 
             {poll.description && (
-              <p className="text-gray-600 mb-4">{poll.description}</p>
+              <p className="text-pure-text-light mb-4">{poll.description}</p>
             )}
 
             {poll.template && (
@@ -244,7 +244,7 @@ export default function PollDetailPage() {
                           {format(new Date(option.date), 'h:mm a')}
                         </h3>
                         {option.label && (
-                          <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                          <span className="text-xs px-2 py-1 bg-gray-100 text-pure-text-light rounded">
                             {option.label}
                           </span>
                         )}

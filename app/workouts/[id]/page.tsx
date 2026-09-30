@@ -401,7 +401,7 @@ export default function WorkoutDetailPage() {
                   </Link>
                 ) : (
                   <span
-                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-300 text-gray-600 cursor-not-allowed text-lg"
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-300 text-pure-text-light cursor-not-allowed text-lg"
                     aria-hidden
                   >
                     ←
@@ -423,7 +423,7 @@ export default function WorkoutDetailPage() {
                   </Link>
                 ) : (
                   <span
-                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-300 text-gray-600 cursor-not-allowed text-lg"
+                    className="inline-flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg border border-gray-300 text-pure-text-light cursor-not-allowed text-lg"
                     aria-hidden
                   >
                     →

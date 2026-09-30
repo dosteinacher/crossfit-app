@@ -75,7 +75,7 @@ export default function AllWodsPage() {
           <Loading />
         ) : workouts.length === 0 ? (
           <Card className="bg-pure-surface border-gray-300 text-center py-12">
-            <p className="text-gray-600 text-lg">
+            <p className="text-pure-text-light text-lg">
               {searchQuery ? `No workouts found for "${searchQuery}"` : 'No workouts yet'}
             </p>
           </Card>

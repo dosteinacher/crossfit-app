@@ -172,7 +172,7 @@ export default function ImportArchivePage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {file && (
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-pure-text-light">
                   Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
                 </p>
               )}

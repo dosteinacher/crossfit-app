@@ -161,7 +161,7 @@ export default function ImportWorkoutsPage() {
             )}
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-2">
+              <label className="block text-sm font-medium text-pure-text-light mb-2">
                 Select File (Excel or CSV)
               </label>
               <input
@@ -196,7 +196,7 @@ export default function ImportWorkoutsPage() {
             <h2 className="text-xl font-bold mb-4 text-pure-ink">File Format Instructions</h2>
 
             <div className="mb-4">
-              <p className="text-gray-600 mb-2">
+              <p className="text-pure-text-light mb-2">
                 Your Excel/CSV file should have these columns:
               </p>
 
@@ -204,9 +204,9 @@ export default function ImportWorkoutsPage() {
                 <table className="min-w-full border border-gray-300 text-sm">
                   <thead className="bg-pure-bg">
                     <tr>
-                      <th className="border border-gray-300 px-4 py-2 text-left text-gray-600">Column</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left text-gray-600">Required?</th>
-                      <th className="border border-gray-300 px-4 py-2 text-left text-gray-600">Example</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left text-pure-text-light">Column</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left text-pure-text-light">Required?</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left text-pure-text-light">Example</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -215,7 +215,7 @@ export default function ImportWorkoutsPage() {
                       <td className="border border-gray-300 px-4 py-2 text-pure-accent-ink">
                         Required
                       </td>
-                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">
                         "Monday Morning WOD"
                       </td>
                     </tr>
@@ -224,14 +224,14 @@ export default function ImportWorkoutsPage() {
                         Description
                       </td>
                       <td className="border border-gray-300 px-4 py-2 text-pure-text-light">Optional</td>
-                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">
                         "For Time: 21-15-9..."
                       </td>
                     </tr>
                     <tr>
                       <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">Type</td>
                       <td className="border border-gray-300 px-4 py-2 text-pure-text-light">Optional</td>
-                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">
                         "HIIT", "Strength", etc.
                       </td>
                     </tr>
@@ -240,14 +240,14 @@ export default function ImportWorkoutsPage() {
                       <td className="border border-gray-300 px-4 py-2 text-pure-accent-ink">
                         Required
                       </td>
-                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">
                         "2024-01-15" or "01/15/2024"
                       </td>
                     </tr>
                     <tr>
                       <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">Time</td>
                       <td className="border border-gray-300 px-4 py-2 text-pure-text-light">Optional (default: 09:00)</td>
-                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">
                         "06:00" or "6:00 AM"
                       </td>
                     </tr>
@@ -258,7 +258,7 @@ export default function ImportWorkoutsPage() {
                       <td className="border border-gray-300 px-4 py-2 text-pure-text-light">
                         Optional (default: 20)
                       </td>
-                      <td className="border border-gray-300 px-4 py-2 text-gray-600">20</td>
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">20</td>
                     </tr>
                   </tbody>
                 </table>
@@ -267,7 +267,7 @@ export default function ImportWorkoutsPage() {
 
             <div className="bg-coastal-sky/10 border border-coastal-sky/30 rounded-lg p-4">
               <h3 className="font-bold text-coastal-sky mb-2">Download Template</h3>
-              <p className="text-gray-600 mb-3">
+              <p className="text-pure-text-light mb-3">
                 Want to see an example? Download our template with sample workouts:
               </p>
               <a

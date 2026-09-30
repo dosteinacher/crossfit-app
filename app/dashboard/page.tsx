@@ -362,7 +362,7 @@ export default function DashboardPage() {
                                   {workout.description ? (
                                     <p className="text-sm text-pure-text-light mb-3 leading-relaxed">{workout.description}</p>
                                   ) : (
-                                    <p className="text-sm text-gray-600 mb-3 italic">No description</p>
+                                    <p className="text-sm text-pure-text-light mb-3 italic">No description</p>
                                   )}
                                   <div className="border-t border-gray-300 pt-3 flex justify-between items-center text-xs text-pure-text-light">
                                     <span>by {workout.creator_name}</span>

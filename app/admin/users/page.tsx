@@ -106,7 +106,7 @@ export default function UsersAdminPage() {
 
           <div className="bg-pure-surface border border-pure-green rounded-lg p-4 mb-6">
             <h3 className="font-bold text-pure-accent-ink mb-2">Admin Panel</h3>
-            <p className="text-gray-600">
+            <p className="text-pure-text-light">
               Manage all registered users. You can view their details and remove users if needed.
             </p>
           </div>
@@ -148,7 +148,7 @@ export default function UsersAdminPage() {
                               Admin
                             </span>
                           ) : (
-                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                            <span className="text-xs px-2 py-1 bg-gray-100 text-pure-text-light rounded">
                               Member
                             </span>
                           )}

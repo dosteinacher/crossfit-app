@@ -229,7 +229,7 @@ export default function ImportCustomPage() {
             )}
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-600 mb-2">
+              <label className="block text-sm font-medium text-pure-text-light mb-2">
                 Select Your Excel File
               </label>
               <input
@@ -279,7 +279,7 @@ export default function ImportCustomPage() {
           <Card>
             <h2 className="text-xl font-bold mb-4 text-pure-ink">How This Import Works</h2>
 
-            <div className="space-y-4 text-gray-600">
+            <div className="space-y-4 text-pure-text-light">
               <p>
                 This import tool is designed specifically for your Excel format with columns:
               </p>
