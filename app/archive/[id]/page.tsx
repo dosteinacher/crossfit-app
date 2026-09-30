@@ -67,7 +67,7 @@ export default function TemplateDetailPage() {
         <Navbar />
         <div className="min-h-screen bg-pure-bg py-8">
           <div className="container mx-auto px-4 max-w-4xl">
-            <Card className="bg-pure-surface border-gray-200">
+            <Card className="bg-pure-surface border-gray-300">
               <p className="text-red-600">Template not found</p>
             </Card>
           </div>
@@ -83,7 +83,7 @@ export default function TemplateDetailPage() {
         <div className="container mx-auto px-4 max-w-4xl">
           {error && <ErrorMessage message={error} />}
 
-          <Card className="bg-pure-surface border-gray-200">
+          <Card className="bg-pure-surface border-gray-300">
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -120,7 +120,7 @@ export default function TemplateDetailPage() {
             </div>
 
             {/* Actions */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
+            <div className="border-t border-gray-300 pt-6 mt-6">
               <div className="flex gap-4">
                 <Button onClick={handleUseTemplate} className="flex-1">
                   Schedule This Workout

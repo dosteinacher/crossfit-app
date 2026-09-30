@@ -62,7 +62,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
       days.push(
         <div
           key={day.toString()}
-          className={`min-h-[80px] sm:min-h-[120px] border border-gray-200 p-1 sm:p-2 ${
+          className={`min-h-[80px] sm:min-h-[120px] border border-gray-300 p-1 sm:p-2 ${
             !isSameMonth(day, monthStart)
               ? 'bg-pure-bg/50 text-gray-600'
               : 'bg-pure-surface text-pure-ink'
@@ -130,7 +130,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
     <div>
       {/* View Toggle */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2 border border-gray-200 rounded-lg p-1 bg-pure-surface">
+        <div className="flex gap-2 border border-gray-300 rounded-lg p-1 bg-pure-surface">
           <button
             onClick={() => setViewMode('calendar')}
             className={`px-4 py-2 rounded transition font-medium ${
@@ -157,7 +157,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
           <div className="flex flex-wrap gap-2 items-center justify-end">
             <button
               onClick={prevMonth}
-              className="px-3 py-2 bg-pure-surface border border-gray-200 rounded-lg hover:bg-coastal-search/20 transition text-pure-ink"
+              className="px-3 py-2 bg-pure-surface border border-gray-300 rounded-lg hover:bg-coastal-search/20 transition text-pure-ink"
             >
               ←
             </button>
@@ -166,7 +166,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
             </h2>
             <button
               onClick={nextMonth}
-              className="px-3 py-2 bg-pure-surface border border-gray-200 rounded-lg hover:bg-coastal-search/20 transition text-pure-ink"
+              className="px-3 py-2 bg-pure-surface border border-gray-300 rounded-lg hover:bg-coastal-search/20 transition text-pure-ink"
             >
               →
             </button>
@@ -182,9 +182,9 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
 
       {viewMode === 'calendar' ? (
         <div className="overflow-x-auto">
-          <div className="bg-pure-surface border border-gray-200 rounded-lg overflow-hidden min-w-[560px]">
+          <div className="bg-pure-surface border border-gray-300 rounded-lg overflow-hidden min-w-[560px]">
             {/* Day headers */}
-            <div className="grid grid-cols-7 bg-pure-bg border-b border-gray-200">
+            <div className="grid grid-cols-7 bg-pure-bg border-b border-gray-300">
               {[
                 { full: 'Sun', short: 'S' },
                 { full: 'Mon', short: 'M' },
@@ -196,7 +196,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
               ].map(({ full, short }) => (
                 <div
                   key={full}
-                  className="p-2 sm:p-3 text-center font-bold text-pure-accent-ink border-r border-gray-200 last:border-r-0 text-xs sm:text-sm"
+                  className="p-2 sm:p-3 text-center font-bold text-pure-accent-ink border-r border-gray-300 last:border-r-0 text-xs sm:text-sm"
                 >
                   <span className="hidden sm:inline">{full}</span>
                   <span className="sm:hidden">{short}</span>
@@ -210,7 +210,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
       ) : (
         <div className="space-y-6">
           {Object.keys(groupedWorkouts).length === 0 ? (
-            <Card className="bg-pure-surface border-gray-200">
+            <Card className="bg-pure-surface border-gray-300">
               <p className="text-pure-text-light text-center py-8">No workouts found</p>
             </Card>
           ) : (
@@ -222,7 +222,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {groupedWorkouts[dateKey].map((workout) => (
                     <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                      <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-surface border-gray-200">
+                      <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-surface border-gray-300">
                         <div className="flex justify-between items-start mb-3">
                           <span className={`text-xs font-medium px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
                             {workout.workout_type}
@@ -242,7 +242,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                           {workout.description || 'No description'}
                         </p>
 
-                        <div className="border-t border-gray-200 pt-3 mt-auto">
+                        <div className="border-t border-gray-300 pt-3 mt-auto">
                           <div className="flex justify-between items-center text-sm">
                             <span className="text-pure-text-light">
                               {format(parseISO(workout.date), 'h:mm a')}

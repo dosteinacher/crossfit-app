@@ -16,8 +16,8 @@ module.exports = {
         'pure-logo': '#c1ff00',
         'pure-accent-light': '#aee600', // Hover state of the signal fill (darker, so it reads on white)
         'pure-accent-ink': '#415600',   // Lime-family ink for accent *text* and icons on light surfaces
-        'pure-bg': '#f4f5f7',           // Page + navbar background — off-white, softer than pure white
-        'pure-surface': '#ffffff',      // Cards, panels, raised surfaces
+        'pure-bg': '#ffffff',           // Page background — white, so cards read as tinted panels on top
+        'pure-surface': '#eef0f3',      // Cards, panels, raised surfaces — a light grey tint against the white page
         'pure-ink': '#14171a',          // Primary text
         'pure-white': '#ffffff',        // Literal white — badges and the dark /wod screen
         // Cool slate ramp, re-pitched for light backgrounds. Same roles as before,

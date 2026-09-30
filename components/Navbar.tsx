@@ -46,7 +46,7 @@ export default function Navbar() {
 
   if (!user) {
     return (
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white border-b border-gray-300 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex justify-between items-center">
             <Link href="/login" className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-pure-accent-ink rounded-lg" aria-label="GO PURE — Login">
@@ -72,7 +72,7 @@ export default function Navbar() {
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-300 shadow-sm">
       <div className="container mx-auto px-4 py-3">
         {/* Top bar */}
         <div className="flex justify-between items-center">
@@ -107,7 +107,7 @@ export default function Navbar() {
             >
               + Create
             </Link>
-            <div className="flex items-center gap-3 ml-2 pl-2 border-l border-gray-200">
+            <div className="flex items-center gap-3 ml-2 pl-2 border-l border-gray-300">
               <Link href="/profile" className="text-sm text-pure-ink font-medium hover:text-coastal-sky transition whitespace-nowrap">
                 {user.name}
                 {user.is_admin && (
@@ -151,7 +151,7 @@ export default function Navbar() {
 
         {/* Mobile dropdown menu */}
         {menuOpen && (
-          <div className="md:hidden mt-3 pb-1 border-t border-gray-200 pt-3 flex flex-col gap-1">
+          <div className="md:hidden mt-3 pb-1 border-t border-gray-300 pt-3 flex flex-col gap-1">
             {NAV_LINKS.map(({ href, label }) => (
               <Link key={href} href={href} className={navLinkClass(href)}>{label}</Link>
             ))}
@@ -163,7 +163,7 @@ export default function Navbar() {
                 ))}
               </>
             )}
-            <div className="mt-1 pt-2 border-t border-gray-200 flex gap-2">
+            <div className="mt-1 pt-2 border-t border-gray-300 flex gap-2">
               <Link
                 href="/workouts/create"
                 className="flex-1 text-center bg-pure-green text-black hover:bg-pure-accent-light px-4 py-2 rounded-lg transition font-semibold text-sm"

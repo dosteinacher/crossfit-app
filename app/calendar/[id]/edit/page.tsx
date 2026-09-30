@@ -160,7 +160,7 @@ export default function EditPollPage() {
         <Navbar />
         <div className="min-h-screen bg-pure-bg py-8">
           <div className="container mx-auto px-4 max-w-4xl">
-            <Card className="bg-pure-surface border-gray-200">
+            <Card className="bg-pure-surface border-gray-300">
               <p className="text-red-600">Poll not found</p>
             </Card>
           </div>
@@ -176,7 +176,7 @@ export default function EditPollPage() {
         <div className="container mx-auto px-4 max-w-3xl">
           <h1 className="text-4xl font-bold text-pure-ink mb-8">Edit Poll</h1>
 
-          <Card className="bg-pure-surface border-gray-200">
+          <Card className="bg-pure-surface border-gray-300">
             {error && <ErrorMessage message={error} />}
             {success && <SuccessMessage message={success} />}
 
@@ -205,7 +205,7 @@ export default function EditPollPage() {
                 <select
                   value={templateId}
                   onChange={(e) => setTemplateId(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                 >
                   <option value="">TBD - Decide later</option>
                   {templates.map((template) => (
@@ -224,7 +224,7 @@ export default function EditPollPage() {
                 ) : (
                   <div className="space-y-2">
                     {existingOptions.map((option) => (
-                      <div key={option.id} className="bg-pure-bg border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                      <div key={option.id} className="bg-pure-bg border border-gray-300 rounded-lg p-4 flex items-center justify-between">
                         <div>
                           <p className="text-pure-ink font-medium">
                             {format(new Date(option.date), 'EEEE, MMM d')} at{' '}
@@ -265,7 +265,7 @@ export default function EditPollPage() {
                 {newOptions.length > 0 && (
                   <div className="space-y-3">
                     {newOptions.map((option, index) => (
-                      <div key={index} className="bg-pure-bg border border-gray-200 rounded-lg p-4">
+                      <div key={index} className="bg-pure-bg border border-gray-300 rounded-lg p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
                             <Input

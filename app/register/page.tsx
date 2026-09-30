@@ -71,7 +71,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-pure-bg flex items-center justify-center px-4">
-      <Card className="w-full max-w-md bg-pure-surface border-gray-200">
+      <Card className="w-full max-w-md bg-pure-surface border-gray-300">
         <h1 className="text-3xl font-bold text-center mb-6 text-pure-ink">
           Register for PURE
         </h1>

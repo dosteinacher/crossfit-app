@@ -63,7 +63,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Polls Section */}
-          <div className="mt-16 pt-8 border-t border-gray-200">
+          <div className="mt-16 pt-8 border-t border-gray-300">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-bold text-pure-ink">Availability Polls</h2>
               <Link href="/calendar/create">
@@ -79,7 +79,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Poll Filter Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-gray-200">
+            <div className="flex gap-2 mb-6 border-b border-gray-300">
               <button
                 onClick={() => setPollFilter('active')}
                 className={`px-4 py-2 font-medium transition ${
@@ -114,7 +114,7 @@ export default function CalendarPage() {
 
             {/* Polls List */}
             {polls.length === 0 ? (
-              <Card className="bg-pure-surface border-gray-200">
+              <Card className="bg-pure-surface border-gray-300">
                 <div className="text-center py-12">
                   <p className="text-gray-600 text-lg mb-4">No polls yet</p>
                   <p className="text-pure-text-light mb-6">
@@ -129,7 +129,7 @@ export default function CalendarPage() {
               <div className="grid grid-cols-1 gap-4">
                 {polls.map((poll) => (
                   <Link key={poll.id} href={`/calendar/${poll.id}`}>
-                    <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer bg-pure-surface border-gray-200">
+                    <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer bg-pure-surface border-gray-300">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">

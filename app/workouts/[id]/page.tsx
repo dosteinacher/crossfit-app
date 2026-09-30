@@ -652,7 +652,7 @@ export default function WorkoutDetailPage() {
                   onChange={(e) => setNewGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddGuest())}
                   placeholder="Guest name..."
-                  className="flex-1 px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="flex-1 px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
                 />
                 <button
                   onClick={handleAddGuest}
@@ -678,7 +678,7 @@ export default function WorkoutDetailPage() {
                 onChange={(e) => setPostMessage(e.target.value)}
                 placeholder="Share a message about this workout..."
                 rows={2}
-                className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green resize-none"
+                className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green resize-none"
               />
               <div className="flex items-center gap-3">
                 <label className="text-xs text-pure-text-light cursor-pointer hover:text-pure-ink">
@@ -716,7 +716,7 @@ export default function WorkoutDetailPage() {
             ) : (
               <div className="space-y-4">
                 {posts.map((p) => (
-                  <div key={p.id} className="bg-pure-bg border border-gray-200 rounded-lg p-3">
+                  <div key={p.id} className="bg-pure-bg border border-gray-300 rounded-lg p-3">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
                         <p className="font-semibold text-pure-ink text-sm">{p.user_name}</p>
@@ -787,7 +787,7 @@ export default function WorkoutDetailPage() {
       {/* Cancel workout modal */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-pure-surface border border-gray-200 rounded-xl shadow-2xl w-full max-w-md p-6">
+          <div className="bg-pure-surface border border-gray-300 rounded-xl shadow-2xl w-full max-w-md p-6">
             <h2 className="text-xl font-bold text-pure-ink mb-2">Cancel Workout</h2>
             <p className="text-pure-text-light text-sm mb-4">
               This will soft-cancel the workout. Registered members will be notified.

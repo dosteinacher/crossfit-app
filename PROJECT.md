@@ -29,12 +29,15 @@ Concise facts about this repo so tools and teammates don’t rely on stale guess
 
 ## Design system
 
-- The app is **light**: off-white page (`pure-bg` `#f4f5f7`), white cards (`pure-surface`), near-black ink (`pure-ink`). Long workout descriptions are the main thing people read, so readability wins over mood.
+- The app is **light**: white page (`pure-bg` `#ffffff`), lightly tinted grey cards (`pure-surface` `#eef0f3`) with a `gray-300` hairline, near-black ink (`pure-ink`). Long workout descriptions are the main thing people read, so readability wins over mood.
+- Cards must carry their own **opaque** background. A transparent card on the page background reads as no card at all, and anything painted behind it bleeds through.
+- Inputs, the navbar and popovers stay **literal white** (`bg-white`), so they lift off the tinted cards.
 - The logo lime **`pure-green` `#c1ff00` is a fill-only signal** — buttons, calendar chips, active states — and always pairs with **dark text**. Lime *text* on white is unreadable, so accent text and icons use **`pure-accent-ink` `#415600`** instead.
 - The `coastal-*` ramp is a cool slate scale for secondary text, labels, borders and decorative fills. `coastal-honey` stays a distinct semantic mid-tier stat/rating colour.
 - Palette lives in **`tailwind.config.js`**; page/body, selection, scrollbar and watermark rules live in **`app/globals.css`**.
 - **`/wod` (gym TV display) stays dark on purpose** — bright signage is unreadable across a room, and `WodScreenWake` paints near-black pixels. It opts out with the `.wod-screen` class (see the `body:has(.wod-screen)` rules in `globals.css`) and uses **literal** colour classes rather than the light tokens.
-- Two logo assets ship: **`go-pure-logo.png`** is the original white + lime artwork and is used only where the background is dark (`/wod`, and the watermark on that screen). **`go-pure-logo-dark.png`** is the ink + olive variant for every light surface — navbar, page headers and the global watermark.
+- Two logo assets ship: **`go-pure-logo.png`** is the original white + lime artwork and is used only where the background is dark (`/wod`, and the watermark on that screen). **`go-pure-logo-dark.png`** is the ink + olive variant for every light surface — navbar and page headers.
+- The **global watermark** in `app/layout.tsx` is a `z-40` overlay, so it paints *above* page content. That only works on the dark `/wod` screen; `globals.css` hides it everywhere else. A watermark on a light page has to sit behind the content instead (see the dashboard, which has its own).
 
 ## Where to read more
 

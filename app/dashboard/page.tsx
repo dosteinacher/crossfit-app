@@ -165,7 +165,7 @@ export default function DashboardPage() {
                 <motion.div
                   variants={fadeUp}
                   transition={{ duration: 0.35 }}
-                  className={`h-full rounded-xl bg-pure-surface border border-gray-200 shadow-sm overflow-hidden ${href ? 'hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer' : ''}`}
+                  className={`h-full rounded-xl bg-pure-surface border border-gray-300 shadow-sm overflow-hidden ${href ? 'hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer' : ''}`}
                 >
                   <div className={`h-1 w-full ${accent}`} />
                   <div className="p-5">
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                 transition={{ duration: 0.4, delay: 0.2 }}
               >
                 <p className="text-xs font-bold tracking-widest text-pure-text-light uppercase mb-3">Up Next</p>
-                <div className={`relative bg-pure-surface rounded-xl overflow-hidden shadow-xl border ${nextWorkout.is_registered ? 'border-pure-green/40' : 'border-gray-200'}`}>
+                <div className={`relative bg-pure-surface rounded-xl overflow-hidden shadow-xl border ${nextWorkout.is_registered ? 'border-pure-accent-ink/40' : 'border-gray-300'}`}>
                   <div className="h-1 w-full bg-gradient-to-r from-pure-green via-coastal-sky to-coastal-day" />
                   <div className="p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1 min-w-0">
@@ -258,7 +258,7 @@ export default function DashboardPage() {
               <motion.div
                 variants={fadeUp} initial="initial" animate="animate"
                 transition={{ duration: 0.4, delay: 0.3 }}
-                className="bg-pure-surface border border-gray-200 rounded-xl p-12 text-center"
+                className="bg-pure-surface border border-gray-300 rounded-xl p-12 text-center"
               >
                 <h3 className="text-2xl font-bold text-pure-ink mb-2">Rest week!</h3>
                 <p className="text-pure-text-light">No workouts in the next 7 days. Check back soon or create one!</p>
@@ -288,12 +288,12 @@ export default function DashboardPage() {
                           return (
                             <div
                               key={workout.id}
-                              className={`relative group/card rounded-xl p-4 border border-gray-200 border-l-4 transition-all ${typeStyle.leftBorder} ${
+                              className={`relative group/card rounded-xl p-4 bg-pure-surface border border-gray-300 border-l-4 transition-all ${typeStyle.leftBorder} ${
                                 workout.is_registered
-                                  ? 'border-t-pure-green/30 border-r-pure-green/30 border-b-pure-green/30 shadow-sm shadow-pure-green/5'
+                                  ? 'border-t-pure-accent-ink/40 border-r-pure-accent-ink/40 border-b-pure-accent-ink/40 ring-1 ring-pure-green/60 shadow-sm'
                                   : isFull
-                                  ? 'opacity-50'
-                                  : 'hover:border-t-gray-600 hover:border-r-gray-600 hover:border-b-gray-600'
+                                  ? 'opacity-60'
+                                  : 'shadow-sm hover:shadow-md hover:border-t-gray-300 hover:border-r-gray-300 hover:border-b-gray-300'
                               }`}
                             >
                               <div className="flex items-start gap-3">
@@ -312,7 +312,7 @@ export default function DashboardPage() {
                                       </span>
                                     )}
                                     {isFull && (
-                                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-pure-text-light border border-gray-200">
+                                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-pure-text-light border border-gray-300">
                                         Full
                                       </span>
                                     )}
@@ -351,7 +351,7 @@ export default function DashboardPage() {
 
                               {/* Hover popover — desktop only */}
                               <div className="hidden md:block pointer-events-none absolute left-full top-0 ml-3 z-50 w-72 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150">
-                                <div className="bg-pure-surface border border-gray-200 rounded-xl shadow-xl p-4">
+                                <div className="bg-white border border-gray-300 rounded-xl shadow-xl p-4">
                                   <div className="flex items-center gap-2 mb-3">
                                     <span className={`text-xs font-medium px-2 py-0.5 rounded border ${typeStyle.badge}`}>
                                       {workout.workout_type}
@@ -364,14 +364,14 @@ export default function DashboardPage() {
                                   ) : (
                                     <p className="text-sm text-gray-600 mb-3 italic">No description</p>
                                   )}
-                                  <div className="border-t border-gray-200 pt-3 flex justify-between items-center text-xs text-pure-text-light">
+                                  <div className="border-t border-gray-300 pt-3 flex justify-between items-center text-xs text-pure-text-light">
                                     <span>by {workout.creator_name}</span>
                                     <span className={workout.registered_count >= workout.max_participants ? 'text-red-600 font-semibold' : 'text-pure-accent-ink font-semibold'}>
                                       {workout.registered_count}/{workout.max_participants} spots
                                     </span>
                                   </div>
                                 </div>
-                                <div className="absolute top-4 -left-1.5 w-3 h-3 bg-pure-surface border-l border-b border-gray-200 rotate-45" />
+                                <div className="absolute top-4 -left-1.5 w-3 h-3 bg-white border-l border-b border-gray-300 rotate-45" />
                               </div>
                             </div>
                           );

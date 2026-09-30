@@ -250,7 +250,7 @@ export default function ImportCustomPage() {
                 <h3 className="font-bold text-pure-ink mb-2">Preview (first few rows):</h3>
                 <div className="space-y-2 text-sm">
                   {preview.map((row, idx) => (
-                    <div key={idx} className="border-b border-gray-200 pb-2">
+                    <div key={idx} className="border-b border-gray-300 pb-2">
                       <p className="font-medium text-coastal-sky">{row.dateTime}</p>
                       {row.warmUp && <p className="text-pure-text-light text-xs">Warm-up: {row.warmUp.substring(0, 50)}...</p>}
                       {row.strength && <p className="text-pure-text-light text-xs">Strength: {row.strength.substring(0, 50)}...</p>}

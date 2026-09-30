@@ -156,7 +156,7 @@ export default function PollDetailPage() {
         <Navbar />
         <div className="min-h-screen bg-pure-bg py-8">
           <div className="container mx-auto px-4 max-w-4xl">
-            <Card className="bg-pure-surface border-gray-200">
+            <Card className="bg-pure-surface border-gray-300">
               <p className="text-red-600">Poll not found</p>
             </Card>
           </div>
@@ -178,7 +178,7 @@ export default function PollDetailPage() {
           {error && <ErrorMessage message={error} />}
           {success && <SuccessMessage message={success} />}
 
-          <Card className="bg-pure-surface border-gray-200">
+          <Card className="bg-pure-surface border-gray-300">
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -234,7 +234,7 @@ export default function PollDetailPage() {
               {sortedOptions.map((option: any) => (
                 <div
                   key={option.id}
-                  className="bg-pure-bg border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition"
+                  className="bg-pure-bg border border-gray-300 rounded-lg p-4 hover:border-gray-300 transition"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -301,7 +301,7 @@ export default function PollDetailPage() {
 
             {/* Add a new date — open to all logged-in users while poll is active */}
             {poll.status === 'active' && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="mt-6 pt-6 border-t border-gray-300">
                 <h3 className="text-lg font-bold text-pure-ink mb-3">Add a date</h3>
                 <p className="text-sm text-pure-text-light mb-3">
                   Propose another time slot. Everyone who has voted (and the poll creator) will get an email so they can vote on it.
@@ -311,20 +311,20 @@ export default function PollDetailPage() {
                     type="date"
                     value={newDate}
                     onChange={(e) => setNewDate(e.target.value)}
-                    className="px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                    className="px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
                   />
                   <input
                     type="time"
                     value={newTime}
                     onChange={(e) => setNewTime(e.target.value)}
-                    className="px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                    className="px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
                   />
                   <input
                     type="text"
                     value={newLabel}
                     onChange={(e) => setNewLabel(e.target.value)}
                     placeholder="Label (optional)"
-                    className="px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
+                    className="px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green"
                   />
                 </div>
                 <Button onClick={handleAddOption} disabled={addingOption || !newDate || !newTime}>

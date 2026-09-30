@@ -140,7 +140,7 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Announcements — kept at top for quick access */}
-          <Card className="bg-pure-surface border-gray-200 mb-8">
+          <Card className="bg-pure-surface border-gray-300 mb-8">
             <h2 className="text-xl font-bold text-pure-ink mb-4">Announcements</h2>
             <div className="space-y-3 mb-5">
               <input
@@ -171,7 +171,7 @@ export default function AdminOverviewPage() {
             ) : (
               <div className="space-y-2">
                 {announcements.map((a: any) => (
-                  <div key={a.id} className="flex items-start justify-between gap-3 bg-pure-bg border border-gray-200 rounded-lg px-4 py-3">
+                  <div key={a.id} className="flex items-start justify-between gap-3 bg-pure-bg border border-gray-300 rounded-lg px-4 py-3">
                     <div className="min-w-0">
                       <p className="font-semibold text-pure-ink text-sm">{a.title}</p>
                       {a.body && <p className="text-pure-text-light text-xs mt-0.5">{a.body}</p>}
@@ -191,7 +191,7 @@ export default function AdminOverviewPage() {
           {/* Stats grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {topCards.map(({ label, value, color }) => (
-              <div key={label} className="bg-pure-surface border border-gray-200 rounded-lg p-4 text-center">
+              <div key={label} className="bg-pure-surface border border-gray-300 rounded-lg p-4 text-center">
                 <p className={`text-3xl font-bold ${color}`}>{value}</p>
                 <p className="text-sm text-pure-text-light mt-1">{label}</p>
               </div>
@@ -199,7 +199,7 @@ export default function AdminOverviewPage() {
           </div>
 
           {/* Top members */}
-          <Card className="bg-pure-surface border-gray-200">
+          <Card className="bg-pure-surface border-gray-300">
             <h2 className="text-xl font-bold text-pure-ink mb-4">Most Active Members</h2>
             {!stats?.top_members?.length ? (
               <p className="text-pure-text-light text-sm">No attendance data yet.</p>
@@ -207,7 +207,7 @@ export default function AdminOverviewPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 text-left text-sm text-pure-text-light">
+                    <tr className="border-b border-gray-300 text-left text-sm text-pure-text-light">
                       <th className="pb-2 pr-4">#</th>
                       <th className="pb-2 pr-4">Member</th>
                       <th className="pb-2 pr-4 text-right">Sign-ups</th>
@@ -221,7 +221,7 @@ export default function AdminOverviewPage() {
                         ? Math.round((m.attended / m.total_registered) * 100)
                         : 0;
                       return (
-                        <tr key={m.id} className="border-b border-gray-200 last:border-0">
+                        <tr key={m.id} className="border-b border-gray-300 last:border-0">
                           <td className="py-3 pr-4 text-pure-text-light text-sm">{i + 1}</td>
                           <td className="py-3 pr-4 text-pure-ink font-medium">{m.name}</td>
                           <td className="py-3 pr-4 text-pure-text-light text-right">{m.total_registered}</td>

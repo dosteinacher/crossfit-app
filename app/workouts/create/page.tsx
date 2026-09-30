@@ -244,7 +244,7 @@ function CreateWorkoutForm() {
 
           {/* Workout generator (optional) */}
           {!templateId && (
-            <div className="mb-6 border border-gray-200 rounded-lg bg-pure-surface overflow-hidden">
+            <div className="mb-6 border border-gray-300 rounded-lg bg-pure-surface overflow-hidden">
               <button
                 type="button"
                 onClick={() => setGenExpanded(!genExpanded)}
@@ -254,14 +254,14 @@ function CreateWorkoutForm() {
                 <span className="text-xl">{genExpanded ? '−' : '+'}</span>
               </button>
               {genExpanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-gray-200 space-y-4">
+                <div className="px-4 pb-4 pt-2 border-t border-gray-300 space-y-4">
                   {genSuccess && (
                     <p className="text-sm text-pure-accent-ink font-medium">{genSuccess}</p>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-pure-ink mb-1">
-                        How many CrossFitters? (1–6) <span className="text-red-600">*</span>
+                        How many CrossFitters? (1–6) <span className="text-red-700">*</span>
                       </label>
                       <input
                         type="number"
@@ -269,12 +269,12 @@ function CreateWorkoutForm() {
                         max={6}
                         value={genAthleteCount}
                         onChange={(e) => setGenAthleteCount(Math.min(6, Math.max(1, Number(e.target.value) || 1)))}
-                        className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg"
+                        className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-pure-ink mb-1">
-                        How long? (min) <span className="text-red-600">*</span>
+                        How long? (min) <span className="text-red-700">*</span>
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {DURATION_PRESETS.map((d) => (
@@ -285,7 +285,7 @@ function CreateWorkoutForm() {
                             className={`px-3 py-1 rounded-lg text-sm font-medium ${
                               genDuration === d
                                 ? 'bg-pure-green text-pure-ink'
-                                : 'bg-pure-bg text-pure-ink border border-gray-200'
+                                : 'bg-pure-bg text-pure-ink border border-gray-300'
                             }`}
                           >
                             {d}
@@ -323,7 +323,7 @@ function CreateWorkoutForm() {
                         <select
                           value={genStrengthPreset}
                           onChange={(e) => setGenStrengthPreset(e.target.value)}
-                          className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg mb-2"
+                          className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg mb-2"
                         >
                           {STRENGTH_PRESETS.map((p) => (
                             <option key={p.label} value={p.value} className="bg-pure-bg">
@@ -337,7 +337,7 @@ function CreateWorkoutForm() {
                             value={genStrengthCustom}
                             onChange={(e) => setGenStrengthCustom(e.target.value)}
                             placeholder="e.g. Back Squat 5x5"
-                            className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg"
+                            className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg"
                           />
                         )}
                       </div>
@@ -350,7 +350,7 @@ function CreateWorkoutForm() {
                     <select
                       value={genFormat}
                       onChange={(e) => setGenFormat(e.target.value as WorkoutFormat)}
-                      className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg"
+                      className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg"
                     >
                       {WORKOUT_FORMATS.map((f) => (
                         <option key={f.value} value={f.value} className="bg-pure-bg">
@@ -364,7 +364,7 @@ function CreateWorkoutForm() {
                       <label className="block text-sm font-medium text-pure-ink mb-1">
                         Exercises to include (optional)
                       </label>
-                      <div className="bg-pure-bg border border-gray-200 rounded-lg p-2 max-h-32 overflow-y-auto">
+                      <div className="bg-pure-bg border border-gray-300 rounded-lg p-2 max-h-32 overflow-y-auto">
                         {EXERCISES.map((ex) => (
                           <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100">
                             <input
@@ -382,7 +382,7 @@ function CreateWorkoutForm() {
                       <label className="block text-sm font-medium text-pure-ink mb-1">
                         Exercises to exclude (optional, max 4)
                       </label>
-                      <div className="bg-pure-bg border border-gray-200 rounded-lg p-2 max-h-32 overflow-y-auto">
+                      <div className="bg-pure-bg border border-gray-300 rounded-lg p-2 max-h-32 overflow-y-auto">
                         {EXERCISES.map((ex) => (
                           <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100">
                             <input
@@ -431,12 +431,12 @@ function CreateWorkoutForm() {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-pure-ink mb-1">
-                  Workout Type <span className="text-red-600">*</span>
+                  Workout Type <span className="text-red-700">*</span>
                 </label>
                 <select
                   value={workoutType}
                   onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                   required
                 >
                   {workoutTypes.map((type) => (
@@ -480,7 +480,7 @@ function CreateWorkoutForm() {
                 <p className="text-xs text-pure-text-light mb-2">
                   Select users who you know will attend. They'll be auto-registered and receive a calendar invite.
                 </p>
-                <div className="bg-pure-bg border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <div className="bg-pure-bg border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
                   {users.length === 0 ? (
                     <p className="text-pure-text-light text-sm">Loading users...</p>
                   ) : (

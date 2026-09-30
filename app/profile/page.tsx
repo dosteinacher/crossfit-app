@@ -132,7 +132,7 @@ export default function ProfilePage() {
               { label: 'Attendance Rate', value: `${attendanceRate}%`, color: 'text-coastal-honey' },
               { label: 'Upcoming', value: stats?.upcoming_workouts ?? 0, color: 'text-coastal-day' },
             ].map(({ label, value, color }) => (
-              <div key={label} className="bg-pure-surface border border-gray-200 rounded-lg p-4 text-center">
+              <div key={label} className="bg-pure-surface border border-gray-300 rounded-lg p-4 text-center">
                 <p className={`text-3xl font-bold ${color}`}>{value}</p>
                 <p className="text-sm text-pure-text-light mt-1">{label}</p>
               </div>
@@ -156,7 +156,7 @@ export default function ProfilePage() {
             const hasData = chartData.some((d) => d.registered > 0);
             if (!hasData) return null;
             return (
-              <div className="bg-pure-surface border border-gray-200 rounded-lg p-5 mb-6">
+              <div className="bg-pure-surface border border-gray-300 rounded-lg p-5 mb-6">
                 <h2 className="text-lg font-bold text-pure-ink mb-4">Monthly Activity</h2>
                 <div className="flex items-end gap-3 h-28">
                   {chartData.map(({ month, label, registered, attended }) => (
@@ -310,7 +310,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 {stats.recent_workouts.map((w: any) => (
                   <Link key={w.id} href={`/workouts/${w.id}`} className="block group">
-                    <div className="bg-pure-surface border border-gray-200 rounded-lg p-4 hover:border-coastal-sky transition">
+                    <div className="bg-pure-surface border border-gray-300 rounded-lg p-4 hover:border-coastal-sky transition">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
                           <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${w.attended ? 'bg-pure-green/20 text-pure-accent-ink border border-pure-green/30' : 'bg-gray-100 text-pure-text-light'}`}>

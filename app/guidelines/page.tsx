@@ -40,7 +40,7 @@ export default function GuidelinesPage() {
 
             <div className="min-w-0 flex-1">
             <section id="team-guidelines" className="scroll-mt-24 mb-10">
-              <Card className="bg-pure-surface border border-gray-200">
+              <Card className="bg-pure-surface border border-gray-300">
                 <h2 className="text-2xl font-bold text-pure-accent-ink mb-4">Allgemeine Trainingsstruktur und Team-Richtlinien</h2>
                 <p className="text-gray-600 mb-4">
                   Alle Trainingsformate können in verschiedenen Settings durchgeführt werden:
@@ -97,7 +97,7 @@ export default function GuidelinesPage() {
             </section>
 
             <section id="programming" className="scroll-mt-24 mb-10">
-              <Card className="bg-pure-surface border border-gray-200">
+              <Card className="bg-pure-surface border border-gray-300">
                 <h2 className="text-2xl font-bold text-pure-accent-ink mb-4">Programming Guidelines (für Coaches und Session-Erstellung)</h2>
 
                 <h3 className="text-lg font-semibold text-pure-ink mt-6 mb-2">1. Time Management</h3>
@@ -155,7 +155,7 @@ export default function GuidelinesPage() {
             </section>
 
             <section id="standard-workout" className="scroll-mt-24 mb-10">
-              <Card className="bg-pure-surface border border-gray-200">
+              <Card className="bg-pure-surface border border-gray-300">
                 <h2 className="text-2xl font-bold text-pure-accent-ink mb-4">1. Standard Workout (60 Minuten)</h2>
                 <h3 className="text-lg font-semibold text-pure-ink mb-2">Struktur</h3>
                 <ul className="list-disc list-inside text-gray-600 space-y-1 mb-4">
@@ -179,7 +179,7 @@ export default function GuidelinesPage() {
             </section>
 
             <section id="long-workout" className="scroll-mt-24 mb-10">
-              <Card className="bg-pure-surface border border-gray-200">
+              <Card className="bg-pure-surface border border-gray-300">
                 <h2 className="text-2xl font-bold text-pure-accent-ink mb-4">2. Long Workout (60 Minuten)</h2>
                 <h3 className="text-lg font-semibold text-pure-ink mb-2">Struktur</h3>
                 <ul className="list-disc list-inside text-gray-600 space-y-1 mb-4">
@@ -206,7 +206,7 @@ export default function GuidelinesPage() {
             </section>
 
             <section id="skill-workout" className="scroll-mt-24 mb-10">
-              <Card className="bg-pure-surface border border-gray-200">
+              <Card className="bg-pure-surface border border-gray-300">
                 <h2 className="text-2xl font-bold text-pure-accent-ink mb-4">3. Skill Workout (60 Minuten)</h2>
                 <h3 className="text-lg font-semibold text-pure-ink mb-2">Struktur</h3>
                 <ul className="list-disc list-inside text-gray-600 space-y-1 mb-4">
@@ -227,7 +227,7 @@ export default function GuidelinesPage() {
             </section>
 
             <section id="double-workout" className="scroll-mt-24 mb-10">
-              <Card className="bg-pure-surface border border-gray-200">
+              <Card className="bg-pure-surface border border-gray-300">
                 <h2 className="text-2xl font-bold text-pure-accent-ink mb-4">4. Double Workout (60 Minuten)</h2>
                 <h3 className="text-lg font-semibold text-pure-ink mb-2">Struktur</h3>
                 <ul className="list-disc list-inside text-gray-600 space-y-1 mb-4">

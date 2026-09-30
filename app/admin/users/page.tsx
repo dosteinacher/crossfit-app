@@ -112,14 +112,14 @@ export default function UsersAdminPage() {
           </div>
 
           {/* Users Table */}
-          <Card className="bg-pure-surface border-gray-200 overflow-x-auto">
+          <Card className="bg-pure-surface border-gray-300 overflow-x-auto">
             {users.length === 0 ? (
               <p className="text-pure-text-light text-center py-8">No users registered yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200">
+                    <tr className="border-b border-gray-300">
                       <th className="text-left py-3 px-4 text-pure-ink font-semibold">Name</th>
                       <th className="text-left py-3 px-4 text-pure-ink font-semibold">Email</th>
                       <th className="text-left py-3 px-4 text-pure-ink font-semibold">Role</th>
@@ -130,7 +130,7 @@ export default function UsersAdminPage() {
                   </thead>
                   <tbody>
                     {users.map((user) => (
-                      <tr key={user.id} className="border-b border-gray-200 hover:bg-pure-bg transition">
+                      <tr key={user.id} className="border-b border-gray-300 hover:bg-pure-bg transition">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <span className="text-pure-ink font-medium">{user.name}</span>

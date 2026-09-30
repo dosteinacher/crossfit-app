@@ -101,7 +101,7 @@ export default function WorkoutsPage() {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex flex-wrap items-end justify-between gap-3 mb-6 border-b border-gray-200">
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-6 border-b border-gray-300">
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('upcoming')}
@@ -150,7 +150,7 @@ export default function WorkoutsPage() {
                 aria-label="Filter past workouts by difficulty rating"
                 value={ratingFilter}
                 onChange={(e) => setRatingFilter(e.target.value as RatingFilter)}
-                className="mb-2 rounded-lg border border-gray-200 bg-pure-surface text-pure-text-light px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
+                className="mb-2 rounded-lg border border-gray-300 bg-pure-surface text-pure-text-light px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
               >
                 <option value="all">All ratings</option>
                 <option value="1">1 — easiest</option>
@@ -170,20 +170,20 @@ export default function WorkoutsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by title, description, or coach…"
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-pure-surface text-pure-ink placeholder:text-pure-text-light text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-pure-surface text-pure-ink placeholder:text-pure-text-light text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
             />
           </div>
 
           {/* Workouts List */}
           {filteredWorkouts.length === 0 ? (
-            <Card className="bg-pure-surface border-gray-200">
+            <Card className="bg-pure-surface border-gray-300">
               <p className="text-pure-text-light text-center py-8">No workouts found</p>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedWorkouts.map((workout) => (
                 <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                  <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-surface border-gray-200">
+                  <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-surface border-gray-300">
                     <div className="flex justify-between items-start mb-3">
                       <span className={`text-xs font-medium px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
                         {workout.workout_type}
@@ -203,7 +203,7 @@ export default function WorkoutsPage() {
                       {workout.description || 'No description'}
                     </p>
                     
-                    <div className="border-t border-gray-200 pt-3 mt-auto">
+                    <div className="border-t border-gray-300 pt-3 mt-auto">
                       <div className="flex justify-between items-center text-sm">
                         <span className="text-pure-text-light">
                           {format(new Date(workout.date), 'MMM d, h:mm a')}

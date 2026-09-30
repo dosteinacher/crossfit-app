@@ -86,7 +86,7 @@ export default function ArchivePage() {
           </div>
 
           {/* Search */}
-          <Card className="mb-6 bg-pure-surface border-gray-200">
+          <Card className="mb-6 bg-pure-surface border-gray-300">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -111,7 +111,7 @@ export default function ArchivePage() {
           </Card>
 
           {/* Filter Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-gray-200 flex-wrap">
+          <div className="flex gap-2 mb-6 border-b border-gray-300 flex-wrap">
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 font-medium transition ${
@@ -166,7 +166,7 @@ export default function ArchivePage() {
 
           {/* Templates Grid */}
           {templates.length === 0 ? (
-            <Card className="bg-pure-surface border-gray-200">
+            <Card className="bg-pure-surface border-gray-300">
               <div className="text-center py-12">
                 <p className="text-gray-600 text-lg mb-4">No workout templates yet</p>
                 <p className="text-pure-text-light mb-6">
@@ -180,7 +180,7 @@ export default function ArchivePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {templates.map((template) => (
-                <Card key={template.id} className="h-full flex flex-col bg-pure-surface border-gray-200 hover:border-pure-green transition-all">
+                <Card key={template.id} className="h-full flex flex-col bg-pure-surface border-gray-300 hover:border-pure-green transition-all">
                   <div className="flex justify-between items-start mb-3">
                     <span className="text-xs font-medium px-2 py-1 bg-purple-600 text-white rounded">
                       {template.category}

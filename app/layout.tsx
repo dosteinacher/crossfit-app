@@ -20,11 +20,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${bebasNeue.variable}`}>
-        {/* Watermark background - high z-index to appear above page backgrounds */}
+        {/* Watermark. On light pages this overlay would tint the content that sits
+            underneath it, so globals.css hides it there; only /wod uses it. */}
         <div 
           className="app-watermark fixed inset-0 pointer-events-none"
           style={{
-            backgroundImage: 'url(/go-pure-logo-dark.png)',
+            backgroundImage: 'url(/go-pure-logo.png)',
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
             backgroundSize: '40%',

@@ -201,64 +201,64 @@ export default function ImportWorkoutsPage() {
               </p>
 
               <div className="overflow-x-auto">
-                <table className="min-w-full border border-gray-200 text-sm">
+                <table className="min-w-full border border-gray-300 text-sm">
                   <thead className="bg-pure-bg">
                     <tr>
-                      <th className="border border-gray-200 px-4 py-2 text-left text-gray-600">Column</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left text-gray-600">Required?</th>
-                      <th className="border border-gray-200 px-4 py-2 text-left text-gray-600">Example</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left text-gray-600">Column</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left text-gray-600">Required?</th>
+                      <th className="border border-gray-300 px-4 py-2 text-left text-gray-600">Example</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="border border-gray-200 px-4 py-2 font-medium text-pure-ink">Title</td>
-                      <td className="border border-gray-200 px-4 py-2 text-pure-accent-ink">
+                      <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">Title</td>
+                      <td className="border border-gray-300 px-4 py-2 text-pure-accent-ink">
                         Required
                       </td>
-                      <td className="border border-gray-200 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
                         "Monday Morning WOD"
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-200 px-4 py-2 font-medium text-pure-ink">
+                      <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">
                         Description
                       </td>
-                      <td className="border border-gray-200 px-4 py-2 text-pure-text-light">Optional</td>
-                      <td className="border border-gray-200 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">Optional</td>
+                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
                         "For Time: 21-15-9..."
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-200 px-4 py-2 font-medium text-pure-ink">Type</td>
-                      <td className="border border-gray-200 px-4 py-2 text-pure-text-light">Optional</td>
-                      <td className="border border-gray-200 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">Type</td>
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">Optional</td>
+                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
                         "HIIT", "Strength", etc.
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-200 px-4 py-2 font-medium text-pure-ink">Date</td>
-                      <td className="border border-gray-200 px-4 py-2 text-pure-accent-ink">
+                      <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">Date</td>
+                      <td className="border border-gray-300 px-4 py-2 text-pure-accent-ink">
                         Required
                       </td>
-                      <td className="border border-gray-200 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
                         "2024-01-15" or "01/15/2024"
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-200 px-4 py-2 font-medium text-pure-ink">Time</td>
-                      <td className="border border-gray-200 px-4 py-2 text-pure-text-light">Optional (default: 09:00)</td>
-                      <td className="border border-gray-200 px-4 py-2 text-gray-600">
+                      <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">Time</td>
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">Optional (default: 09:00)</td>
+                      <td className="border border-gray-300 px-4 py-2 text-gray-600">
                         "06:00" or "6:00 AM"
                       </td>
                     </tr>
                     <tr>
-                      <td className="border border-gray-200 px-4 py-2 font-medium text-pure-ink">
+                      <td className="border border-gray-300 px-4 py-2 font-medium text-pure-ink">
                         Max Participants
                       </td>
-                      <td className="border border-gray-200 px-4 py-2 text-pure-text-light">
+                      <td className="border border-gray-300 px-4 py-2 text-pure-text-light">
                         Optional (default: 20)
                       </td>
-                      <td className="border border-gray-200 px-4 py-2 text-gray-600">20</td>
+                      <td className="border border-gray-300 px-4 py-2 text-gray-600">20</td>
                     </tr>
                   </tbody>
                 </table>

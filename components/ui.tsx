@@ -58,7 +58,7 @@ export function Input({
     <div className={`mb-4 ${className}`}>
       <label className="block text-sm font-medium text-pure-ink mb-1">
         {label}
-        {required && <span className="text-red-600 ml-1">*</span>}
+        {required && <span className="text-red-700 ml-1">*</span>}
       </label>
       <input
         type={type}
@@ -113,7 +113,7 @@ export function TimeInput({
     <div className={`mb-4 ${className}`}>
       <label className="block text-sm font-medium text-pure-ink mb-1">
         {label}
-        {required && <span className="text-red-600 ml-1">*</span>}
+        {required && <span className="text-red-700 ml-1">*</span>}
       </label>
       <div className="flex gap-2">
         <select
@@ -188,7 +188,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-pure-surface text-pure-ink rounded-lg border border-gray-200 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_-4px_rgba(16,24,40,0.10)] p-6 ${className}`}>
+    <div className={`bg-pure-surface text-pure-ink rounded-lg border border-gray-300 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_4px_12px_-4px_rgba(16,24,40,0.10)] p-6 ${className}`}>
       {children}
     </div>
   );

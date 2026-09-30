@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #f4f5f7;           /* Off-white page — softer than pure white for long reading */
+  --background: #ffffff;           /* White page — cards sit on top as tinted panels */
   --foreground: #14171a;           /* Near-black ink */
   --accent: #c1ff00;               /* Signal lime — fill only (matches logo) */
   --accent-ink: #415600;           /* Lime-family ink, for accent text on light surfaces */
@@ -66,12 +66,15 @@ body:has(.wod-screen) {
   color-scheme: dark;
 }
 
-/* The dark /wod screen needs the original white + lime artwork instead.
-   The watermark carries inline styles, so these have to win with !important. */
+/* The global watermark is a z-40 overlay: on light pages it would sit *above*
+   the content and grey out cards and text. Only the dark /wod screen, where it
+   reads as a faint glow behind the numbers, still shows it. */
+.app-watermark {
+  display: none;
+}
+
 body:has(.wod-screen) .app-watermark {
-  background-image: url(/go-pure-logo.png) !important;
-  filter: none !important;
-  opacity: 0.05 !important;
+  display: block;
 }
 
 /* Navbar brand: very slow rotation for TV/signage motion; disabled when user prefers reduced motion */

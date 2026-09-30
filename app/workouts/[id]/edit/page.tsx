@@ -218,12 +218,12 @@ export default function EditWorkoutPage() {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-pure-ink mb-1">
-                  Workout Type <span className="text-red-600">*</span>
+                  Workout Type <span className="text-red-700">*</span>
                 </label>
                 <select
                   value={workoutType}
                   onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                  className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
                   required
                 >
                   {workoutTypes.map((type) => (
@@ -275,7 +275,7 @@ export default function EditWorkoutPage() {
                     {participants.map((p) => (
                       <li
                         key={p.user_id}
-                        className="flex items-center justify-between bg-pure-bg border border-gray-200 rounded-lg px-3 py-2"
+                        className="flex items-center justify-between bg-pure-bg border border-gray-300 rounded-lg px-3 py-2"
                       >
                         <span className="text-sm text-pure-ink">{p.user_name}</span>
                         <button
@@ -296,7 +296,7 @@ export default function EditWorkoutPage() {
                     <select
                       value={selectedAddUserId}
                       onChange={(e) => setSelectedAddUserId(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-pure-bg border border-gray-200 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
+                      className="flex-1 px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
                     >
                       <option value="">Select a person to add...</option>
                       {unregisteredUsers.map((u) => (

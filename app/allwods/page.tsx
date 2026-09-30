@@ -61,7 +61,7 @@ export default function AllWodsPage() {
         </div>
 
         {/* Search */}
-        <Card className="mb-6 bg-pure-surface border-gray-200">
+        <Card className="mb-6 bg-pure-surface border-gray-300">
           <input
             type="text"
             placeholder="Search workouts..."
@@ -74,7 +74,7 @@ export default function AllWodsPage() {
         {loading ? (
           <Loading />
         ) : workouts.length === 0 ? (
-          <Card className="bg-pure-surface border-gray-200 text-center py-12">
+          <Card className="bg-pure-surface border-gray-300 text-center py-12">
             <p className="text-gray-600 text-lg">
               {searchQuery ? `No workouts found for "${searchQuery}"` : 'No workouts yet'}
             </p>
@@ -82,7 +82,7 @@ export default function AllWodsPage() {
         ) : (
           <div className="space-y-4">
             {workouts.map((workout) => (
-              <Card key={workout.id} className="bg-pure-surface border-gray-200">
+              <Card key={workout.id} className="bg-pure-surface border-gray-300">
                 <div className="flex items-center gap-3 flex-wrap mb-3">
                   <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg">
                     {workout.workout_type}
@@ -96,7 +96,7 @@ export default function AllWodsPage() {
                   {workout.description || 'No workout details provided'}
                 </p>
 
-                <div className="flex items-center justify-between text-sm text-pure-text-light pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between text-sm text-pure-text-light pt-3 border-t border-gray-300">
                   <span>
                     Created by <span className="text-pure-ink font-medium">{workout.creator_name}</span>
                   </span>
@@ -115,7 +115,7 @@ export default function AllWodsPage() {
             href="https://go-pure.ch/login"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block bg-pure-surface border border-gray-200 rounded-lg px-6 py-3 hover:border-pure-green hover:bg-pure-bg transition-all duration-300"
+            className="inline-block bg-pure-surface border border-gray-300 rounded-lg px-6 py-3 hover:border-pure-green hover:bg-pure-bg transition-all duration-300"
           >
             <p className="text-lg font-bold text-pure-accent-ink">go-pure.ch login</p>
           </a>
