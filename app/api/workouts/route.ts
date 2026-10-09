@@ -39,17 +39,18 @@ export async function GET(request: NextRequest) {
 
     const enrichedWorkouts = workouts.map((workout: Workout) => {
       const regs = regsByWorkout.get(workout.id) || [];
+      const guests = guestsByWorkout.get(workout.id) || [];
       return {
         ...workout,
         creator_name: usersById.get(workout.created_by)?.name || 'Unknown',
-        registered_count: regs.length,
+        registered_count: regs.length + guests.length,
         is_registered: currentUserRegSet.has(workout.id),
         participants: regs.map((r: Registration) => ({
           user_id: r.user_id,
           user_name: usersById.get(r.user_id)?.name || 'Unknown',
           attended: r.attended,
         })),
-        guests: guestsByWorkout.get(workout.id) || [],
+        guests,
       };
     });
 
