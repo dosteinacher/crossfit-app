@@ -13,6 +13,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        ink: '#0B0C0A',
+        'ink-2': '#4A4D45',
+        muted: '#8A8D84',
+        paper: '#FFFFFF',
+        canvas: '#F4F4F0',
+        line: '#E4E4DE',
+        'line-2': '#EEEEE9',
+        lime: '#C8F31D',
+        danger: '#C8341F',
         // "Signal on paper": the app runs light so long text stays comfortable to read.
         // The lime logo colour is kept as a fill-only signal (buttons, dots, highlights)
         // because lime *text* on white is unreadable — use `pure-accent-ink` for that.
@@ -35,6 +44,18 @@ module.exports = {
         'coastal-honey': '#8A6D1F',
         // Semantic aliases
         'pure-text-light': '#383D44',   // Secondary text — ink family, not slate (9.6:1 on the card tint)
+      },
+      fontFamily: {
+        sans: ['var(--font-body)', 'Arial', 'Helvetica', 'sans-serif'],
+        display: ['var(--font-display)', 'Impact', 'sans-serif'],
+      },
+      borderRadius: {
+        sm: 'var(--radius-sm)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+      },
+      boxShadow: {
+        card: 'var(--shadow-card)',
       },
     },
   },

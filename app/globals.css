@@ -3,21 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;           /* White page — cards sit on top as tinted panels */
-  --foreground: #14171a;           /* Near-black ink */
-  --accent: #c1ff00;               /* Signal lime — fill only (matches logo) */
-  --accent-ink: #415600;           /* Lime-family ink, for accent text on light surfaces */
-  --coastal-sky: #475569;          /* slate-600 — secondary text/borders */
-  --coastal-search: #cbd5e1;       /* slate-300 — hover surfaces/borders */
-  --coastal-day: #334155;          /* slate-700 — strong labels */
-  --coastal-kombucha: #e2e8f0;     /* slate-200 — decorative gradients */
-  --coastal-honey: #8A6D1F;        /* Semantic mid-tier stat/rating color */
+  --ink: #0B0C0A;
+  --ink-2: #4A4D45;
+  --muted: #8A8D84;
+  --paper: #FFFFFF;
+  --canvas: #F4F4F0;
+  --line: #E4E4DE;
+  --line-2: #EEEEE9;
+  --lime: #C8F31D;
+  --danger: #C8341F;
+
+  --radius-sm: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, .06), 0 20px 50px rgba(0, 0, 0, .08);
+
+  /* Legacy aliases remain until the later component and screen phases migrate. */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --accent: var(--lime);
+  --accent-ink: #415600;
+  --coastal-sky: #475569;
+  --coastal-search: #cbd5e1;
+  --coastal-day: #334155;
+  --coastal-kombucha: #e2e8f0;
+  --coastal-honey: #8A6D1F;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Arial, Helvetica, sans-serif;
   min-height: 100vh;
   /* Keep native form controls, date pickers and scrollbars in light mode even when
      the OS is set to dark — otherwise they fight the page. */
@@ -25,12 +41,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Bold display font for all headings — condensed, uppercase, gym-poster energy.
-   Falls back gracefully if the font variable isn't present. */
+/* Condensed display type is reserved for headings and prominent numbers. */
 h1, h2, h3 {
   font-family: var(--font-display), Impact, sans-serif;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  line-height: 0.9;
 }
 
 /* Signature lime brand moment on text selection + scrollbar, independent of the
@@ -64,17 +79,6 @@ body:has(.wod-screen) {
   background: #000000;
   color: #f5f5f5;
   color-scheme: dark;
-}
-
-/* The global watermark is a z-40 overlay: on light pages it would sit *above*
-   the content and grey out cards and text. Only the dark /wod screen, where it
-   reads as a faint glow behind the numbers, still shows it. */
-.app-watermark {
-  display: none;
-}
-
-body:has(.wod-screen) .app-watermark {
-  display: block;
 }
 
 /* Navbar brand: very slow rotation for TV/signage motion; disabled when user prefers reduced motion */
