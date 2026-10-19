@@ -206,7 +206,7 @@ export default function WorkoutsPage() {
                     <Link href={`/workouts/${workout.id}`} className="mt-3 text-ink hover:underline">
                       <h2 className="font-display text-2xl font-black uppercase leading-[.9] tracking-[-.01em]">{workout.title}</h2>
                     </Link>
-                    <WorkoutFormatStamps description={description} />
+                    <WorkoutFormatStamps title={workout.title} description={description} showScoreboard />
                     {hasDescription && (
                       <p className="mt-3 line-clamp-2 whitespace-pre-line text-base leading-snug text-ink-2">
                         {description}

@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { getWorkoutFormatStamps, parseWorkoutDescription } from './workout-description';
+import {
+  getWorkoutFormat,
+  getWorkoutFormatStamps,
+  getWorkoutScoreboard,
+  parseWorkoutDescription,
+} from './workout-description';
 
 // These imported workout examples are from public/workouts-template.csv; no live database is configured here.
 describe('parseWorkoutDescription', () => {
@@ -60,16 +65,53 @@ describe('parseWorkoutDescription', () => {
     assert.deepEqual(part.lines, ['10 – 5 – 5 – 3 – 3', 'Build to a heavy, clean 3']);
   });
 
-  it('extracts concise format stamps without duplicating a format', () => {
-    assert.deepEqual(
-      getWorkoutFormatStamps('AMRAP 20 minutes:\n10 Wall Balls\n15 Kettlebell Swings'),
-      ['AMRAP · 20 MIN']
-    );
-    assert.deepEqual(
-      getWorkoutFormatStamps('For Time (20 min cap):\n21-15-9\nThrusters\nPull-ups'),
-      ['FOR TIME · 20 MIN CAP', '21-15-9']
-    );
-    assert.deepEqual(getWorkoutFormatStamps('5 Rounds:\n5 Back Squats'), ['5 ROUNDS']);
+  it('detects the final workout part format and duration, not the warm-up', () => {
+    assert.deepEqual(getWorkoutFormat({
+      title: 'Training',
+      description: 'Warm-up – 10 Min\nWOD – AMRAP 30 Min\n10 Wall Balls',
+    }), { format: 'AMRAP', minutes: 30 });
+  });
+
+  it('detects German formats, team size, and benchmark tags', () => {
+    assert.deepEqual(getWorkoutFormat({
+      title: 'Open 26.1',
+      description: 'Kraft – 15 Min\nWOD – Auf Zeit 20 Min\nTeam von 4\n21-15-9',
+    }), {
+      format: 'FOR TIME',
+      minutes: 20,
+      team: 'TEAM OF 4',
+      benchmark: 'OPEN 26.1',
+    });
+    assert.deepEqual(getWorkoutFormat({
+      title: 'Workout',
+      description: 'WOD – „Four Corners“\nAMRAP 12 Min',
+    }), { format: 'AMRAP', minutes: 12, benchmark: 'FOUR CORNERS' });
+  });
+
+  it('produces format, cap, team, and benchmark stamp variants', () => {
+    assert.deepEqual(getWorkoutFormatStamps({
+      title: 'Fran',
+      description: 'WOD – For Time 8 Min\nTeam of 3\n21-15-9',
+    }), [
+      { label: 'FOR TIME · CAP 8′', variant: 'format' },
+      { label: 'TEAM OF 3', variant: 'meta' },
+      { label: 'FRAN', variant: 'benchmark' },
+    ]);
+  });
+
+  it('extracts scoreboard rep schemes and main movements', () => {
+    assert.deepEqual(getWorkoutScoreboard({
+      title: 'Fran',
+      description: 'For Time:\n21-15-9\nThrusters\nPull-ups',
+    }), { scheme: '21-15-9', movements: ['Thrusters', 'Pull-ups'] });
+    assert.deepEqual(getWorkoutScoreboard({
+      title: 'Strength',
+      description: 'Strength:\n5x3\nBack Squat',
+    }), { scheme: '5x3', movements: ['Back Squat'] });
+    assert.deepEqual(getWorkoutScoreboard({
+      title: 'Strength',
+      description: 'Strength:\n10 – 5 – 5 – 3 – 3\nBack Squat',
+    }), { scheme: '10-5-5-3-3', movements: ['Back Squat'] });
   });
 
   it('never throws for a non-string input', () => {

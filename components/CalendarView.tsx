@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { CapacityBar, Card, Label, SegmentedControl, StatusAction } from './ui';
 import WorkoutFormatStamps from './WorkoutFormatStamps';
+import { getWorkoutFormat } from '@/lib/workout-description';
 
 interface Workout {
   id: number;
@@ -127,7 +128,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
         <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
         <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
           <span className="block truncate font-semibold text-ink group-hover:underline">{workout.title}</span>
-          <WorkoutFormatStamps description={workout.description || ''} />
+          <WorkoutFormatStamps title={workout.title} description={workout.description || ''} />
           <span className="mt-1 block text-[13px] text-ink-2 md:hidden">
             {format(date, 'HH:mm')}
           </span>
@@ -202,6 +203,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                   <div className="space-y-1.5">
                     {dayWorkouts.map((workout) => {
                       const status = statusFor(workout, now);
+                      const workoutFormat = getWorkoutFormat(workout).format;
                       const isAttended = Boolean(user?.id && workout.participants?.some(
                         (participant) => participant.user_id === user.id && participant.attended
                       ));
@@ -217,7 +219,9 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                       return (
                         <Link key={workout.id} href={`/workouts/${workout.id}`} className={`block overflow-hidden rounded-[7px] px-[7px] py-[5px] text-[13px] leading-tight ${chipClass}`}>
                             <span className="block truncate font-bold tabular-nums">
-                              {status === 'past' && isAttended ? '✓ Attended' : `${format(parseISO(workout.date), 'HH:mm')} · ${workout.registered_count}/${workout.max_participants}`}
+                              {status === 'past' && isAttended
+                                ? '✓ Attended'
+                                : `${format(parseISO(workout.date), 'HH:mm')}${workoutFormat ? ` · ${workoutFormat}` : ''}`}
                             </span>
                           <span className="mt-0.5 block truncate">{workout.title}</span>
                         </Link>
