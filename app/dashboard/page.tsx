@@ -7,6 +7,7 @@ import { Avatar, CapacityBar, Card, Label, Loading, StatusAction } from '@/compo
 import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { Announcement, WorkoutWithDetails } from '@/lib/types';
+import { parseWorkoutDescription } from '@/lib/workout-description';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -17,27 +18,6 @@ function getGreeting() {
 
 function getInitials(name: string) {
   return name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || '?';
-}
-
-function descriptionParts(description: string) {
-  return description
-    .split(/(?=\s*\d+\.\s+)/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .slice(0, 3)
-    .map((part, index) => {
-      const match = part.match(/^\s*(\d+)\.\s*(.+?)(?:\s+[–—-]\s+|$)([\s\S]*)$/);
-      const title = match?.[2]?.trim() || `Part ${index + 1}`;
-      const duration = part.match(/(\d+)\s*Min/i)?.[1];
-      const movements = (match?.[3] || part)
-        .replace(/^\s*\d+\s*Min(?:utes?)?(?:\s+\d+\s+Rounds?)?\s*/i, '')
-        .split(/\s+-\s+|\n+/)
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .slice(0, 5);
-
-      return { title, duration, movements };
-    });
 }
 
 export default function DashboardPage() {
@@ -112,7 +92,7 @@ export default function DashboardPage() {
   const firstName = user?.name.split(/\s+/)[0] || 'there';
   const announcement = announcements[0];
   const greeting = getGreeting();
-  const heroParts = nextWorkout?.description ? descriptionParts(nextWorkout.description) : [];
+  const heroParts = nextWorkout?.description ? parseWorkoutDescription(nextWorkout.description).slice(0, 3) : [];
 
   return (
     <>
@@ -172,11 +152,13 @@ export default function DashboardPage() {
                       {heroParts.map((part, index) => (
                         <div key={`${part.title}-${index}`} className="min-h-32 rounded-lg border border-[#2A2C27] bg-[#141512] p-3">
                           <p className="text-[13px] font-bold uppercase tracking-wide text-white">
-                            {String(index + 1).padStart(2, '0')} · {part.title}{part.duration ? ` · ${part.duration}′` : ''}
+                            {String(index + 1).padStart(2, '0')} · {part.title}{part.durationMinutes ? ` · ${part.durationMinutes}′` : ''}
                           </p>
                           <div className="mt-3 space-y-1 text-sm leading-snug text-white">
-                            {part.movements.length ? part.movements.map((movement, movementIndex) => (
-                              <p key={`${movement}-${movementIndex}`} className="line-clamp-1">{movement}</p>
+                            {part.movements.length ? part.movements.slice(0, 5).map((movement, movementIndex) => (
+                              <p key={`${movement.movement}-${movementIndex}`} className="line-clamp-1">
+                                {movement.reps ? `${movement.reps} ` : ''}{movement.movement}
+                              </p>
                             )) : <p className="line-clamp-3">{nextWorkout.description}</p>}
                           </div>
                         </div>
@@ -199,8 +181,8 @@ export default function DashboardPage() {
                     <div className="sm:hidden">
                       <CapacityBar value={nextWorkout.registered_count} max={nextWorkout.max_participants} className="[&>span:last-child]:text-white [&>span>span]:bg-white" />
                     </div>
-                    <Link href={`/workouts/${nextWorkout.id}`} className="inline-flex min-h-11 shrink-0 items-center rounded-sm bg-white px-4 text-sm font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
-                      Open workout →
+                    <Link href={`/workouts/${nextWorkout.id}/board`} className="inline-flex min-h-11 shrink-0 items-center rounded-sm bg-white px-4 text-sm font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
+                      Open whiteboard →
                     </Link>
                   </div>
                 </article>
