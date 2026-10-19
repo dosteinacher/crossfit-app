@@ -231,12 +231,14 @@ export function StatusAction({
   onJoin,
   onUnregister,
   waitlist = false,
+  disabled = false,
   className = '',
 }: {
   status: 'registered' | 'open' | 'full';
   onJoin?: () => void;
   onUnregister?: () => void;
   waitlist?: boolean;
+  disabled?: boolean;
   className?: string;
 }) {
   if (status === 'registered') {
@@ -244,7 +246,8 @@ export function StatusAction({
       <button
         type="button"
         onClick={onUnregister}
-        className={`inline-flex min-h-11 items-center justify-center rounded-full bg-lime px-3 py-2 text-sm font-bold text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15 ${className}`}
+        disabled={disabled}
+        className={`inline-flex min-h-11 items-center justify-center rounded-full bg-lime px-3 py-2 text-sm font-bold text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       >
         ✓ You&apos;re in
       </button>
@@ -252,7 +255,7 @@ export function StatusAction({
   }
 
   if (status === 'open') {
-    return <Button variant="dark" onClick={onJoin} className={className}>Join</Button>;
+    return <Button variant="dark" onClick={onJoin} disabled={disabled} className={className}>Join</Button>;
   }
 
   return (
