@@ -26,11 +26,23 @@ function getInitials(name: string) {
   return words.slice(0, 2).map((word) => word[0]).join('').toUpperCase() || '?';
 }
 
-function formatCountdown(minutes: number) {
-  if (minutes < 60) return `${minutes} MIN`;
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes ? `${hours}H ${remainingMinutes}M` : `${hours}H`;
+function getWorkoutDurationMinutes(workout: WorkoutWithDetails) {
+  const partMinutes = parseWorkoutDescription(workout.description || '')
+    .reduce((total, part) => total + (part.durationMinutes || 0), 0);
+  return partMinutes || 60;
+}
+
+function formatCountdown(seconds: number) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+}
+
+function formatShortCountdown(seconds: number) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `in ${hours}h ${minutes}m`;
 }
 
 export default function DashboardPage() {
@@ -43,7 +55,7 @@ export default function DashboardPage() {
   const [toast, setToast] = useState('');
 
   useEffect(() => {
-    const interval = window.setInterval(() => setClock(new Date()), 60_000);
+    const interval = window.setInterval(() => setClock(new Date()), 1000);
     return () => window.clearInterval(interval);
   }, []);
 
@@ -124,7 +136,7 @@ export default function DashboardPage() {
   );
   const activeWorkout = sortedWorkouts.find((workout) => {
     const start = new Date(workout.date).getTime();
-    return start <= now.getTime() && now.getTime() < start + 60 * 60_000;
+    return start <= now.getTime() && now.getTime() < start + getWorkoutDurationMinutes(workout) * 60_000;
   });
   const nextWorkout = activeWorkout ?? sortedWorkouts.find(
     (workout) => new Date(workout.date) > now
@@ -187,9 +199,12 @@ export default function DashboardPage() {
             {nextWorkout && (() => {
               const date = new Date(nextWorkout.date);
               const isOnNow = nextWorkout.id === activeWorkout?.id;
-              const countdownMinutes = Math.max(0, Math.ceil(
-                ((isOnNow ? date.getTime() + 60 * 60_000 : date.getTime()) - now.getTime()) / 60_000
+              const endsAt = date.getTime() + getWorkoutDurationMinutes(nextWorkout) * 60_000;
+              const secondsRemaining = Math.max(0, Math.ceil(
+                ((isOnNow ? endsAt : date.getTime()) - now.getTime()) / 1000
               ));
+              const over24Hours = !isOnNow && secondsRemaining > 24 * 60 * 60;
+              const countdownIsShort = !isOnNow && secondsRemaining < 60 * 60;
               const full = nextWorkout.registered_count >= nextWorkout.max_participants;
               const participants = [...nextWorkout.participants].sort((a, b) =>
                 Number(b.user_id === user?.id) - Number(a.user_id === user?.id)
@@ -202,43 +217,67 @@ export default function DashboardPage() {
                 : full
                   ? `FULL · ${nextWorkout.registered_count}/${nextWorkout.max_participants}`
                   : `OPEN · ${nextWorkout.registered_count}/${nextWorkout.max_participants}`;
+              const elapsedMinutes = Math.max(0, (now.getTime() - date.getTime()) / 60_000);
+              let cumulativeMinutes = 0;
+              const timedParts = heroParts.filter((part) => part.durationMinutes);
+              const currentPart = timedParts.find((part) => {
+                if (!part.durationMinutes) return false;
+                cumulativeMinutes += part.durationMinutes;
+                return elapsedMinutes < cumulativeMinutes;
+              }) || timedParts.at(-1) || heroParts[0];
+              const onNowPart = isOnNow && currentPart
+                ? `Part ${heroParts.indexOf(currentPart) + 1} · ${currentPart.title}`
+                : '';
 
               return (
-                <article className="rounded-xl bg-ink p-5 text-white md:p-[30px]" style={{ boxShadow: '0 24px 60px rgba(0,0,0,.25)' }}>
+                <article className={`rounded-xl p-5 md:p-[30px] ${isOnNow ? 'bg-lime text-ink' : 'bg-ink text-white'}`} style={{ boxShadow: '0 24px 60px rgba(0,0,0,.25)' }}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full bg-lime px-3 py-1 text-[13px] font-bold uppercase tracking-wide text-ink">{isOnNow ? 'On now' : 'Up next'}</span>
-                      <span className="text-sm font-semibold text-white">{dateLabel}</span>
+                      <span className={`rounded-full px-3 py-1 text-[13px] font-bold uppercase tracking-wide ${isOnNow ? 'bg-ink text-lime' : 'bg-lime text-ink'}`}>{isOnNow ? 'ON NOW' : 'UP NEXT'}</span>
+                      <span className={`text-sm font-semibold ${isOnNow ? 'text-ink' : 'text-white'}`}>{dateLabel}</span>
                     </div>
-                    <span className="rounded-full border border-white/20 px-3 py-1 text-[13px] font-bold text-white">{status}</span>
+                    <span className={`rounded-full border px-3 py-1 text-[13px] font-bold ${isOnNow ? 'border-ink/30 text-ink' : 'border-white/20 text-white'}`}>{status}</span>
                   </div>
 
                   <div className="mt-7">
                     <div className="flex flex-wrap items-end justify-between gap-3">
-                      <time className="block font-display text-[72px] font-extrabold leading-[.82] tabular-nums text-lime md:text-[120px]">
+                      <time className={`block font-display text-[72px] font-extrabold leading-[.82] tabular-nums md:text-[120px] ${isOnNow ? 'text-ink' : 'text-lime'}`}>
                         {format(date, 'HH:mm')}
                       </time>
-                      <span className="pb-1 text-sm font-bold uppercase tracking-wide text-white md:text-base">
-                        {isOnNow ? `Ends in ${formatCountdown(countdownMinutes)}` : `Starts in ${formatCountdown(countdownMinutes)}`}
-                      </span>
+                      <div className="pb-1 text-right">
+                        {over24Hours ? (
+                          <span className={`font-display text-2xl font-extrabold tabular-nums ${isOnNow ? 'text-ink' : 'text-white'}`}>{format(date, 'EEE d MMM')}</span>
+                        ) : (
+                          <>
+                            <span className={`block text-[13px] font-bold uppercase tracking-wide ${isOnNow ? 'text-ink' : 'text-white'}`}>{isOnNow ? 'ENDS IN' : 'STARTS IN'}</span>
+                            <span className={`hidden font-display text-[44px] font-extrabold leading-none tabular-nums md:block ${countdownIsShort && !isOnNow ? 'text-lime' : isOnNow ? 'text-ink' : 'text-white'}`}>
+                              {formatCountdown(secondsRemaining)}
+                            </span>
+                            <span className={`font-display text-2xl font-extrabold leading-none tabular-nums md:hidden ${countdownIsShort && !isOnNow ? 'text-lime' : isOnNow ? 'text-ink' : 'text-white'}`}>
+                              {formatShortCountdown(secondsRemaining)}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <Link href={`/workouts/${nextWorkout.id}`} className="mt-4 block max-w-4xl text-white hover:text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
+                    <Link href={`/workouts/${nextWorkout.id}`} className={`mt-4 block max-w-4xl focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/40 ${isOnNow ? 'text-ink hover:underline' : 'text-white hover:text-lime'}`}>
                       <h2 className="line-clamp-2 font-display text-[36px] font-black uppercase leading-[.9] md:text-[52px]">{nextWorkout.title}</h2>
                     </Link>
-                    <WorkoutFormatStamps title={nextWorkout.title} description={nextWorkout.description || ''} tone="dark" />
+                    {onNowPart && <p className="mt-2 text-sm font-bold">{onNowPart}</p>}
+                    <WorkoutFormatStamps title={nextWorkout.title} description={nextWorkout.description || ''} tone={isOnNow ? 'light' : 'dark'} />
                   </div>
 
                   {heroParts.length > 0 ? (
                     <div className="mt-7 hidden grid-cols-1 gap-2 sm:grid sm:grid-cols-3">
                       {heroParts.map((part, index) => (
-                        <div key={`${part.title}-${index}`} className="min-h-32 rounded-lg border border-[#2A2C27] bg-[#141512] p-3">
-                          <p className="text-[13px] font-bold uppercase tracking-wide text-white">
+                        <div key={`${part.title}-${index}`} className={`min-h-32 rounded-lg border p-3 ${isOnNow ? 'border-ink/20 bg-white/30' : 'border-[#2A2C27] bg-[#141512]'}`}>
+                          <p className={`text-[13px] font-bold uppercase tracking-wide ${isOnNow ? 'text-ink' : 'text-white'}`}>
                             {String(index + 1).padStart(2, '0')} · {part.sectionTitle}{part.durationMinutes ? ` · ${part.durationMinutes}′` : ''}
                           </p>
                           {part.title !== part.sectionTitle && (
-                            <p className="mt-2 line-clamp-2 font-display text-xl font-bold leading-tight text-white">{part.title}</p>
+                            <p className={`mt-2 line-clamp-2 font-display text-xl font-bold leading-tight ${isOnNow ? 'text-ink' : 'text-white'}`}>{part.title}</p>
                           )}
-                          <div className="mt-2 space-y-1 text-sm leading-snug text-white">
+                          <div className={`mt-2 space-y-1 text-sm leading-snug ${isOnNow ? 'text-ink' : 'text-white'}`}>
                             {part.movements.length ? part.movements.slice(0, 5).map((movement, movementIndex) => (
                               <p key={`${movement.movement}-${movementIndex}`} className="line-clamp-1">
                                 {movement.reps ? `${movement.reps} ` : ''}{movement.movement}
@@ -252,18 +291,18 @@ export default function DashboardPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/15 pt-5">
+                  <div className={`mt-6 flex items-center justify-between gap-4 border-t pt-5 ${isOnNow ? 'border-ink/20' : 'border-white/15'}`}>
                     <div className="hidden min-w-0 items-center sm:flex">
                       <div className="flex -space-x-2">
                         {participants.slice(0, 4).map((participant) => (
                           <Avatar
                             key={participant.user_id}
                             initials={getInitials(participant.user_name)}
-                            className={`h-9 w-9 border-2 border-ink text-[13px] ${participant.user_id === user?.id ? '!bg-lime !text-ink' : '!bg-ink !text-white'}`}
+                            className={`h-9 w-9 border-2 text-[13px] ${participant.user_id === user?.id ? '!bg-ink !text-lime' : '!bg-white !text-ink'} ${isOnNow ? 'border-lime' : 'border-ink'}`}
                           />
                         ))}
                       </div>
-                      <span className="ml-3 truncate text-sm text-white">
+                      <span className={`ml-3 truncate text-sm ${isOnNow ? 'text-ink' : 'text-white'}`}>
                         {participants.slice(0, 3).map((participant) => (
                           participant.user_id === user?.id ? 'You' : participant.user_name.split(' ')[0]
                         )).join(', ')}
@@ -271,16 +310,16 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="sm:hidden">
-                      <CapacityBar value={nextWorkout.registered_count} max={nextWorkout.max_participants} className="[&>span:last-child]:text-white [&>span>span]:bg-white" />
+                      <CapacityBar value={nextWorkout.registered_count} max={nextWorkout.max_participants} className={isOnNow ? '[&>span:last-child]:text-ink [&>span>span]:bg-ink' : '[&>span:last-child]:text-white [&>span>span]:bg-white'} />
                     </div>
                     <div className="flex shrink-0 flex-wrap gap-2">
-                      <Link href={`/workouts/${nextWorkout.id}/board`} className="inline-flex min-h-11 items-center rounded-sm bg-lime px-4 text-sm font-bold text-ink hover:brightness-95 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-white/50">
+                      <Link href={`/workouts/${nextWorkout.id}/board`} className={`inline-flex min-h-11 items-center rounded-sm px-4 text-sm font-bold focus-visible:outline-none focus-visible:ring-[3px] ${isOnNow ? 'bg-ink text-white hover:bg-ink-2 focus-visible:ring-ink/40' : 'bg-lime text-ink hover:brightness-95 focus-visible:ring-white/50'}`}>
                         Open board →
                       </Link>
                       <button
                         type="button"
                         onClick={() => void handleCastToTv(nextWorkout.id)}
-                        className="inline-flex min-h-11 items-center rounded-sm border border-white/50 px-4 text-sm font-bold text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
+                        className={`inline-flex min-h-11 items-center rounded-sm border px-4 text-sm font-bold focus-visible:outline-none focus-visible:ring-[3px] ${isOnNow ? 'border-ink/50 text-ink hover:bg-white/20 focus-visible:ring-ink/40' : 'border-white/50 text-white hover:bg-white/10 focus-visible:ring-lime/40'}`}
                       >
                         Cast to TV
                       </button>
