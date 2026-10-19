@@ -330,69 +330,98 @@ export default function DashboardPage() {
             })()}
 
             <Card className="flex flex-col !p-5 shadow-[0_24px_60px_rgba(0,0,0,.25)] md:!p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <Label>Your stats</Label>
-                  <p className="mt-2 text-sm font-medium text-ink-2">Training consistency · 12 weeks</p>
+              <div className="hidden sm:block">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <Label>Your stats</Label>
+                    <p className="mt-2 text-sm font-medium text-ink-2">Training consistency · 12 weeks</p>
+                  </div>
+                  <div
+                    className="relative h-16 w-16 shrink-0 rounded-full"
+                    role="img"
+                    aria-label={`Attendance · 12 weeks: ${dashboardStats?.attendanceRate ?? 0}%`}
+                    style={{ background: `conic-gradient(var(--ink) ${dashboardStats?.attendanceRate ?? 0}%, var(--line) 0)` }}
+                  >
+                    <span className="absolute inset-[6px] flex items-center justify-center rounded-full bg-paper font-display text-lg font-extrabold tabular-nums text-ink">
+                      {dashboardStats?.attendanceRate ?? 0}%
+                    </span>
+                  </div>
                 </div>
-                <div className="relative h-[92px] w-[92px] shrink-0" role="img" aria-label={`Attendance · 12 weeks: ${dashboardStats?.attendanceRate ?? 0}%`}>
-                  <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" strokeWidth="8" />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="42"
-                      fill="none"
-                      stroke="var(--lime)"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray={`${(dashboardStats?.attendanceRate ?? 0) * 2.639} 263.9`}
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center font-display text-2xl font-extrabold tabular-nums text-ink">
-                    {dashboardStats?.attendanceRate ?? 0}%
-                  </span>
+
+                <div className="mt-4 flex items-end justify-between gap-3 border-b border-line-2 pb-4">
+                  <div>
+                    <p className="font-display text-[96px] font-black leading-[.82] tracking-[-.01em] tabular-nums text-ink">
+                      {dashboardStats?.streakWeeks ?? 0}
+                    </p>
+                    <p className="mt-1 text-[13px] font-bold uppercase text-ink-2">WEEK STREAK</p>
+                    <p className="mt-1 text-[13px] font-semibold text-ink-2">Trained {dashboardStats?.streakWeeks ?? 0} weeks in a row</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[13px] font-semibold text-ink-2">ATTENDANCE · 12 WKS</p>
+                    <p className="mt-1 text-base font-bold tabular-nums text-ink">
+                      {dashboardStats?.attended ?? 0} of {dashboardStats?.registered ?? 0}
+                    </p>
+                    <p className="mt-3 text-[13px] font-semibold text-ink-2">SESSIONS IN {format(now, 'MMM').toUpperCase()}</p>
+                    <p className="font-display text-[34px] font-black leading-none tabular-nums text-ink">{dashboardStats?.sessionsThisMonth ?? 0}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-12 gap-1" role="list" aria-label="Attendance by week for the last 12 weeks">
+                  {dashboardStats?.weeks.map((week) => {
+                    const color = week.current ? 'bg-lime' : week.attended > 0 ? 'bg-ink' : 'bg-line';
+                    return (
+                      <span
+                        key={week.key}
+                        role="listitem"
+                        title={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
+                        aria-label={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
+                        className={`h-7 rounded-sm ${color}`}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex justify-between text-[13px] font-medium text-ink-2">
+                  <span>12 weeks ago</span>
+                  <span>This week</span>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-end justify-between gap-3 border-b border-line-2 pb-4">
-                <div>
-                  <p className="font-display text-5xl font-black leading-[.82] tracking-[-.01em] tabular-nums text-ink md:text-[96px]">
-                    {dashboardStats?.streakWeeks ?? 0}
-                  </p>
-                  <p className="mt-1 text-[13px] font-semibold text-ink-2">week streak</p>
+              <div className="sm:hidden">
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0 text-center">
+                    <p className="font-display text-[56px] font-black leading-[.82] tabular-nums text-ink">{dashboardStats?.streakWeeks ?? 0}</p>
+                    <p className="mt-1 text-[13px] font-bold uppercase text-ink-2">WEEK STREAK</p>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="grid grid-cols-12 gap-1" role="list" aria-label="Attendance by week for the last 12 weeks">
+                      {dashboardStats?.weeks.map((week) => (
+                        <span
+                          key={week.key}
+                          role="listitem"
+                          title={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
+                          aria-label={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
+                          className={`h-7 rounded-sm ${week.current ? 'bg-lime' : week.attended > 0 ? 'bg-ink' : 'bg-line'}`}
+                        />
+                      ))}
+                    </div>
+                    <div className="mt-2 flex justify-between text-[13px] font-medium text-ink-2">
+                      <span>12 weeks ago</span>
+                      <span>This week</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-right text-[13px] font-semibold text-ink-2">
-                  ATTENDANCE · 12 WKS
-                  <span className="mt-1 block text-base font-bold tabular-nums text-ink">
-                    {dashboardStats?.attended ?? 0}/{dashboardStats?.registered ?? 0} sessions
-                  </span>
-                </p>
               </div>
 
-              <div className="mt-4 grid grid-cols-12 gap-1.5" role="list" aria-label="Attendance by week for the last 12 weeks">
-                {dashboardStats?.weeks.map((week) => {
-                  const intensity = week.registered === 0
-                    ? 'bg-line'
-                    : week.attended === 0
-                      ? 'bg-[#D8DAD2]'
-                      : week.attended >= 2
-                        ? 'bg-lime'
-                        : 'bg-[#B5D34A]';
-                  return (
-                    <span
-                      key={week.key}
-                      role="listitem"
-                      title={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
-                      aria-label={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
-                      className={`h-3 rounded-sm ${intensity}`}
-                    />
-                  );
-                })}
-              </div>
-              <div className="mt-2 flex justify-between text-[13px] font-medium text-ink-2">
-                <span>{dashboardStats?.weeks[0]?.label}</span>
-                <span>This week</span>
+              <div className="mt-auto border-t border-line-2 pt-4">
+                <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">Next 7 days · you&apos;re in</p>
+                <div className="grid grid-cols-7 gap-1.5" role="list" aria-label="Your registered days for the next 7 days">
+                  {dashboardStats?.registeredDays.map((day) => (
+                    <div key={day.key} role="listitem" aria-label={`${day.label}${day.registered ? ', registered' : ', no registration'}`} className="flex flex-col items-center gap-1">
+                      <span className="text-[13px] font-bold uppercase text-ink-2">{day.label}</span>
+                      <span className={`h-2.5 w-2.5 rounded-full ${day.registered ? 'bg-lime' : 'bg-line'}`} />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="mt-auto flex flex-wrap gap-2 pt-5">

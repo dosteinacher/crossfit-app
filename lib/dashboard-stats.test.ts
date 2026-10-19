@@ -38,7 +38,11 @@ describe('getDashboardStats', () => {
     assert.equal(stats.registered, 3);
     assert.equal(stats.attendanceRate, 67);
     assert.equal(stats.streakWeeks, 2);
+    assert.equal(stats.sessionsThisMonth, 2);
     assert.equal(stats.weeks.at(-1)?.attended, 1);
+    assert.equal(stats.weeks.at(-1)?.current, true);
+    assert.equal(stats.registeredDays[0].registered, true);
+    assert.equal(stats.registeredDays.length, 7);
   });
 
   it('does not include future registrations in attendance stats', () => {
@@ -51,5 +55,16 @@ describe('getDashboardStats', () => {
     assert.equal(stats.registered, 0);
     assert.equal(stats.attendanceRate, 0);
     assert.equal(stats.streakWeeks, 0);
+  });
+
+  it('continues a streak from the previous week when the current week has no attended session', () => {
+    const stats = getDashboardStats([
+      workout(1, '2026-10-12T10:00:00', true),
+      workout(2, '2026-10-19T10:00:00', false),
+    ], 7, new Date('2026-10-19T12:00:00'));
+
+    assert.equal(stats.streakWeeks, 1);
+    assert.equal(stats.weeks.at(-1)?.current, true);
+    assert.equal(stats.weeks.at(-1)?.attended, 0);
   });
 });
