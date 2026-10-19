@@ -112,7 +112,7 @@ export default function WorkoutsPage() {
       <main className="min-h-screen bg-canvas py-6 md:py-10">
         <div className="mx-auto max-w-[1120px] px-4">
           <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="font-display text-4xl font-extrabold text-ink md:text-5xl">Workouts</h1>
+            <h1 className="font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">Workouts</h1>
             <div className="flex items-center gap-2">
               <a href="/api/export/workouts-txt" download className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-4 text-sm font-bold text-ink hover:bg-canvas">
                 Export as TXT
@@ -176,7 +176,7 @@ export default function WorkoutsPage() {
                       </span>
                     )}
                     <Link href={`/workouts/${workout.id}`} className="mt-3 text-ink hover:underline">
-                      <h2 className="font-display text-2xl font-bold uppercase leading-[.95]">{workout.title}</h2>
+                      <h2 className="font-display text-2xl font-black uppercase leading-[.9] tracking-[-.01em]">{workout.title}</h2>
                     </Link>
                     <WorkoutFormatStamps description={description} />
                     {hasDescription && (

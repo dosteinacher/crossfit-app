@@ -122,7 +122,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
       <div key={workout.id} className="grid grid-cols-[40px_minmax(0,1fr)_20px] items-center gap-3 px-3 py-4 first:rounded-t-lg last:rounded-b-lg md:grid-cols-[56px_68px_minmax(0,1fr)_auto_auto] md:gap-4 md:px-5">
         <div className="flex flex-col items-center">
           <span className="text-[13px] font-bold uppercase text-ink-2">{format(date, 'EEE')}</span>
-          <span className="mt-0.5 font-display text-[30px] font-bold leading-none tabular-nums text-ink">{format(date, 'd')}</span>
+          <span className="mt-0.5 font-display text-[34px] font-black leading-none tracking-[-.01em] tabular-nums text-ink">{format(date, 'd')}</span>
         </div>
         <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
         <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
@@ -161,7 +161,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
   return (
     <div>
       <header className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-center md:justify-between">
-        <h1 className="font-display text-[42px] font-extrabold uppercase leading-[.9] text-ink md:text-[56px]">
+        <h1 className="font-display text-[58px] font-black uppercase leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">
           {format(currentMonth, 'MMMM yyyy')}
         </h1>
         <div className="flex flex-wrap items-center gap-2 md:justify-end">

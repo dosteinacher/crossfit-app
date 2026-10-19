@@ -135,7 +135,7 @@ export default function DashboardPage() {
           <header className={`grid gap-5 ${announcement ? 'md:grid-cols-[1.2fr_.8fr] md:items-center' : ''}`}>
             <div>
               <Label>{format(now, "EEEE '·' d MMMM").toUpperCase()}</Label>
-              <h1 className="mt-3 font-display text-[44px] font-extrabold leading-[.9] text-ink md:text-[72px]" style={{ textTransform: 'none' }}>
+              <h1 className="mt-3 font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]" style={{ textTransform: 'none' }}>
                 {greeting}, {firstName}.
               </h1>
               <p className="mt-3 text-base text-ink-2">You&apos;re in for <strong className="font-bold text-ink">{registeredThisWeek} sessions</strong> this week.</p>
@@ -274,7 +274,7 @@ export default function DashboardPage() {
 
               <div className="mt-4 flex items-end justify-between gap-3 border-b border-line-2 pb-4">
                 <div>
-                  <p className="font-display text-4xl font-extrabold leading-none tabular-nums text-ink">
+                  <p className="font-display text-5xl font-black leading-[.82] tracking-[-.01em] tabular-nums text-ink md:text-[96px]">
                     {dashboardStats?.streakWeeks ?? 0}
                   </p>
                   <p className="mt-1 text-[13px] font-semibold text-ink-2">week streak</p>
@@ -321,7 +321,7 @@ export default function DashboardPage() {
 
           <section>
             <div className="mb-4 flex items-end justify-between gap-4">
-              <h2 className="font-display text-[30px] font-extrabold uppercase text-ink">Next 7 days</h2>
+              <h2 className="font-display text-[40px] font-black uppercase leading-[.9] tracking-[-.01em] text-ink">Next 7 days</h2>
               <Link href="/calendar" className="whitespace-nowrap text-sm font-bold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">Full calendar →</Link>
             </div>
 
@@ -340,7 +340,7 @@ export default function DashboardPage() {
                     <div key={workout.id} className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 px-3 py-4 first:rounded-t-lg last:rounded-b-lg md:grid-cols-[56px_68px_minmax(0,1fr)_auto_auto] md:gap-4 md:px-5">
                       <div className="flex flex-col items-center">
                         <span className="text-[13px] font-bold uppercase text-ink-2">{format(date, 'EEE')}</span>
-                        <span className="mt-0.5 font-display text-[30px] font-bold leading-none tabular-nums text-ink">{format(date, 'd')}</span>
+                        <span className="mt-0.5 font-display text-[34px] font-black leading-none tracking-[-.01em] tabular-nums text-ink">{format(date, 'd')}</span>
                       </div>
                       <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
                       <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
