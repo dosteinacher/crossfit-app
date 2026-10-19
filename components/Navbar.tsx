@@ -44,13 +44,15 @@ function NavIcon({ kind }: { kind: 'home' | 'workouts' | 'calendar' | 'profile' 
   );
 }
 
-export default function Navbar() {
+export default function Navbar({ photoHero = false }: { photoHero?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [adminOpen, setAdminOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [adminOpenPath, setAdminOpenPath] = useState<string | null>(null);
+  const [profileOpenPath, setProfileOpenPath] = useState<string | null>(null);
+  const adminOpen = adminOpenPath === pathname;
+  const profileOpen = profileOpenPath === pathname;
 
   useEffect(() => {
     fetch('/api/auth/session')
@@ -59,11 +61,6 @@ export default function Navbar() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => {
-    setAdminOpen(false);
-    setProfileOpen(false);
-  }, [pathname]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
@@ -75,7 +72,7 @@ export default function Navbar() {
 
   if (!user) {
     return (
-      <nav className="sticky top-0 z-50 border-b border-line bg-paper">
+      <nav className={`${photoHero ? 'absolute inset-x-0 top-0 z-50 border-transparent bg-transparent md:sticky md:top-0 md:border-b md:border-line md:bg-paper' : 'sticky top-0 border-b border-line bg-paper'} z-50`}>
         <div className="mx-auto flex h-[52px] max-w-[1120px] items-center justify-between px-4 md:h-[68px]">
           <Link href="/login" className="flex items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15" aria-label="GO PURE — Login">
             <Image src="/go-pure-logo-dark.png" alt="" width={96} height={30} className="h-7 w-auto object-contain object-left" priority />
@@ -106,8 +103,8 @@ export default function Navbar() {
             className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
             aria-label="PURE — Dashboard"
           >
-            <Image src="/go-pure-logo-dark.png" alt="" width={96} height={30} className="h-7 w-auto object-contain object-left md:h-8" priority />
-            <span className="font-display text-2xl font-extrabold text-ink">PURE</span>
+            <Image src={photoHero ? '/go-pure-logo.png' : '/go-pure-logo-dark.png'} alt="" width={96} height={30} className="h-7 w-auto object-contain object-left md:h-8" priority />
+            <span className={`font-display text-2xl font-extrabold ${photoHero ? 'text-white md:text-ink' : 'text-ink'}`}>PURE</span>
           </Link>
 
           <div className="hidden items-center gap-1 md:flex">
@@ -118,7 +115,7 @@ export default function Navbar() {
               <div className="relative ml-1 border-l border-line pl-2">
                 <button
                   type="button"
-                  onClick={() => setAdminOpen((open) => !open)}
+                  onClick={() => setAdminOpenPath(adminOpen ? null : pathname)}
                   aria-expanded={adminOpen}
                   className={navLinkClass(pathname.startsWith('/admin'))}
                 >
@@ -146,7 +143,7 @@ export default function Navbar() {
             <div className="relative border-l border-line pl-3">
               <button
                 type="button"
-                onClick={() => setProfileOpen((open) => !open)}
+                onClick={() => setProfileOpenPath(profileOpen ? null : pathname)}
                 aria-label="Open profile menu"
                 aria-expanded={profileOpen}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-ink text-sm font-bold text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
@@ -168,7 +165,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <Link href="/profile" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-ink text-[13px] font-bold text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15 md:hidden" aria-label="Profile">
+          <Link href="/profile" className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-bold focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15 md:hidden ${photoHero ? 'bg-white/95 text-ink' : 'bg-ink text-lime'}`} aria-label="Profile">
             {initials}
           </Link>
         </div>
@@ -202,7 +199,7 @@ export default function Navbar() {
           )}
           <button
             type="button"
-            onClick={() => setProfileOpen((open) => !open)}
+            onClick={() => setProfileOpenPath(profileOpen ? null : pathname)}
             aria-expanded={profileOpen}
             className="flex w-full flex-col items-center justify-start pt-2 text-[13px] font-semibold text-ink-2"
           >

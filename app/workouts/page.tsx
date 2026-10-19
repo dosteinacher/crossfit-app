@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import PhotoHero from '@/components/PhotoHero';
 import { Button, CapacityBar, Card, Loading, SegmentedControl, StatusAction } from '@/components/ui';
 import WorkoutFormatStamps from '@/components/WorkoutFormatStamps';
 import { format } from 'date-fns';
@@ -27,6 +28,7 @@ export default function WorkoutsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [registering, setRegistering] = useState<number | null>(null);
+  const [upcomingSummary, setUpcomingSummary] = useState({ count: 0, registered: 0 });
   const PAGE_SIZE = 12;
 
   useEffect(() => {
@@ -45,13 +47,23 @@ export default function WorkoutsPage() {
 
   const fetchWorkouts = async () => {
     try {
-      const url = filter === 'upcoming' ? '/api/workouts?filter=upcoming' : '/api/workouts';
-      const response = await fetch(url);
+      const response = await fetch(filter === 'upcoming' ? '/api/workouts?filter=upcoming' : '/api/workouts');
       if (!response.ok) throw new Error('Could not load workouts');
       const data = await response.json();
-      let filtered: WorkoutWithDetails[] = data.workouts || [];
+      const allWorkouts: WorkoutWithDetails[] = data.workouts || [];
+      const now = new Date();
+      const upcoming = filter === 'upcoming'
+        ? allWorkouts
+        : allWorkouts.filter((workout) => new Date(workout.date) > now);
+      setUpcomingSummary({
+        count: upcoming.length,
+        registered: upcoming.filter((workout) => workout.is_registered).length,
+      });
+      let filtered = allWorkouts;
 
-      if (filter === 'mine') {
+      if (filter === 'upcoming') {
+        filtered = allWorkouts;
+      } else if (filter === 'mine') {
         filtered = filtered.filter((workout) => workout.is_registered);
       } else if (filter === 'past') {
         const now = new Date().toISOString();
@@ -71,6 +83,9 @@ export default function WorkoutsPage() {
   };
 
   const handleRegistration = async (workoutId: number, isRegistered: boolean) => {
+    const isUpcoming = workouts.some(
+      (workout) => workout.id === workoutId && new Date(workout.date) > new Date()
+    );
     setRegistering(workoutId);
     try {
       const response = await fetch(`/api/workouts/${workoutId}/register`, {
@@ -86,6 +101,12 @@ export default function WorkoutsPage() {
             }
           : workout
       )));
+      if (isUpcoming) {
+          setUpcomingSummary((summary) => ({
+            ...summary,
+            registered: Math.max(0, summary.registered + (isRegistered ? -1 : 1)),
+          }));
+      }
     } catch (error) {
       console.error('Workout registration error:', error);
     } finally {
@@ -109,16 +130,23 @@ export default function WorkoutsPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-canvas py-6 md:py-10">
-        <div className="mx-auto max-w-[1120px] px-4">
-          <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">Workouts</h1>
-            <div className="flex items-center gap-2">
-              <a href="/api/export/workouts-txt" download className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-4 text-sm font-bold text-ink hover:bg-canvas">
-                Export as TXT
-              </a>
+      <main className="min-h-screen bg-canvas pb-6 md:pb-10">
+        <PhotoHero image="/images/gym-storage.jpg" imageAlt="PURE gym rig and equipment storage" objectPosition="center 48%" className="h-[240px]">
+          <header className="mx-auto flex h-full max-w-[1120px] flex-wrap items-end justify-between gap-4 px-4 pb-7 pt-8">
+            <div>
+              <p className="text-[13px] font-bold uppercase tracking-[.14em] text-lime">Box mode · Training schedule</p>
+              <h1 className="mt-2 font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-white md:text-[96px]">Workouts</h1>
+              <p className="mt-3 text-[13px] font-bold uppercase tracking-wide text-lime">
+                {upcomingSummary.count} upcoming · {upcomingSummary.registered} you&apos;re in
+              </p>
             </div>
-          </div>
+            <a href="/api/export/workouts-txt" download className="inline-flex min-h-11 items-center rounded-sm border border-white/70 bg-white/[.96] px-4 text-sm font-bold text-ink hover:bg-white">
+              Export as TXT
+            </a>
+          </header>
+        </PhotoHero>
+
+        <div className="mx-auto max-w-[1120px] px-4 py-6 md:py-10">
 
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <SegmentedControl items={FILTERS} value={filter} onChange={setFilter} ariaLabel="Filter workouts" className="max-w-full" />

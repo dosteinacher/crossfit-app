@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import PhotoHero from '@/components/PhotoHero';
 import { Avatar, CapacityBar, Card, Label, Loading, StatusAction } from '@/components/ui';
 import WorkoutFormatStamps from '@/components/WorkoutFormatStamps';
 import { addDays, format, startOfWeek } from 'date-fns';
@@ -129,26 +130,37 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-canvas py-6 md:py-10">
-        <div className="mx-auto max-w-[1120px] space-y-8 px-4">
-          <header className={`grid gap-5 ${announcement ? 'md:grid-cols-[1.2fr_.8fr] md:items-center' : ''}`}>
-            <div>
-              <Label>{format(now, "EEEE '·' d MMMM").toUpperCase()}</Label>
-              <h1 className="mt-3 font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]" style={{ textTransform: 'none' }}>
-                {greeting}, {firstName}.
-              </h1>
-              <p className="mt-3 text-base text-ink-2">You&apos;re in for <strong className="font-bold text-ink">{registeredThisWeek} sessions</strong> this week.</p>
+      <Navbar photoHero />
+      <main className="min-h-screen bg-canvas pb-6 md:pb-10">
+        <PhotoHero
+          image="/images/gym-hero.jpg"
+          mobileImage="/images/gym-rig.jpg"
+          imageAlt="PURE gym training rig and kettlebells"
+          objectPosition="center 52%"
+          mobileObjectPosition="center 48%"
+          className="h-[330px] md:h-[440px]"
+        >
+          <header className="mx-auto flex h-full max-w-[1120px] flex-col justify-between px-4 pb-8 pt-[68px] md:pb-[108px] md:pt-10">
+            <div className="flex items-start justify-between gap-4">
+              <Label className="text-lime">{format(now, "EEEE '·' d MMMM").toUpperCase()}</Label>
+              {announcement && (
+                <div className="max-w-[48%] rounded-lg border border-white/80 bg-white/[.96] px-4 py-3 text-ink shadow-card md:max-w-sm">
+                  <span className="block text-[13px] font-bold uppercase tracking-wide">News</span>
+                  <span className="mt-1 block truncate text-sm font-semibold">{announcement.title}</span>
+                </div>
+              )}
             </div>
-            {announcement && (
-              <div className="flex min-h-14 items-center gap-3 rounded-lg border border-line bg-paper px-4 py-3">
-                <span className="inline-flex min-h-7 shrink-0 items-center rounded-md bg-ink px-2 text-[13px] font-bold text-white">NEWS</span>
-                <span className="truncate font-semibold text-ink">{announcement.title}</span>
-              </div>
-            )}
+            <div className="max-w-[900px]">
+              <h1 className="font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-white md:text-[112px]" style={{ textTransform: 'none' }}>
+                <span className="block">{greeting},</span>
+                <span className="block">{firstName}.</span>
+              </h1>
+              <p className="mt-3 text-base text-white">You&apos;re in for <strong className="font-bold text-lime">{registeredThisWeek} sessions</strong> this week.</p>
+            </div>
           </header>
+        </PhotoHero>
 
-          <section className="grid gap-5 md:grid-cols-[1.55fr_1fr]">
+        <section className="relative z-20 mx-auto -mt-11 grid max-w-[1120px] gap-5 px-4 md:-mt-[88px] md:grid-cols-[1.55fr_1fr]">
             {nextWorkout && (() => {
               const date = new Date(nextWorkout.date);
               const isOnNow = nextWorkout.id === activeWorkout?.id;
@@ -169,7 +181,7 @@ export default function DashboardPage() {
                   : `OPEN · ${nextWorkout.registered_count}/${nextWorkout.max_participants}`;
 
               return (
-                <article className="rounded-xl bg-ink p-5 text-white md:p-[30px]">
+                <article className="rounded-xl bg-ink p-5 text-white md:p-[30px]" style={{ boxShadow: '0 24px 60px rgba(0,0,0,.25)' }}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="rounded-full bg-lime px-3 py-1 text-[13px] font-bold uppercase tracking-wide text-ink">{isOnNow ? 'On now' : 'Up next'}</span>
@@ -246,7 +258,7 @@ export default function DashboardPage() {
               );
             })()}
 
-            <Card className="flex flex-col !p-5 md:!p-6">
+            <Card className="flex flex-col !p-5 shadow-[0_24px_60px_rgba(0,0,0,.25)] md:!p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <Label>Your stats</Label>
@@ -317,9 +329,9 @@ export default function DashboardPage() {
                 <Link href="/calendar" className="inline-flex min-h-11 items-center rounded-sm border border-line px-3 text-sm font-bold text-ink hover:bg-canvas">Calendar</Link>
               </div>
             </Card>
-          </section>
+        </section>
 
-          <section>
+        <section className="mx-auto mt-8 max-w-[1120px] px-4">
             <div className="mb-4 flex items-end justify-between gap-4">
               <h2 className="font-display text-[40px] font-black uppercase leading-[.9] tracking-[-.01em] text-ink">Next 7 days</h2>
               <Link href="/calendar" className="whitespace-nowrap text-sm font-bold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">Full calendar →</Link>
@@ -377,8 +389,7 @@ export default function DashboardPage() {
                 })}
               </Card>
             )}
-          </section>
-        </div>
+        </section>
       </main>
     </>
   );
