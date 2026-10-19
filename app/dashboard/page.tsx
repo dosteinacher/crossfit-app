@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Avatar, CapacityBar, Card, Label, Loading, StatusAction } from '@/components/ui';
@@ -8,6 +8,7 @@ import WorkoutFormatStamps from '@/components/WorkoutFormatStamps';
 import { addDays, format, startOfWeek } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { Announcement, WorkoutWithDetails } from '@/lib/types';
+import { getDashboardStats } from '@/lib/dashboard-stats';
 import { parseWorkoutDescription } from '@/lib/workout-description';
 
 function getGreeting() {
@@ -114,6 +115,10 @@ export default function DashboardPage() {
     const date = new Date(workout.date);
     return date >= weekStart && date < weekEnd && workout.is_registered;
   }).length;
+  const dashboardStats = useMemo(
+    () => user ? getDashboardStats(workouts, user.id, now) : null,
+    [workouts, user, now]
+  );
 
   if (loading || dataLoading) return <Loading />;
 
@@ -143,7 +148,7 @@ export default function DashboardPage() {
             )}
           </header>
 
-          <section>
+          <section className="grid gap-5 md:grid-cols-[1.55fr_1fr]">
             {nextWorkout && (() => {
               const date = new Date(nextWorkout.date);
               const isOnNow = nextWorkout.id === activeWorkout?.id;
@@ -241,6 +246,77 @@ export default function DashboardPage() {
               );
             })()}
 
+            <Card className="flex flex-col !p-5 md:!p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <Label>Your stats</Label>
+                  <p className="mt-2 text-sm font-medium text-ink-2">Training consistency · 12 weeks</p>
+                </div>
+                <div className="relative h-[92px] w-[92px] shrink-0" role="img" aria-label={`Attendance · 12 weeks: ${dashboardStats?.attendanceRate ?? 0}%`}>
+                  <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" strokeWidth="8" />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="42"
+                      fill="none"
+                      stroke="var(--lime)"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${(dashboardStats?.attendanceRate ?? 0) * 2.639} 263.9`}
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center font-display text-2xl font-extrabold tabular-nums text-ink">
+                    {dashboardStats?.attendanceRate ?? 0}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-end justify-between gap-3 border-b border-line-2 pb-4">
+                <div>
+                  <p className="font-display text-4xl font-extrabold leading-none tabular-nums text-ink">
+                    {dashboardStats?.streakWeeks ?? 0}
+                  </p>
+                  <p className="mt-1 text-[13px] font-semibold text-ink-2">week streak</p>
+                </div>
+                <p className="text-right text-[13px] font-semibold text-ink-2">
+                  ATTENDANCE · 12 WKS
+                  <span className="mt-1 block text-base font-bold tabular-nums text-ink">
+                    {dashboardStats?.attended ?? 0}/{dashboardStats?.registered ?? 0} sessions
+                  </span>
+                </p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-12 gap-1.5" role="list" aria-label="Attendance by week for the last 12 weeks">
+                {dashboardStats?.weeks.map((week) => {
+                  const intensity = week.registered === 0
+                    ? 'bg-line'
+                    : week.attended === 0
+                      ? 'bg-[#D8DAD2]'
+                      : week.attended >= 2
+                        ? 'bg-lime'
+                        : 'bg-[#B5D34A]';
+                  return (
+                    <span
+                      key={week.key}
+                      role="listitem"
+                      title={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
+                      aria-label={`${week.label}: ${week.attended} attended of ${week.registered} registered`}
+                      className={`h-3 rounded-sm ${intensity}`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="mt-2 flex justify-between text-[13px] font-medium text-ink-2">
+                <span>{dashboardStats?.weeks[0]?.label}</span>
+                <span>This week</span>
+              </div>
+
+              <div className="mt-auto flex flex-wrap gap-2 pt-5">
+                <Link href="/wod" className="inline-flex min-h-11 items-center rounded-sm border border-line px-3 text-sm font-bold text-ink hover:bg-canvas">Today&apos;s WOD</Link>
+                <Link href="/calendar" className="inline-flex min-h-11 items-center rounded-sm border border-line px-3 text-sm font-bold text-ink hover:bg-canvas">Calendar</Link>
+              </div>
+            </Card>
           </section>
 
           <section>
