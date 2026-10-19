@@ -4,6 +4,7 @@ export interface WorkoutMovement {
 }
 
 export interface WorkoutDescriptionPart {
+  sectionTitle: string;
   title: string;
   durationMinutes?: number;
   lines: string[];
@@ -57,17 +58,22 @@ function splitSections(text: string) {
 function parsePart(section: string, numbered: boolean): WorkoutDescriptionPart {
   const content = numbered ? section.replace(/^\d+\.\s*/, '') : section;
   const headingBoundary = content.search(/\s+[–—-]\s+|:\s*|\r?\n|\s+(?=\d+\s*Min\b)/i);
-  const title = (headingBoundary === -1 ? content : content.slice(0, headingBoundary)).trim() || 'Workout';
-  let details = headingBoundary === -1 ? '' : content.slice(headingBoundary).replace(/^\s*(?:[–—-]|:)?\s*/, '');
+  const sectionTitle = (headingBoundary === -1 ? '' : content.slice(0, headingBoundary)).trim() || 'Workout';
+  const details = headingBoundary === -1 ? '' : content.slice(headingBoundary).replace(/^\s*(?:[–—-]|:)?\s*/, '');
   const durationMinutes = Number(details.match(/(\d+)\s*Min/i)?.[1] || content.match(/(\d+)\s*Min/i)?.[1]) || undefined;
   const lines = splitLines(details || content);
-  const filteredLines = lines.filter((line, index) => !(index === 0 && /\d+\s*Min/i.test(line)));
+  const filteredLines = lines.filter((line) => !/^\d+\s*Min\b/i.test(line));
+  const firstLine = filteredLines[0];
+  const hasContentTitle = Boolean(firstLine && !/^(?:\d+(?:\s*(?:[-/]|[x×])\s*\d+)*|AMRAP\b|EMOM\b|For Time\b)/i.test(firstLine));
+  const title = hasContentTitle ? firstLine : sectionTitle;
+  const contentLines = hasContentTitle ? filteredLines.slice(1) : filteredLines;
 
   return {
+    sectionTitle,
     title,
     ...(durationMinutes ? { durationMinutes } : {}),
-    lines: filteredLines,
-    movements: filteredLines.map(splitMovement),
+    lines: contentLines,
+    movements: contentLines.map(splitMovement),
   };
 }
 
@@ -78,16 +84,10 @@ export function parseWorkoutDescription(text: string): WorkoutDescriptionPart[] 
     const hasNumberedSections = /(?:^|\s)\d+\.\s+/.test(source);
     return sections.map((section) => parsePart(section, hasNumberedSections));
   }
-
-  const lines = source.split('\n');
-  const movements = lines
-    .flatMap((line) => splitLines(line))
-    .map(splitMovement);
-  const durationMinutes = Number(source.match(/(\d+)\s*Min/i)?.[1]) || undefined;
-  return [{
+  return source ? [parsePart(source, false)] : [{
+    sectionTitle: 'Workout',
     title: 'Workout',
-    ...(durationMinutes ? { durationMinutes } : {}),
-    lines,
-    movements,
+    lines: [],
+    movements: [],
   }];
 }

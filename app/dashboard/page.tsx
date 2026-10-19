@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Avatar, CapacityBar, Card, Label, Loading, StatusAction } from '@/components/ui';
-import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
+import { addDays, format, startOfWeek } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { Announcement, WorkoutWithDetails } from '@/lib/types';
 import { parseWorkoutDescription } from '@/lib/workout-description';
@@ -17,7 +17,10 @@ function getGreeting() {
 }
 
 function getInitials(name: string) {
-  return name.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const words = name
+    .replace(/\p{Extended_Pictographic}|\p{Regional_Indicator}/gu, '')
+    .match(/[\p{L}\p{N}]+/gu) || [];
+  return words.slice(0, 2).map((word) => word[0]).join('').toUpperCase() || '?';
 }
 
 export default function DashboardPage() {
@@ -69,7 +72,6 @@ export default function DashboardPage() {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   const weekEnd = addDays(weekStart, 7);
   const nextSevenEnd = addDays(today, 7);
   const upcomingWorkouts = workouts
@@ -115,10 +117,13 @@ export default function DashboardPage() {
             )}
           </header>
 
-          <section className={`grid gap-5 ${nextWorkout ? 'md:grid-cols-[1.55fr_1fr]' : ''}`}>
+          <section>
             {nextWorkout && (() => {
               const date = new Date(nextWorkout.date);
               const full = nextWorkout.registered_count >= nextWorkout.max_participants;
+              const participants = [...nextWorkout.participants].sort((a, b) =>
+                Number(b.user_id === user?.id) - Number(a.user_id === user?.id)
+              );
               const dateLabel = date.toDateString() === addDays(today, 1).toDateString()
                 ? `Tomorrow · ${format(date, 'EEE d MMM')}`
                 : format(date, 'EEE d MMM');
@@ -138,12 +143,12 @@ export default function DashboardPage() {
                     <span className="rounded-full border border-white/20 px-3 py-1 text-[13px] font-bold text-white">{status}</span>
                   </div>
 
-                  <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-end">
-                    <time className="shrink-0 font-display text-[64px] font-extrabold leading-[.82] tabular-nums text-lime md:text-[104px]">
+                  <div className="mt-7">
+                    <time className="block font-display text-[72px] font-extrabold leading-[.82] tabular-nums text-lime md:text-[120px]">
                       {format(date, 'HH:mm')}
                     </time>
-                    <Link href={`/workouts/${nextWorkout.id}`} className="min-w-0 text-white hover:text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
-                      <h2 className="font-display text-3xl font-extrabold uppercase leading-[.9] md:text-5xl">{nextWorkout.title}</h2>
+                    <Link href={`/workouts/${nextWorkout.id}`} className="mt-4 block max-w-4xl text-white hover:text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
+                      <h2 className="line-clamp-2 font-display text-[36px] font-black uppercase leading-[.9] md:text-[52px]">{nextWorkout.title}</h2>
                     </Link>
                   </div>
 
@@ -152,14 +157,19 @@ export default function DashboardPage() {
                       {heroParts.map((part, index) => (
                         <div key={`${part.title}-${index}`} className="min-h-32 rounded-lg border border-[#2A2C27] bg-[#141512] p-3">
                           <p className="text-[13px] font-bold uppercase tracking-wide text-white">
-                            {String(index + 1).padStart(2, '0')} · {part.title}{part.durationMinutes ? ` · ${part.durationMinutes}′` : ''}
+                            {String(index + 1).padStart(2, '0')} · {part.sectionTitle}{part.durationMinutes ? ` · ${part.durationMinutes}′` : ''}
                           </p>
-                          <div className="mt-3 space-y-1 text-sm leading-snug text-white">
+                          {part.title !== part.sectionTitle && (
+                            <p className="mt-2 line-clamp-2 font-display text-xl font-bold leading-tight text-white">{part.title}</p>
+                          )}
+                          <div className="mt-2 space-y-1 text-sm leading-snug text-white">
                             {part.movements.length ? part.movements.slice(0, 5).map((movement, movementIndex) => (
                               <p key={`${movement.movement}-${movementIndex}`} className="line-clamp-1">
                                 {movement.reps ? `${movement.reps} ` : ''}{movement.movement}
                               </p>
-                            )) : <p className="line-clamp-3">{nextWorkout.description}</p>}
+                            )) : part.lines.slice(0, 3).map((line, lineIndex) => (
+                              <p key={`${line}-${lineIndex}`} className="line-clamp-1">{line}</p>
+                            ))}
                           </div>
                         </div>
                       ))}
@@ -169,13 +179,19 @@ export default function DashboardPage() {
                   <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/15 pt-5">
                     <div className="hidden min-w-0 items-center sm:flex">
                       <div className="flex -space-x-2">
-                        {nextWorkout.participants.slice(0, 4).map((participant) => (
-                          <Avatar key={participant.user_id} initials={getInitials(participant.user_name)} className="h-9 w-9 border-2 border-ink text-[13px]" />
+                        {participants.slice(0, 4).map((participant) => (
+                          <Avatar
+                            key={participant.user_id}
+                            initials={getInitials(participant.user_name)}
+                            className={`h-9 w-9 border-2 border-ink text-[13px] ${participant.user_id === user?.id ? '!bg-lime !text-ink' : '!bg-ink !text-white'}`}
+                          />
                         ))}
                       </div>
                       <span className="ml-3 truncate text-sm text-white">
-                        {nextWorkout.participants.slice(0, 3).map((participant) => participant.user_name.split(' ')[0]).join(', ')}
-                        {nextWorkout.participants.length > 3 ? ` +${nextWorkout.participants.length - 3}` : ''}
+                        {participants.slice(0, 3).map((participant) => (
+                          participant.user_id === user?.id ? 'You' : participant.user_name.split(' ')[0]
+                        )).join(', ')}
+                        {participants.length > 3 ? ` +${participants.length - 3}` : ''}
                       </span>
                     </div>
                     <div className="sm:hidden">
@@ -189,35 +205,6 @@ export default function DashboardPage() {
               );
             })()}
 
-            <Card className="flex flex-col !p-5 md:!p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <Label>This week</Label>
-                  <p className="mt-2 text-sm font-medium text-ink-2">{format(weekStart, 'd MMM')} – {format(addDays(weekStart, 6), 'd MMM')}</p>
-                </div>
-                <span className="font-display text-5xl font-extrabold leading-none tabular-nums text-ink">{registeredThisWeek}</span>
-              </div>
-              <p className="mt-1 text-sm text-ink-2">booked sessions</p>
-
-              <div className="mt-5 grid grid-cols-7 gap-1">
-                {weekDays.map((day) => {
-                  const isToday = isSameDay(day, today);
-                  const hasRegistration = workouts.some((workout) => workout.is_registered && isSameDay(new Date(workout.date), day));
-                  return (
-                    <div key={day.toISOString()} className={`flex min-h-[68px] flex-col items-center justify-center rounded-md ${isToday ? 'bg-ink text-white' : 'bg-canvas text-ink'}`}>
-                      <span className={`text-[13px] font-semibold ${isToday ? 'text-white' : 'text-ink-2'}`}>{format(day, 'EEEEE')}</span>
-                      <span className="mt-1 text-base font-bold tabular-nums">{format(day, 'd')}</span>
-                      <span aria-label={hasRegistration ? 'Registered' : undefined} className={`mt-1 h-1.5 w-1.5 rounded-full ${hasRegistration ? 'bg-lime' : 'bg-transparent'}`} />
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-auto flex flex-wrap gap-2 pt-5">
-                <Link href="/wod" className="inline-flex min-h-11 items-center rounded-sm border border-line px-3 text-sm font-bold text-ink hover:bg-canvas">Today&apos;s WOD</Link>
-                <Link href="/calendar" className="inline-flex min-h-11 items-center rounded-sm border border-line px-3 text-sm font-bold text-ink hover:bg-canvas">Calendar</Link>
-              </div>
-            </Card>
           </section>
 
           <section>
@@ -238,7 +225,7 @@ export default function DashboardPage() {
                   const status = workout.is_registered ? 'registered' : full ? 'full' : 'open';
                   const pending = registering === workout.id;
                   return (
-                    <div key={workout.id} className="grid grid-cols-[40px_minmax(0,1fr)_20px] items-center gap-3 px-3 py-4 first:rounded-t-lg last:rounded-b-lg md:grid-cols-[56px_68px_minmax(0,1fr)_auto_auto] md:gap-4 md:px-5">
+                    <div key={workout.id} className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 px-3 py-4 first:rounded-t-lg last:rounded-b-lg md:grid-cols-[56px_68px_minmax(0,1fr)_auto_auto] md:gap-4 md:px-5">
                       <div className="flex flex-col items-center">
                         <span className="text-[13px] font-bold uppercase text-ink-2">{format(date, 'EEE')}</span>
                         <span className="mt-0.5 font-display text-[30px] font-bold leading-none tabular-nums text-ink">{format(date, 'd')}</span>
@@ -246,28 +233,32 @@ export default function DashboardPage() {
                       <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
                       <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
                         <span className="block truncate font-semibold text-ink group-hover:underline">{workout.title}</span>
-                        <span className="mt-1 block truncate text-[13px] text-ink-2 md:text-sm">
-                          <span className="md:hidden">{format(date, 'HH:mm')} · {workout.registered_count}/{workout.max_participants} · </span>
-                          {workout.description || 'Workout details'}
+                        <span className="mt-1 block text-[13px] text-ink-2 md:hidden">
+                          {format(date, 'HH:mm')}
                         </span>
                       </Link>
                       <CapacityBar value={workout.registered_count} max={workout.max_participants} className="hidden md:inline-flex" />
-                      <StatusAction
-                        status={status}
-                        disabled={pending || (full && !workout.is_registered)}
-                        onJoin={() => handleRegister(workout.id, false)}
-                        onUnregister={() => handleRegister(workout.id, true)}
-                        className="hidden md:inline-flex"
-                      />
-                      <button
-                        type="button"
-                        disabled={pending || (full && !workout.is_registered)}
-                        onClick={() => handleRegister(workout.id, workout.is_registered)}
-                        aria-label={workout.is_registered ? `Unregister from ${workout.title}` : full ? `${workout.title} is full` : `Join ${workout.title}`}
-                        className={`h-3.5 w-3.5 rounded-full border focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/20 disabled:cursor-not-allowed md:hidden ${
-                          workout.is_registered ? 'border-lime bg-lime' : full ? 'border-line bg-line' : 'border-ink bg-white'
-                        }`}
-                      />
+                      <div className="flex items-center gap-2">
+                        <Link href={`/workouts/${workout.id}/board`} className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas">
+                          Board
+                        </Link>
+                        <StatusAction
+                          status={status}
+                          disabled={pending || (full && !workout.is_registered)}
+                          onJoin={() => handleRegister(workout.id, false)}
+                          onUnregister={() => handleRegister(workout.id, true)}
+                          className="hidden md:inline-flex"
+                        />
+                        <button
+                          type="button"
+                          disabled={pending || (full && !workout.is_registered)}
+                          onClick={() => handleRegister(workout.id, workout.is_registered)}
+                          aria-label={workout.is_registered ? `Unregister from ${workout.title}` : full ? `${workout.title} is full` : `Join ${workout.title}`}
+                          className={`h-3.5 w-3.5 shrink-0 rounded-full border focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/20 disabled:cursor-not-allowed md:hidden ${
+                            workout.is_registered ? 'border-lime bg-lime' : full ? 'border-line bg-line' : 'border-ink bg-white'
+                          }`}
+                        />
+                      </div>
                     </div>
                   );
                 })}

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  addDays,
   addMonths,
   endOfMonth,
   endOfWeek,
@@ -13,8 +12,10 @@ import {
   isSameMonth,
   parseISO,
   startOfMonth,
+  startOfDay,
   startOfWeek,
 } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
 import { CapacityBar, Card, Label, SegmentedControl, StatusAction } from './ui';
 
 interface Workout {
@@ -26,12 +27,12 @@ interface Workout {
   max_participants: number;
   registered_count: number;
   is_registered: boolean;
+  participants?: Array<{ user_id: number; attended: boolean }>;
   creator_name: string;
 }
 
 interface CalendarViewProps {
   workouts: Workout[];
-  canCreateWorkout: boolean;
 }
 
 type ViewMode = 'month' | 'list';
@@ -48,7 +49,8 @@ function statusFor(workout: Workout, now: Date): 'registered' | 'open' | 'full' 
   return 'open';
 }
 
-export default function CalendarView({ workouts, canCreateWorkout }: CalendarViewProps) {
+export default function CalendarView({ workouts }: CalendarViewProps) {
+  const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [calendarWorkouts, setCalendarWorkouts] = useState(workouts);
@@ -71,6 +73,7 @@ export default function CalendarView({ workouts, canCreateWorkout }: CalendarVie
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
   const now = new Date();
+  const todayStart = startOfDay(now);
   const workoutsByDate: Record<string, Workout[]> = {};
   for (const workout of sortedWorkouts) {
     const key = format(parseISO(workout.date), 'yyyy-MM-dd');
@@ -123,9 +126,8 @@ export default function CalendarView({ workouts, canCreateWorkout }: CalendarVie
         <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
         <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
           <span className="block truncate font-semibold text-ink group-hover:underline">{workout.title}</span>
-          <span className="mt-1 block truncate text-[13px] text-ink-2 md:text-sm">
-            <span className="md:hidden">{format(date, 'HH:mm')} · {workout.registered_count}/{workout.max_participants} · </span>
-            {workout.description || 'Workout details'}
+          <span className="mt-1 block text-[13px] text-ink-2 md:hidden">
+            {format(date, 'HH:mm')}
           </span>
         </Link>
         <CapacityBar value={workout.registered_count} max={workout.max_participants} className="hidden md:inline-flex" />
@@ -165,9 +167,6 @@ export default function CalendarView({ workouts, canCreateWorkout }: CalendarVie
           <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Next month" className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-paper text-xl text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15">→</button>
           <button type="button" onClick={() => setCurrentMonth(new Date())} className="inline-flex min-h-10 items-center rounded-sm border border-line bg-paper px-3 text-sm font-bold text-ink hover:bg-canvas">Today</button>
           <SegmentedControl items={VIEW_OPTIONS} value={viewMode} onChange={setViewMode} ariaLabel="Calendar view" />
-          {canCreateWorkout && (
-            <Link href="/workouts/create" className="inline-flex min-h-11 items-center rounded-sm bg-lime px-3 text-sm font-bold text-ink hover:brightness-95">+ New workout</Link>
-          )}
         </div>
       </header>
 
@@ -189,18 +188,24 @@ export default function CalendarView({ workouts, canCreateWorkout }: CalendarVie
             {days.map((day) => {
               const dateKey = format(day, 'yyyy-MM-dd');
               const dayWorkouts = workoutsByDate[dateKey] || [];
-              const today = isSameDay(day, now);
+              const isToday = isSameDay(day, now);
+              const pastDay = day < todayStart;
               return (
-                <div key={dateKey} className={`min-h-[118px] overflow-hidden p-2 sm:p-[10px] ${isSameMonth(day, monthStart) ? 'bg-paper' : 'bg-[#FAFAF7]'}`}>
+                <div key={dateKey} className={`min-h-[118px] overflow-hidden p-2 sm:p-[10px] ${pastDay || !isSameMonth(day, monthStart) ? 'bg-[#FAFAF7]' : 'bg-paper'}`}>
                   <div className="mb-2 flex justify-start">
-                    <span className={`inline-flex h-[30px] min-w-[30px] items-center justify-center rounded-full px-1 text-sm font-bold tabular-nums ${today ? 'bg-ink text-white' : isSameMonth(day, monthStart) ? 'text-ink' : 'text-ink-2'}`}>
+                    <span className={`inline-flex h-[30px] min-w-[30px] items-center justify-center rounded-full px-1 text-sm font-bold tabular-nums ${isToday ? 'bg-ink text-white' : isSameMonth(day, monthStart) ? 'text-ink' : 'text-ink-2'}`}>
                       {format(day, 'd')}
                     </span>
                   </div>
                   <div className="space-y-1.5">
                     {dayWorkouts.map((workout) => {
                       const status = statusFor(workout, now);
-                      const chipClass = status === 'registered'
+                      const isAttended = Boolean(user?.id && workout.participants?.some(
+                        (participant) => participant.user_id === user.id && participant.attended
+                      ));
+                      const chipClass = status === 'past'
+                        ? 'bg-canvas text-ink-2'
+                        : status === 'registered'
                         ? 'bg-lime text-ink'
                         : status === 'open'
                           ? 'border-[1.5px] border-ink bg-white text-ink'
@@ -209,7 +214,9 @@ export default function CalendarView({ workouts, canCreateWorkout }: CalendarVie
                             : 'bg-canvas text-ink-2';
                       return (
                         <Link key={workout.id} href={`/workouts/${workout.id}`} className={`block overflow-hidden rounded-[7px] px-[7px] py-[5px] text-[13px] leading-tight ${chipClass}`}>
-                          <span className="block truncate font-bold tabular-nums">{format(parseISO(workout.date), 'HH:mm')} · {workout.registered_count}/{workout.max_participants}</span>
+                            <span className="block truncate font-bold tabular-nums">
+                              {status === 'past' && isAttended ? '✓ Attended' : `${format(parseISO(workout.date), 'HH:mm')} · ${workout.registered_count}/${workout.max_participants}`}
+                            </span>
                           <span className="mt-0.5 block truncate">{workout.title}</span>
                         </Link>
                       );

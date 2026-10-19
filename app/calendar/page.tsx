@@ -17,7 +17,7 @@ const POLL_FILTERS: Array<{ label: string; value: PollFilter }> = [
 ];
 
 export default function CalendarPage() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
   const [pollFilter, setPollFilter] = useState<PollFilter>('active');
@@ -59,7 +59,7 @@ export default function CalendarPage() {
       <main className="min-h-screen bg-canvas py-6 md:py-10">
         <div className="mx-auto max-w-[1120px] space-y-12 px-4">
           {/* Calendar Section */}
-          <CalendarView workouts={workouts} canCreateWorkout={Boolean(user?.is_admin)} />
+          <CalendarView workouts={workouts} />
 
           {/* Polls Section */}
           <section className="border-t border-line pt-8">

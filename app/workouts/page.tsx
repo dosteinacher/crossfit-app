@@ -19,7 +19,7 @@ const FILTERS: Array<{ label: string; value: WorkoutFilter }> = [
 ];
 
 export default function WorkoutsPage() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const [workouts, setWorkouts] = useState<WorkoutWithDetails[]>([]);
   const [filter, setFilter] = useState<WorkoutFilter>('upcoming');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
@@ -116,11 +116,6 @@ export default function WorkoutsPage() {
               <a href="/api/export/workouts-txt" download className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-4 text-sm font-bold text-ink hover:bg-canvas">
                 Export as TXT
               </a>
-              {user?.is_admin && (
-                <Link href="/workouts/create" className="inline-flex min-h-11 items-center rounded-sm bg-lime px-4 text-[15px] font-bold text-ink hover:brightness-95">
-                  + New workout
-                </Link>
-              )}
             </div>
           </div>
 
@@ -166,9 +161,14 @@ export default function WorkoutsPage() {
                 const full = workout.registered_count >= workout.max_participants;
                 const status = workout.is_registered ? 'registered' : full ? 'full' : 'open';
                 const pending = registering === workout.id;
+                const description = workout.description?.trim() || '';
+                const hasDescription = Boolean(description && !/^(?:\.{3,}|…)+$/.test(description.replace(/\s/g, '')));
                 return (
                   <Card key={workout.id} className="flex h-full flex-col !p-5">
-                    <time className="text-lg font-bold tabular-nums text-ink">{format(new Date(workout.date), 'EEE, MMM d · HH:mm')}</time>
+                    <div className="flex items-start justify-between gap-3">
+                      <time className="text-[15px] font-bold tabular-nums text-ink">{format(new Date(workout.date), 'EEE, MMM d · HH:mm')}</time>
+                      <span className="shrink-0 text-[13px] text-ink-2">by {workout.creator_name}</span>
+                    </div>
                     {workout.workout_type.toLowerCase() !== 'general' && (
                       <span className="mt-3 w-fit rounded-full bg-canvas px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide text-ink-2">
                         {workout.workout_type}
@@ -177,10 +177,11 @@ export default function WorkoutsPage() {
                     <Link href={`/workouts/${workout.id}`} className="mt-3 text-ink hover:underline">
                       <h2 className="font-display text-2xl font-bold uppercase leading-[.95]">{workout.title}</h2>
                     </Link>
-                    <p className="mt-3 line-clamp-2 min-h-12 whitespace-pre-line text-base leading-snug text-ink-2">
-                      {workout.description || 'No description'}
-                    </p>
-                    <p className="mt-3 text-[13px] text-ink-2">by {workout.creator_name}</p>
+                    {hasDescription && (
+                      <p className="mt-3 line-clamp-2 whitespace-pre-line text-base leading-snug text-ink-2">
+                        {description}
+                      </p>
+                    )}
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line-2 pt-4">
                       <CapacityBar value={workout.registered_count} max={workout.max_participants} />
                       <StatusAction
