@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import { Loading } from '@/components/ui';
 import { format } from 'date-fns';
@@ -109,11 +108,6 @@ export default function DashboardPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-pure-bg py-8 relative overflow-hidden">
-        {/* Background watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          <Image src="/go-pure-logo-dark.png" alt="" width={800} height={800} className="opacity-[0.05] select-none" style={{ filter: 'grayscale(100%)' }} />
-        </div>
-
         <div className="container mx-auto px-4 max-w-6xl relative z-10 space-y-8">
 
           {/* Greeting */}

@@ -100,3 +100,9 @@ body:has(.wod-screen) {
     animation: none;
   }
 }
+
+@media (max-width: 767px) {
+  body:has(.app-mobile-tabs) {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
