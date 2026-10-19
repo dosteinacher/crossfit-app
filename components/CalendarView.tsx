@@ -1,10 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, parseISO } from 'date-fns';
-import { Card } from './ui';
-import { getWorkoutTypeStyle } from '@/lib/workout-colors';
+import {
+  addDays,
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  eachDayOfInterval,
+  format,
+  isSameDay,
+  isSameMonth,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns';
+import { CapacityBar, Card, Label, SegmentedControl, StatusAction } from './ui';
 
 interface Workout {
   id: number;
@@ -20,250 +31,209 @@ interface Workout {
 
 interface CalendarViewProps {
   workouts: Workout[];
+  canCreateWorkout: boolean;
 }
 
-type ViewMode = 'calendar' | 'list';
+type ViewMode = 'month' | 'list';
 
-export default function CalendarView({ workouts }: CalendarViewProps) {
+const VIEW_OPTIONS: Array<{ label: string; value: ViewMode }> = [
+  { label: 'Month', value: 'month' },
+  { label: 'List', value: 'list' },
+];
+
+function statusFor(workout: Workout, now: Date): 'registered' | 'open' | 'full' | 'past' {
+  if (new Date(workout.date) < now) return 'past';
+  if (workout.is_registered) return 'registered';
+  if (workout.registered_count >= workout.max_participants) return 'full';
+  return 'open';
+}
+
+export default function CalendarView({ workouts, canCreateWorkout }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [calendarWorkouts, setCalendarWorkouts] = useState(workouts);
+  const [registering, setRegistering] = useState<number | null>(null);
 
-  // Generate calendar grid
+  useEffect(() => {
+    setCalendarWorkouts(workouts);
+  }, [workouts]);
+
+  useEffect(() => {
+    setViewMode(window.matchMedia('(max-width: 767px)').matches ? 'list' : 'month');
+  }, []);
+
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart);
-  const endDate = endOfWeek(monthEnd);
-
-  const dateFormat = 'MMMM yyyy';
-  const dayFormat = 'd';
-
-  const rows = [];
-  let days = [];
-  let day = startDate;
-
-  // Group workouts by date for easy lookup
-  const workoutsByDate: { [key: string]: Workout[] } = {};
-  workouts.forEach((workout) => {
-    const dateKey = format(parseISO(workout.date), 'yyyy-MM-dd');
-    if (!workoutsByDate[dateKey]) {
-      workoutsByDate[dateKey] = [];
-    }
-    workoutsByDate[dateKey].push(workout);
-  });
-
-  // Generate calendar rows
-  while (day <= endDate) {
-    for (let i = 0; i < 7; i++) {
-      const formattedDate = format(day, dayFormat);
-      const dateKey = format(day, 'yyyy-MM-dd');
-      const dayWorkouts = workoutsByDate[dateKey] || [];
-      const cloneDay = day;
-
-      days.push(
-        <div
-          key={day.toString()}
-          className={`min-h-[80px] sm:min-h-[120px] border border-gray-300 p-1 sm:p-2 ${
-            !isSameMonth(day, monthStart)
-              ? 'bg-pure-bg/50 text-gray-600'
-              : 'bg-pure-surface text-pure-ink'
-          } ${isSameDay(day, new Date()) ? 'ring-2 ring-pure-accent-ink' : ''}`}
-        >
-          <div className="font-semibold mb-1">{formattedDate}</div>
-          <div className="space-y-1">
-            {dayWorkouts.map((workout) => (
-              <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                <div
-                  className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 transition ${
-                    workout.is_registered
-                      ? 'bg-pure-green text-black ring-1 ring-pure-accent-ink'
-                      : getWorkoutTypeStyle(workout.workout_type).chip
-                  }`}
-                >
-                  <div className="font-semibold truncate">{workout.title}</div>
-                  <div className="text-[10px]">
-                    {format(parseISO(workout.date), 'h:mm a')}
-                  </div>
-                  <div className="text-[10px]">
-                    {workout.registered_count}/{workout.max_participants}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      );
-      day = addDays(day, 1);
-    }
-    rows.push(
-      <div key={day.toString()} className="grid grid-cols-7">
-        {days}
-      </div>
-    );
-    days = [];
+  const gridStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const gridEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
+  const sortedWorkouts = [...calendarWorkouts].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  const now = new Date();
+  const workoutsByDate: Record<string, Workout[]> = {};
+  for (const workout of sortedWorkouts) {
+    const key = format(parseISO(workout.date), 'yyyy-MM-dd');
+    (workoutsByDate[key] ||= []).push(workout);
   }
 
-  const nextMonth = () => {
-    setCurrentMonth(addDays(monthStart, 32));
+  const groupedWorkouts = new Map<string, Workout[]>();
+  for (const workout of sortedWorkouts) {
+    const weekKey = format(startOfWeek(parseISO(workout.date), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    const group = groupedWorkouts.get(weekKey) || [];
+    group.push(workout);
+    groupedWorkouts.set(weekKey, group);
+  }
+
+  const handleRegistration = async (workout: Workout) => {
+    const isRegistered = workout.is_registered;
+    setRegistering(workout.id);
+    try {
+      const response = await fetch(`/api/workouts/${workout.id}/register`, {
+        method: isRegistered ? 'DELETE' : 'POST',
+      });
+      if (!response.ok) throw new Error('Could not update workout registration');
+      setCalendarWorkouts((current) => current.map((item) => (
+        item.id === workout.id
+          ? {
+              ...item,
+              is_registered: !isRegistered,
+              registered_count: Math.max(0, item.registered_count + (isRegistered ? -1 : 1)),
+            }
+          : item
+      )));
+    } catch (error) {
+      console.error('Workout registration error:', error);
+    } finally {
+      setRegistering(null);
+    }
   };
 
-  const prevMonth = () => {
-    setCurrentMonth(addDays(monthStart, -32));
+  const renderAgendaRow = (workout: Workout) => {
+    const date = parseISO(workout.date);
+    const status = statusFor(workout, now);
+    const full = status === 'full';
+    const pending = registering === workout.id;
+    return (
+      <div key={workout.id} className="grid grid-cols-[40px_minmax(0,1fr)_20px] items-center gap-3 px-3 py-4 first:rounded-t-lg last:rounded-b-lg md:grid-cols-[56px_68px_minmax(0,1fr)_auto_auto] md:gap-4 md:px-5">
+        <div className="flex flex-col items-center">
+          <span className="text-[13px] font-bold uppercase text-ink-2">{format(date, 'EEE')}</span>
+          <span className="mt-0.5 font-display text-[30px] font-bold leading-none tabular-nums text-ink">{format(date, 'd')}</span>
+        </div>
+        <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
+        <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
+          <span className="block truncate font-semibold text-ink group-hover:underline">{workout.title}</span>
+          <span className="mt-1 block truncate text-[13px] text-ink-2 md:text-sm">
+            <span className="md:hidden">{format(date, 'HH:mm')} · {workout.registered_count}/{workout.max_participants} · </span>
+            {workout.description || 'Workout details'}
+          </span>
+        </Link>
+        <CapacityBar value={workout.registered_count} max={workout.max_participants} className="hidden md:inline-flex" />
+        {status === 'past' ? (
+          <span className="hidden min-h-11 items-center px-3 text-sm font-semibold text-ink-2 md:inline-flex">Past</span>
+        ) : (
+          <StatusAction
+            status={status}
+            disabled={pending || (full && !workout.is_registered)}
+            onJoin={() => void handleRegistration(workout)}
+            onUnregister={() => void handleRegistration(workout)}
+            className="hidden md:inline-flex"
+          />
+        )}
+        <span
+          aria-label={status === 'registered' ? 'Registered' : status === 'full' ? 'Full' : status === 'past' ? 'Past workout' : 'Spots open'}
+          className={`h-3.5 w-3.5 rounded-full border md:hidden ${
+            status === 'registered'
+              ? 'border-lime bg-lime'
+              : status === 'full' || status === 'past'
+                ? 'border-line bg-line'
+                : 'border-ink bg-white'
+          }`}
+        />
+      </div>
+    );
   };
-
-  const goToToday = () => {
-    setCurrentMonth(new Date());
-  };
-
-  // List view - group workouts by date
-  const groupedWorkouts: { [key: string]: Workout[] } = {};
-  workouts
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .forEach((workout) => {
-      const dateKey = format(parseISO(workout.date), 'yyyy-MM-dd');
-      if (!groupedWorkouts[dateKey]) {
-        groupedWorkouts[dateKey] = [];
-      }
-      groupedWorkouts[dateKey].push(workout);
-    });
 
   return (
     <div>
-      {/* View Toggle */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2 border border-gray-300 rounded-lg p-1 bg-pure-surface">
-          <button
-            onClick={() => setViewMode('calendar')}
-            className={`px-4 py-2 rounded transition font-medium ${
-              viewMode === 'calendar'
-                ? 'bg-pure-green text-black'
-                : 'text-pure-text-light hover:text-pure-ink'
-            }`}
-          >
-            Calendar
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`px-4 py-2 rounded transition font-medium ${
-              viewMode === 'list'
-                ? 'bg-pure-green text-black'
-                : 'text-pure-text-light hover:text-pure-ink'
-            }`}
-          >
-            List
-          </button>
+      <header className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-center md:justify-between">
+        <h1 className="font-display text-[42px] font-extrabold uppercase leading-[.9] text-ink md:text-[56px]">
+          {format(currentMonth, 'MMMM yyyy')}
+        </h1>
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
+          <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, -1))} aria-label="Previous month" className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-paper text-xl text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15">←</button>
+          <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Next month" className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-paper text-xl text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15">→</button>
+          <button type="button" onClick={() => setCurrentMonth(new Date())} className="inline-flex min-h-10 items-center rounded-sm border border-line bg-paper px-3 text-sm font-bold text-ink hover:bg-canvas">Today</button>
+          <SegmentedControl items={VIEW_OPTIONS} value={viewMode} onChange={setViewMode} ariaLabel="Calendar view" />
+          {canCreateWorkout && (
+            <Link href="/workouts/create" className="inline-flex min-h-11 items-center rounded-sm bg-lime px-3 text-sm font-bold text-ink hover:brightness-95">+ New workout</Link>
+          )}
         </div>
+      </header>
 
-        {viewMode === 'calendar' && (
-          <div className="flex flex-wrap gap-2 items-center justify-end">
-            <button
-              onClick={prevMonth}
-              className="px-3 py-2 bg-pure-surface border border-gray-300 rounded-lg hover:bg-coastal-search/20 transition text-pure-ink"
-            >
-              ←
-            </button>
-            <h2 className="text-lg font-bold text-pure-ink min-w-[150px] text-center">
-              {format(currentMonth, dateFormat)}
-            </h2>
-            <button
-              onClick={nextMonth}
-              className="px-3 py-2 bg-pure-surface border border-gray-300 rounded-lg hover:bg-coastal-search/20 transition text-pure-ink"
-            >
-              →
-            </button>
-            <button
-              onClick={goToToday}
-              className="px-3 py-2 bg-coastal-sky text-white rounded-lg hover:bg-coastal-sky/80 transition font-medium"
-            >
-              Today
-            </button>
-          </div>
-        )}
+      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="Calendar legend">
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-ink-2"><span className="h-3 w-3 rounded-sm bg-lime" />You&apos;re in</span>
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-ink-2"><span className="h-3 w-3 rounded-sm border border-ink bg-white" />Spots open</span>
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-ink-2"><span className="h-3 w-3 rounded-sm bg-line" />Full</span>
       </div>
 
-      {viewMode === 'calendar' ? (
-        <div className="overflow-x-auto">
-          <div className="bg-pure-surface border border-gray-300 rounded-lg overflow-hidden min-w-[560px]">
-            {/* Day headers */}
-            <div className="grid grid-cols-7 bg-pure-bg border-b border-gray-300">
-              {[
-                { full: 'Sun', short: 'S' },
-                { full: 'Mon', short: 'M' },
-                { full: 'Tue', short: 'T' },
-                { full: 'Wed', short: 'W' },
-                { full: 'Thu', short: 'T' },
-                { full: 'Fri', short: 'F' },
-                { full: 'Sat', short: 'S' },
-              ].map(({ full, short }) => (
-                <div
-                  key={full}
-                  className="p-2 sm:p-3 text-center font-bold text-pure-accent-ink border-r border-gray-300 last:border-r-0 text-xs sm:text-sm"
-                >
-                  <span className="hidden sm:inline">{full}</span>
-                  <span className="sm:hidden">{short}</span>
+      {viewMode === 'month' ? (
+        <div className="overflow-hidden rounded-xl bg-line">
+          <div className="grid grid-cols-7 gap-px">
+            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+              <div key={day} className="bg-paper px-2 py-3 text-center text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                <span className="hidden sm:inline">{day}</span>
+                <span className="sm:hidden">{day.slice(0, 1)}</span>
+              </div>
+            ))}
+            {days.map((day) => {
+              const dateKey = format(day, 'yyyy-MM-dd');
+              const dayWorkouts = workoutsByDate[dateKey] || [];
+              const today = isSameDay(day, now);
+              return (
+                <div key={dateKey} className={`min-h-[118px] overflow-hidden p-2 sm:p-[10px] ${isSameMonth(day, monthStart) ? 'bg-paper' : 'bg-[#FAFAF7]'}`}>
+                  <div className="mb-2 flex justify-start">
+                    <span className={`inline-flex h-[30px] min-w-[30px] items-center justify-center rounded-full px-1 text-sm font-bold tabular-nums ${today ? 'bg-ink text-white' : isSameMonth(day, monthStart) ? 'text-ink' : 'text-ink-2'}`}>
+                      {format(day, 'd')}
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {dayWorkouts.map((workout) => {
+                      const status = statusFor(workout, now);
+                      const chipClass = status === 'registered'
+                        ? 'bg-lime text-ink'
+                        : status === 'open'
+                          ? 'border-[1.5px] border-ink bg-white text-ink'
+                          : status === 'full'
+                            ? 'bg-line text-ink-2'
+                            : 'bg-canvas text-ink-2';
+                      return (
+                        <Link key={workout.id} href={`/workouts/${workout.id}`} className={`block overflow-hidden rounded-[7px] px-[7px] py-[5px] text-[13px] leading-tight ${chipClass}`}>
+                          <span className="block truncate font-bold tabular-nums">{format(parseISO(workout.date), 'HH:mm')} · {workout.registered_count}/{workout.max_participants}</span>
+                          <span className="mt-0.5 block truncate">{workout.title}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
-              ))}
-            </div>
-            {/* Calendar grid */}
-            {rows}
+              );
+            })}
           </div>
         </div>
+      ) : groupedWorkouts.size === 0 ? (
+        <Card>
+          <p className="py-4 text-base text-ink-2">No workouts found.</p>
+        </Card>
       ) : (
-        <div className="space-y-6">
-          {Object.keys(groupedWorkouts).length === 0 ? (
-            <Card className="bg-pure-surface border-gray-300">
-              <p className="text-pure-text-light text-center py-8">No workouts found</p>
-            </Card>
-          ) : (
-            Object.keys(groupedWorkouts).map((dateKey) => (
-              <div key={dateKey}>
-                <h3 className="text-2xl font-bold text-pure-accent-ink mb-3">
-                  {format(parseISO(dateKey), 'EEEE, MMMM d, yyyy')}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {groupedWorkouts[dateKey].map((workout) => (
-                    <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                      <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-surface border-gray-300">
-                        <div className="flex justify-between items-start mb-3">
-                          {workout.workout_type.toLowerCase() !== 'general' && (
-                            <span className={`text-[13px] font-bold uppercase tracking-wide px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
-                              {workout.workout_type}
-                            </span>
-                          )}
-                          {workout.is_registered && (
-                            <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">
-                              Registered
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="text-xl font-bold text-pure-ink mb-2">
-                          {workout.title}
-                        </h3>
-
-                        <p className="text-sm text-pure-text-light mb-4 line-clamp-2">
-                          {workout.description || 'No description'}
-                        </p>
-
-                        <div className="border-t border-gray-300 pt-3 mt-auto">
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-pure-text-light">
-                              {format(parseISO(workout.date), 'h:mm a')}
-                            </span>
-                            <span className="text-pure-text-light">
-                              {workout.registered_count}/{workout.max_participants}
-                            </span>
-                          </div>
-                          <div className="text-xs text-pure-text-light mt-2">
-                            by {workout.creator_name}
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
+        <div className="space-y-5">
+          {[...groupedWorkouts.entries()].map(([weekKey, weekWorkouts]) => (
+            <section key={weekKey}>
+              <div className="mb-2"><Label>Week of {format(parseISO(weekKey), 'd MMM')}</Label></div>
+              <Card className="!p-0 divide-y divide-line-2">
+                {weekWorkouts.map(renderAgendaRow)}
+              </Card>
+            </section>
+          ))}
         </div>
       )}
     </div>

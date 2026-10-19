@@ -4,15 +4,23 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import CalendarView from '@/components/CalendarView';
-import { Card, Loading, Button } from '@/components/ui';
+import { Badge, Card, Loading, SegmentedControl } from '@/components/ui';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 
+type PollFilter = 'all' | 'active' | 'closed';
+
+const POLL_FILTERS: Array<{ label: string; value: PollFilter }> = [
+  { label: 'Active', value: 'active' },
+  { label: 'All', value: 'all' },
+  { label: 'Closed', value: 'closed' },
+];
+
 export default function CalendarPage() {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
-  const [pollFilter, setPollFilter] = useState<'all' | 'active' | 'closed'>('active');
+  const [pollFilter, setPollFilter] = useState<PollFilter>('active');
 
   useEffect(() => {
     if (!loading) {
@@ -48,119 +56,64 @@ export default function CalendarPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-bg py-8">
-        <div className="container mx-auto px-4 max-w-7xl">
+      <main className="min-h-screen bg-canvas py-6 md:py-10">
+        <div className="mx-auto max-w-[1120px] space-y-12 px-4">
           {/* Calendar Section */}
-          <div className="mb-12">
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-4xl font-bold text-pure-ink">Calendar</h1>
-              <Link href="/workouts/create">
-                <Button>Create Workout</Button>
-              </Link>
-            </div>
-
-            <CalendarView workouts={workouts} />
-          </div>
+          <CalendarView workouts={workouts} canCreateWorkout={Boolean(user?.is_admin)} />
 
           {/* Polls Section */}
-          <div className="mt-16 pt-8 border-t border-gray-300">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-pure-ink">Availability Polls</h2>
-              <Link href="/calendar/create">
-                <Button variant="secondary">Create Poll</Button>
+          <section className="border-t border-line pt-8">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="font-display text-3xl font-extrabold uppercase text-ink md:text-4xl">Availability Polls</h2>
+                <p className="mt-2 text-base text-ink-2">Find a time that works for the team.</p>
+              </div>
+              <Link href="/calendar/create" className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-4 text-sm font-bold text-ink hover:bg-canvas">
+                Create Poll
               </Link>
-            </div>
-
-            <div className="bg-pure-surface border border-pure-green rounded-lg p-4 mb-6">
-              <h3 className="font-bold text-pure-accent-ink mb-2">Weekly Planning</h3>
-              <p className="text-pure-text-light">
-                Create polls to find the best times for workouts. Everyone can vote for times they're available!
-              </p>
             </div>
 
             {/* Poll Filter Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-gray-300">
-              <button
-                onClick={() => setPollFilter('active')}
-                className={`px-4 py-2 font-medium transition ${
-                  pollFilter === 'active'
-                    ? 'text-pure-accent-ink border-b-2 border-pure-green'
-                    : 'text-pure-text-light hover:text-pure-ink'
-                }`}
-              >
-                Active
-              </button>
-              <button
-                onClick={() => setPollFilter('all')}
-                className={`px-4 py-2 font-medium transition ${
-                  pollFilter === 'all'
-                    ? 'text-pure-accent-ink border-b-2 border-pure-green'
-                    : 'text-pure-text-light hover:text-pure-ink'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setPollFilter('closed')}
-                className={`px-4 py-2 font-medium transition ${
-                  pollFilter === 'closed'
-                    ? 'text-pure-accent-ink border-b-2 border-pure-green'
-                    : 'text-pure-text-light hover:text-pure-ink'
-                }`}
-              >
-                Closed
-              </button>
+            <div className="mb-5">
+              <SegmentedControl items={POLL_FILTERS} value={pollFilter} onChange={setPollFilter} ariaLabel="Filter availability polls" />
             </div>
 
             {/* Polls List */}
             {polls.length === 0 ? (
-              <Card className="bg-pure-surface border-gray-300">
-                <div className="text-center py-12">
-                  <p className="text-pure-text-light text-lg mb-4">No polls yet</p>
-                  <p className="text-pure-text-light mb-6">
-                    Create a poll to find the best workout times for your team!
-                  </p>
-                  <Link href="/calendar/create">
-                    <Button>Create Your First Poll</Button>
-                  </Link>
+              <Card>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <p className="text-base text-ink-2">No availability polls yet.</p>
+                  <Link href="/calendar/create" className="inline-flex min-h-11 items-center rounded-sm bg-lime px-4 text-[15px] font-bold text-ink hover:brightness-95">Create a poll</Link>
                 </div>
               </Card>
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {polls.map((poll) => (
-                  <Link key={poll.id} href={`/calendar/${poll.id}`}>
-                    <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer bg-pure-surface border-gray-300">
-                      <div className="flex justify-between items-start">
+                  <Link key={poll.id} href={`/calendar/${poll.id}`} className="block rounded-lg focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15">
+                    <Card className="transition-colors hover:border-ink">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-pure-ink">
+                            <h3 className="font-display text-2xl font-bold uppercase text-ink">
                               {poll.title}
                             </h3>
-                            <span
-                              className={`text-xs font-medium px-2 py-1 rounded ${
-                                poll.status === 'active'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-pure-text-light'
-                              }`}
-                            >
-                              {poll.status}
-                            </span>
+                            <Badge variant={poll.status === 'active' ? 'neutral' : 'outline'}>{poll.status}</Badge>
                           </div>
                           
                           {poll.description && (
-                            <p className="text-sm text-pure-text-light mb-3">
+                            <p className="mb-3 text-base text-ink-2">
                               {poll.description}
                             </p>
                           )}
 
-                          <div className="flex items-center gap-4 text-sm text-pure-text-light">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink-2">
                             <span>{poll.option_count} time slots</span>
                             <span>{poll.total_voters} voters</span>
                             <span>by {poll.creator_name}</span>
                           </div>
                         </div>
 
-                        <div className="text-right text-xs text-pure-text-light">
+                        <div className="text-[13px] text-ink-2">
                           {format(new Date(poll.created_at), 'MMM d, yyyy')}
                         </div>
                       </div>
@@ -169,9 +122,9 @@ export default function CalendarPage() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     </>
   );
 }
