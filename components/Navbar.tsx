@@ -96,7 +96,7 @@ export default function Navbar({ photoHero = false }: { photoHero?: boolean }) {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 border-b border-line bg-paper">
+      <nav className={`${photoHero ? 'absolute inset-x-0 top-0 z-50 border-transparent bg-transparent md:sticky md:top-0 md:border-b md:border-line md:bg-paper' : 'sticky top-0 border-b border-line bg-paper'} z-50`}>
         <div className="mx-auto flex h-[52px] max-w-[1120px] items-center justify-between px-4 md:h-[68px]">
           <Link
             href="/dashboard"

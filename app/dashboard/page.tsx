@@ -175,7 +175,7 @@ export default function DashboardPage() {
           mobileObjectPosition="center 48%"
           className="h-[330px] md:h-[440px]"
         >
-          <header className="mx-auto flex h-full max-w-[1120px] flex-col justify-between px-4 pb-8 pt-[68px] md:pb-[108px] md:pt-10">
+          <header className="mx-auto flex h-full max-w-[1120px] flex-col justify-between px-4 pb-14 pt-[68px] md:pb-[108px] md:pt-10">
             <div className="flex items-start justify-between gap-4">
               <Label className="text-lime">{format(now, "EEEE '·' d MMMM").toUpperCase()}</Label>
               {announcement && (
@@ -195,7 +195,7 @@ export default function DashboardPage() {
           </header>
         </PhotoHero>
 
-        <section className="relative z-20 mx-auto -mt-11 grid max-w-[1120px] gap-5 px-4 md:-mt-[88px] md:grid-cols-[1.55fr_1fr]">
+        <section className={`relative z-20 mx-auto -mt-11 grid max-w-[1120px] gap-5 px-4 md:-mt-[88px] ${nextWorkout ? 'md:grid-cols-[1.55fr_1fr]' : 'md:grid-cols-1'}`}>
             {nextWorkout && (() => {
               const date = new Date(nextWorkout.date);
               const isOnNow = nextWorkout.id === activeWorkout?.id;
@@ -240,8 +240,8 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="mt-7">
-                    <div className="flex flex-wrap items-end justify-between gap-3">
-                      <time className={`block font-display text-[72px] font-extrabold leading-[.82] tabular-nums md:text-[120px] ${isOnNow ? 'text-ink' : 'text-lime'}`}>
+                    <div className="flex flex-nowrap items-end justify-between gap-3">
+                      <time className={`block font-display text-[72px] font-extrabold leading-[.82] tabular-nums md:text-[72px] lg:text-[96px] 2xl:text-[120px] ${isOnNow ? 'text-ink' : 'text-lime'}`}>
                         {format(date, 'HH:mm')}
                       </time>
                       <div className="pb-1 text-right">
@@ -250,7 +250,7 @@ export default function DashboardPage() {
                         ) : (
                           <>
                             <span className={`block text-[13px] font-bold uppercase tracking-wide ${isOnNow ? 'text-ink' : 'text-white'}`}>{isOnNow ? 'ENDS IN' : 'STARTS IN'}</span>
-                            <span className={`hidden font-display text-[44px] font-extrabold leading-none tabular-nums md:block ${countdownIsShort && !isOnNow ? 'text-lime' : isOnNow ? 'text-ink' : 'text-white'}`}>
+                            <span className={`hidden font-display text-[32px] font-extrabold leading-none tabular-nums md:block lg:text-[44px] ${countdownIsShort && !isOnNow ? 'text-lime' : isOnNow ? 'text-ink' : 'text-white'}`}>
                               {formatCountdown(secondsRemaining)}
                             </span>
                             <span className={`font-display text-2xl font-extrabold leading-none tabular-nums md:hidden ${countdownIsShort && !isOnNow ? 'text-lime' : isOnNow ? 'text-ink' : 'text-white'}`}>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                     </div>
                   ) : null}
 
-                  <div className={`mt-6 flex items-center justify-between gap-4 border-t pt-5 ${isOnNow ? 'border-ink/20' : 'border-white/15'}`}>
+                  <div className={`mt-6 flex flex-wrap items-center justify-between gap-4 border-t pt-5 ${isOnNow ? 'border-ink/20' : 'border-white/15'}`}>
                     <div className="hidden min-w-0 items-center sm:flex">
                       <div className="flex -space-x-2">
                         {participants.slice(0, 4).map((participant) => (
@@ -309,10 +309,10 @@ export default function DashboardPage() {
                         {participants.length > 3 ? ` +${participants.length - 3}` : ''}
                       </span>
                     </div>
-                    <div className="sm:hidden">
+                    <div className="w-full sm:hidden">
                       <CapacityBar value={nextWorkout.registered_count} max={nextWorkout.max_participants} className={isOnNow ? '[&>span:last-child]:text-ink [&>span>span]:bg-ink' : '[&>span:last-child]:text-white [&>span>span]:bg-white'} />
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                    <div className="flex w-full shrink-0 flex-wrap justify-end gap-2 sm:w-auto">
                       <Link href={`/workouts/${nextWorkout.id}/board`} className={`inline-flex min-h-11 items-center rounded-sm px-4 text-sm font-bold focus-visible:outline-none focus-visible:ring-[3px] ${isOnNow ? 'bg-ink text-white hover:bg-ink-2 focus-visible:ring-ink/40' : 'bg-lime text-ink hover:brightness-95 focus-visible:ring-white/50'}`}>
                         Open board →
                       </Link>
