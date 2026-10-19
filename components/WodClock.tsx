@@ -12,17 +12,20 @@ export default function WodClock() {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    setNow(new Date());
+    const initialTick = window.setTimeout(() => setNow(new Date()), 0);
     const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+    return () => {
+      window.clearTimeout(initialTick);
+      clearInterval(id);
+    };
   }, []);
 
   if (!now) return null;
 
   return (
     <div className="text-right tabular-nums">
-      <p className="text-3xl font-bold text-[#f5f5f5]">{format(now, 'h:mm:ss a')}</p>
-      <p className="text-sm text-[#a8b0ba] mt-1">{format(now, 'EEEE, MMMM d, yyyy')}</p>
+      <p className="text-3xl font-bold text-ink">{format(now, 'h:mm:ss a')}</p>
+      <p className="mt-1 text-base text-ink-2">{format(now, 'EEEE, MMMM d, yyyy')}</p>
     </div>
   );
 }

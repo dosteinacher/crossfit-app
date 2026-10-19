@@ -73,14 +73,6 @@ h1, h2, h3 {
   background: #8b95a3;
 }
 
-/* The gym TV display at /wod stays dark: bright signage is unreadable across a room,
-   and the screen-wake canvas paints near-black pixels. Scoped via body[data-wod]. */
-body:has(.wod-screen) {
-  background: #000000;
-  color: #f5f5f5;
-  color-scheme: dark;
-}
-
 /* Navbar brand: very slow rotation for TV/signage motion; disabled when user prefers reduced motion */
 @keyframes navbar-brand-spin {
   from {
