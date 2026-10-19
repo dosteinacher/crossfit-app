@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, TimeInput } from '@/components/ui';
+import { Card, Button, ErrorMessage, SuccessMessage, SegmentedControl } from '@/components/ui';
 import { generateWorkout } from '@/lib/workout-generator';
 import {
   EXERCISES,
@@ -32,7 +32,11 @@ function CreateWorkoutForm() {
   const [loading, setLoading] = useState(false);
   const [saveToArchive, setSaveToArchive] = useState(true);
   const [users, setUsers] = useState<Array<{ id: number; name: string; email: string }>>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [usersLoadError, setUsersLoadError] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [attendeeSearch, setAttendeeSearch] = useState('');
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   // Workout generator state (optional section)
   const [genExpanded, setGenExpanded] = useState(false);
@@ -47,6 +51,9 @@ function CreateWorkoutForm() {
   const [genSuccess, setGenSuccess] = useState('');
 
   const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
+  const visibleUsers = users.filter((user) =>
+    `${user.name} ${user.email}`.toLowerCase().includes(attendeeSearch.trim().toLowerCase())
+  );
 
   useEffect(() => {
     // Pre-fill date and time from poll if provided
@@ -60,10 +67,11 @@ function CreateWorkoutForm() {
   }, [pollDate]);
 
   useEffect(() => {
-    if (templateId) {
-      loadTemplate();
+    if (descriptionRef.current) {
+      descriptionRef.current.style.height = 'auto';
+      descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
     }
-  }, [templateId]);
+  }, [description]);
 
   // Pre-select users from poll after users are loaded
   useEffect(() => {
@@ -94,16 +102,18 @@ function CreateWorkoutForm() {
   const fetchUsers = async () => {
     try {
       const response = await fetch('/api/users');
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || []);
-      }
+      if (!response.ok) throw new Error('Could not load members');
+      const data = await response.json();
+      setUsers(data.users || []);
     } catch (error) {
       console.error('Fetch users error:', error);
+      setUsersLoadError('Could not load members. You can still create the workout without pre-selecting attendees.');
+    } finally {
+      setUsersLoading(false);
     }
   };
 
-  const loadTemplate = async () => {
+  const loadTemplate = useCallback(async () => {
     try {
       const response = await fetch(`/api/templates/${templateId}`);
       if (response.ok) {
@@ -124,7 +134,13 @@ function CreateWorkoutForm() {
     } catch (error) {
       console.error('Load template error:', error);
     }
-  };
+  }, [templateId]);
+
+  useEffect(() => {
+    if (templateId) {
+      loadTemplate();
+    }
+  }, [templateId, loadTemplate]);
 
   const handleGenerate = () => {
     setGenSuccess('');
@@ -213,7 +229,7 @@ function CreateWorkoutForm() {
       } else {
         setError(data.error || 'Failed to create workout');
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -223,45 +239,51 @@ function CreateWorkoutForm() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-bg py-8">
-        <div className="container mx-auto px-4 max-w-2xl">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-pure-ink">
+      <main className="min-h-screen bg-canvas py-6 md:py-10">
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4 md:mb-8">
+            <div>
+              <p className="text-[13px] font-bold uppercase tracking-[.14em] text-ink-2">Workouts</p>
+              <h1 className="mt-2 font-display text-4xl font-extrabold text-ink md:text-5xl">
               {templateId ? 'Schedule from Template' : 'Create New Workout'}
-            </h1>
+              </h1>
+            </div>
             <Link href="/archive">
               <Button variant="secondary">Browse Archive</Button>
             </Link>
           </div>
 
           {templateId && (
-            <div className="bg-purple-100 border border-purple-300 rounded-lg p-4 mb-6">
-              <p className="text-purple-700">
+            <div className="mb-6 border-l-4 border-ink bg-paper p-4 text-ink">
+              <p className="text-base text-ink-2">
                 <strong>Using template!</strong> Edit as needed and schedule for a specific date/time.
               </p>
             </div>
           )}
 
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="space-y-6">
           {/* Workout generator (optional) */}
           {!templateId && (
-            <div className="mb-6 border border-gray-300 rounded-lg bg-pure-surface overflow-hidden">
+            <div className="overflow-hidden rounded-lg border border-line bg-paper">
               <button
                 type="button"
                 onClick={() => setGenExpanded(!genExpanded)}
-                className="w-full px-4 py-3 flex justify-between items-center text-left text-pure-ink font-medium hover:bg-gray-100 transition"
+                aria-expanded={genExpanded}
+                className="flex min-h-14 w-full items-center justify-between px-4 text-left font-bold text-ink hover:bg-canvas"
               >
                 <span>Help me build a workout</span>
-                <span className="text-xl">{genExpanded ? '−' : '+'}</span>
+                <span aria-hidden="true" className="text-xl">{genExpanded ? '−' : '+'}</span>
               </button>
               {genExpanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-gray-300 space-y-4">
+                <div className="space-y-4 border-t border-line-2 px-4 pb-4 pt-4">
                   {genSuccess && (
-                    <p className="text-sm text-pure-accent-ink font-medium">{genSuccess}</p>
+                    <p className="text-sm font-semibold text-ink">{genSuccess}</p>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-pure-ink mb-1">
-                        How many CrossFitters? (1–6) <span className="text-red-700">*</span>
+                      <label className="mb-1 block text-sm font-bold text-ink">
+                        How many CrossFitters? (1–6) <span className="text-danger">*</span>
                       </label>
                       <input
                         type="number"
@@ -269,12 +291,12 @@ function CreateWorkoutForm() {
                         max={6}
                         value={genAthleteCount}
                         onChange={(e) => setGenAthleteCount(Math.min(6, Math.max(1, Number(e.target.value) || 1)))}
-                        className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg"
+                        className="min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-pure-ink mb-1">
-                        How long? (min) <span className="text-red-700">*</span>
+                      <label className="mb-1 block text-sm font-bold text-ink">
+                        How long? (min) <span className="text-danger">*</span>
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {DURATION_PRESETS.map((d) => (
@@ -282,10 +304,10 @@ function CreateWorkoutForm() {
                             key={d}
                             type="button"
                             onClick={() => setGenDuration(d)}
-                            className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                            className={`min-h-11 rounded-sm px-3 text-sm font-bold ${
                               genDuration === d
-                                ? 'bg-pure-green text-pure-ink'
-                                : 'bg-pure-bg text-pure-ink border border-gray-300'
+                                ? 'bg-lime text-ink'
+                                : 'border border-line bg-paper text-ink hover:bg-canvas'
                             }`}
                           >
                             {d}
@@ -295,27 +317,27 @@ function CreateWorkoutForm() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-pure-ink mb-2">
+                    <label className="mb-2 block text-sm font-bold text-ink">
                       Strength included?
                     </label>
-                    <div className="flex gap-4 mb-2">
+                    <div className="mb-2 flex gap-4">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           checked={!genStrengthIncluded}
                           onChange={() => setGenStrengthIncluded(false)}
-                          className="text-pure-accent-ink"
+                          className="accent-ink"
                         />
-                        <span className="text-pure-ink">No</span>
+                        <span className="text-base text-ink">No</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
                           checked={genStrengthIncluded}
                           onChange={() => setGenStrengthIncluded(true)}
-                          className="text-pure-accent-ink"
+                          className="accent-ink"
                         />
-                        <span className="text-pure-ink">Yes</span>
+                        <span className="text-base text-ink">Yes</span>
                       </label>
                     </div>
                     {genStrengthIncluded && (
@@ -323,10 +345,10 @@ function CreateWorkoutForm() {
                         <select
                           value={genStrengthPreset}
                           onChange={(e) => setGenStrengthPreset(e.target.value)}
-                          className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg mb-2"
+                          className="mb-2 min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
                         >
                           {STRENGTH_PRESETS.map((p) => (
-                            <option key={p.label} value={p.value} className="bg-pure-bg">
+                            <option key={p.label} value={p.value}>
                               {p.label}
                             </option>
                           ))}
@@ -337,23 +359,23 @@ function CreateWorkoutForm() {
                             value={genStrengthCustom}
                             onChange={(e) => setGenStrengthCustom(e.target.value)}
                             placeholder="e.g. Back Squat 5x5"
-                            className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg"
+                            className="min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
                           />
                         )}
                       </div>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-pure-ink mb-1">
+                    <label className="mb-1 block text-sm font-bold text-ink">
                       Workout format
                     </label>
                     <select
                       value={genFormat}
                       onChange={(e) => setGenFormat(e.target.value as WorkoutFormat)}
-                      className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg"
+                      className="min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
                     >
                       {WORKOUT_FORMATS.map((f) => (
-                        <option key={f.value} value={f.value} className="bg-pure-bg">
+                        <option key={f.value} value={f.value}>
                           {f.label}
                         </option>
                       ))}
@@ -361,38 +383,38 @@ function CreateWorkoutForm() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-pure-ink mb-1">
+                      <label className="mb-1 block text-sm font-bold text-ink">
                         Exercises to include (optional)
                       </label>
-                      <div className="bg-pure-bg border border-gray-300 rounded-lg p-2 max-h-32 overflow-y-auto">
+                      <div className="max-h-32 overflow-y-auto rounded-sm border border-line bg-canvas p-2">
                         {EXERCISES.map((ex) => (
-                          <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100">
+                          <label key={ex} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-paper">
                             <input
                               type="checkbox"
                               checked={genIncludeExercises.includes(ex)}
                               onChange={() => toggleGenInclude(ex)}
-                              className="text-pure-accent-ink"
+                              className="accent-ink"
                             />
-                            <span className="text-sm text-pure-ink">{ex}</span>
+                            <span className="text-sm text-ink">{ex}</span>
                           </label>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-pure-ink mb-1">
+                      <label className="mb-1 block text-sm font-bold text-ink">
                         Exercises to exclude (optional, max 4)
                       </label>
-                      <div className="bg-pure-bg border border-gray-300 rounded-lg p-2 max-h-32 overflow-y-auto">
+                      <div className="max-h-32 overflow-y-auto rounded-sm border border-line bg-canvas p-2">
                         {EXERCISES.map((ex) => (
-                          <label key={ex} className="flex items-center gap-2 py-1 px-2 rounded cursor-pointer hover:bg-gray-100">
+                          <label key={ex} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-paper">
                             <input
                               type="checkbox"
                               checked={genExcludeExercises.includes(ex)}
                               onChange={() => toggleGenExclude(ex)}
                               disabled={!genExcludeExercises.includes(ex) && genExcludeExercises.length >= 4}
-                              className="text-pure-accent-ink"
+                              className="accent-ink"
                             />
-                            <span className="text-sm text-pure-ink">{ex}</span>
+                            <span className="text-sm text-ink">{ex}</span>
                           </label>
                         ))}
                       </div>
@@ -406,145 +428,204 @@ function CreateWorkoutForm() {
             </div>
           )}
 
-          <Card>
-            {error && <ErrorMessage message={error} />}
-            {success && <SuccessMessage message={success} />}
+              {error && <ErrorMessage message={error} />}
+              {success && <SuccessMessage message={success} />}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <Card className="space-y-5">
+                  <div>
+                    <label htmlFor="workout-title" className="mb-1.5 block text-sm font-bold text-ink">Workout title</label>
+                    <input
+                      id="workout-title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g., Monday Morning WOD"
+                      required
+                      className="min-h-12 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                    />
+                  </div>
 
-            <form onSubmit={handleSubmit}>
-              <Input
-                label="Workout Title"
-                type="text"
-                value={title}
-                onChange={setTitle}
-                placeholder="e.g., Monday Morning WOD"
-                required
-              />
+                  <div>
+                    <label htmlFor="workout-description" className="mb-1.5 block text-sm font-bold text-ink">Description</label>
+                    <textarea
+                      ref={descriptionRef}
+                      id="workout-description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Describe the workout, movements, and any notes..."
+                      rows={5}
+                      className="min-h-40 w-full resize-none overflow-hidden rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                    />
+                  </div>
 
-              <TextArea
-                label="Description"
-                value={description}
-                onChange={setDescription}
-                placeholder="Describe the workout, movements, and any notes..."
-                rows={24}
-                textareaClassName="min-h-[28rem]"
-              />
+                  <div>
+                    <p className="mb-2 text-sm font-bold text-ink">Workout type</p>
+                    <SegmentedControl
+                      items={workoutTypes.map((type) => ({ label: type, value: type }))}
+                      value={workoutType}
+                      onChange={setWorkoutType}
+                      ariaLabel="Workout type"
+                      className="w-full flex-wrap"
+                    />
+                  </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pure-ink mb-1">
-                  Workout Type <span className="text-red-700">*</span>
-                </label>
-                <select
-                  value={workoutType}
-                  onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
-                  required
-                >
-                  {workoutTypes.map((type) => (
-                    <option key={type} value={type} className="bg-pure-bg text-pure-ink">
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="workout-date" className="mb-1.5 block text-sm font-bold text-ink">Date</label>
+                      <input
+                        id="workout-date"
+                        type="date"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        required
+                        className="min-h-12 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="workout-time" className="mb-1.5 block text-sm font-bold text-ink">Time</label>
+                      <input
+                        id="workout-time"
+                        type="time"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                        required
+                        className="min-h-12 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Date"
-                  type="date"
-                  value={date}
-                  onChange={setDate}
-                  required
-                />
+                  <div>
+                    <label htmlFor="max-participants" className="mb-1.5 block text-sm font-bold text-ink">Maximum participants</label>
+                    <div className="inline-flex items-center rounded-sm border border-line bg-paper">
+                      <button
+                        type="button"
+                        aria-label="Decrease maximum participants"
+                        onClick={() => setMaxParticipants((current) => String(Math.max(1, (Number(current) || 1) - 1)))}
+                        className="h-12 w-12 text-xl font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
+                      >
+                        −
+                      </button>
+                      <input
+                        id="max-participants"
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={maxParticipants}
+                        onChange={(e) => setMaxParticipants(e.target.value)}
+                        onBlur={() => setMaxParticipants(String(Math.max(1, Number.parseInt(maxParticipants, 10) || 1)))}
+                        required
+                        className="h-12 w-16 border-x border-line bg-paper text-center text-base font-bold tabular-nums text-ink focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        aria-label="Increase maximum participants"
+                        onClick={() => setMaxParticipants((current) => String((Number(current) || 1) + 1))}
+                        className="h-12 w-12 text-xl font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
 
-                <TimeInput
-                  label="Time"
-                  value={time}
-                  onChange={setTime}
-                  required
-                />
-              </div>
+                  <div>
+                    <label htmlFor="attendee-search" className="mb-1.5 block text-sm font-bold text-ink">Pre-select attendees <span className="font-normal text-ink-2">(optional)</span></label>
+                    <p className="mb-3 text-sm text-ink-2">
+                      Selected members will be registered automatically and receive a calendar invite.
+                    </p>
+                    <input
+                      id="attendee-search"
+                      type="search"
+                      value={attendeeSearch}
+                      onChange={(e) => setAttendeeSearch(e.target.value)}
+                      placeholder="Search members by name or email"
+                      className="mb-2 min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                    />
+                    <div className="max-h-60 overflow-y-auto rounded-sm border border-line">
+                      {usersLoadError ? (
+                        <p className="p-3 text-sm text-ink-2">{usersLoadError}</p>
+                      ) : usersLoading ? (
+                        <p className="p-3 text-sm text-ink-2">Loading members…</p>
+                      ) : users.length === 0 ? (
+                        <p className="p-3 text-sm text-ink-2">No members are available to pre-select.</p>
+                      ) : visibleUsers.length === 0 ? (
+                        <p className="p-3 text-sm text-ink-2">No members match that search.</p>
+                      ) : (
+                        visibleUsers.map((user) => (
+                          <label key={user.id} className="flex min-h-12 cursor-pointer items-center gap-3 border-b border-line-2 px-3 last:border-0 hover:bg-canvas">
+                            <input
+                              type="checkbox"
+                              checked={selectedUserIds.includes(user.id)}
+                              onChange={(e) => setSelectedUserIds((current) =>
+                                e.target.checked
+                                  ? current.includes(user.id) ? current : [...current, user.id]
+                                  : current.filter((id) => id !== user.id)
+                              )}
+                              className="h-4 w-4 accent-ink"
+                            />
+                            <span className="min-w-0 text-sm font-semibold text-ink">
+                              {user.name} <span className="font-normal text-ink-2">({user.email})</span>
+                            </span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    {selectedUserIds.length > 0 && (
+                      <p className="mt-2 text-sm font-semibold text-ink">
+                        {selectedUserIds.length} member{selectedUserIds.length === 1 ? '' : 's'} selected
+                      </p>
+                    )}
+                  </div>
 
-              <Input
-                label="Max Participants"
-                type="number"
-                value={maxParticipants}
-                onChange={setMaxParticipants}
-                placeholder="4"
-                required
-              />
+                  {!templateId && (
+                    <label className="flex min-h-12 cursor-pointer items-center gap-3 border-t border-line-2 pt-3 text-sm text-ink">
+                      <input
+                        type="checkbox"
+                        checked={saveToArchive}
+                        onChange={(e) => setSaveToArchive(e.target.checked)}
+                        className="h-4 w-4 accent-ink"
+                      />
+                      Save this workout to Archive for future reuse
+                    </label>
+                  )}
+                </Card>
+                <div className="sticky bottom-[calc(80px_+_env(safe-area-inset-bottom))] z-20 -mx-4 flex gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur-sm md:bottom-0">
+                  <Button type="submit" disabled={loading} className="flex-1">
+                    {loading ? 'Creating…' : 'Create workout'}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => router.back()} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pure-ink mb-1">
-                  Pre-select Attendees (Optional)
-                </label>
-                <p className="text-xs text-pure-text-light mb-2">
-                  Select users who you know will attend. They'll be auto-registered and receive a calendar invite.
+            <aside className="order-first lg:order-none lg:sticky lg:top-6 lg:self-start">
+              <Card className="!bg-ink !text-white">
+                <p className="text-[13px] font-bold uppercase tracking-[.14em] text-white/75">Live preview</p>
+                <div className="mt-5 flex flex-wrap items-start justify-between gap-3">
+                  <h2 className="font-display text-3xl font-extrabold text-white">{title.trim() || 'Workout title'}</h2>
+                  <span className="rounded-sm bg-lime px-2.5 py-1 text-[13px] font-bold text-ink">{workoutType}</span>
+                </div>
+                <p className="mt-3 text-sm text-white/80">
+                  {date || 'Date not set'}{time ? ` · ${time}` : ''}
                 </p>
-                <div className="bg-pure-bg border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto">
-                  {users.length === 0 ? (
-                    <p className="text-pure-text-light text-sm">Loading users...</p>
-                  ) : (
-                    users.map((user) => (
-                      <label key={user.id} className="flex items-center gap-2 py-2 hover:bg-gray-100 px-2 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedUserIds.includes(user.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedUserIds([...selectedUserIds, user.id]);
-                            } else {
-                              setSelectedUserIds(selectedUserIds.filter((id) => id !== user.id));
-                            }
-                          }}
-                          className="w-4 h-4 text-pure-accent-ink rounded focus:ring-2 focus:ring-pure-green"
-                        />
-                        <span className="text-sm text-pure-ink">
-                          {user.name} <span className="text-pure-text-light text-xs">({user.email})</span>
-                        </span>
-                      </label>
-                    ))
+                <div className="my-5 border-t border-white/20" />
+                <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-white">
+                  {description.trim() || 'Your workout description will appear here.'}
+                </p>
+                <div className="mt-6 border-t border-white/20 pt-4">
+                  <p className="text-sm font-bold text-white">{selectedUserIds.length} selected · {maxParticipants || '0'} spots max</p>
+                  {selectedUserIds.length > 0 && (
+                    <p className="mt-2 text-sm text-white/80">
+                      {users.filter((user) => selectedUserIds.includes(user.id)).map((user) => user.name).join(', ')}
+                    </p>
                   )}
                 </div>
-                {selectedUserIds.length > 0 && (
-                  <p className="text-xs text-pure-accent-ink mt-2">
-                    {selectedUserIds.length} user{selectedUserIds.length > 1 ? 's' : ''} selected
-                  </p>
-                )}
-              </div>
-
-              {!templateId && (
-                <div className="mb-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={saveToArchive}
-                      onChange={(e) => setSaveToArchive(e.target.checked)}
-                      className="w-4 h-4 text-pure-accent-ink rounded focus:ring-2 focus:ring-pure-green"
-                    />
-                    <span className="text-sm text-pure-ink">
-                      Save this workout to Archive (for future reuse)
-                    </span>
-                  </label>
-                </div>
-              )}
-
-              <div className="flex gap-4 mt-6">
-                <Button type="submit" disabled={loading} className="flex-1">
-                  {loading ? 'Creating...' : 'Create Workout'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => router.back()}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
+              </Card>
+            </aside>
+          </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }
