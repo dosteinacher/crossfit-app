@@ -40,6 +40,7 @@ export default function DashboardPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [registering, setRegistering] = useState<number | null>(null);
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
     const interval = window.setInterval(() => setClock(new Date()), 60_000);
@@ -89,6 +90,28 @@ export default function DashboardPage() {
     } finally {
       setRegistering(null);
     }
+  };
+
+  const handleCastToTv = async (workoutId: number) => {
+    const boardUrl = new URL(`/workouts/${workoutId}/board?tv=1`, window.location.origin).toString();
+    type PresentationRequestLike = { start: () => Promise<unknown> };
+    type PresentationRequestFactory = new (urls: string[]) => PresentationRequestLike;
+    const PresentationRequest = (window as Window & {
+      PresentationRequest?: PresentationRequestFactory;
+    }).PresentationRequest;
+
+    if (PresentationRequest) {
+      try {
+        await new PresentationRequest([boardUrl]).start();
+        return;
+      } catch (error) {
+        console.warn('Could not start TV presentation:', error);
+      }
+    }
+
+    window.open(boardUrl, '_blank', 'noopener,noreferrer');
+    setToast('Use AirPlay / Screen Mirroring to send this window to the TV');
+    window.setTimeout(() => setToast(''), 5000);
   };
 
   const now = clock;
@@ -250,9 +273,18 @@ export default function DashboardPage() {
                     <div className="sm:hidden">
                       <CapacityBar value={nextWorkout.registered_count} max={nextWorkout.max_participants} className="[&>span:last-child]:text-white [&>span>span]:bg-white" />
                     </div>
-                    <Link href={`/workouts/${nextWorkout.id}/board`} className="inline-flex min-h-11 shrink-0 items-center rounded-sm bg-white px-4 text-sm font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
-                      Open whiteboard →
-                    </Link>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Link href={`/workouts/${nextWorkout.id}/board`} className="inline-flex min-h-11 items-center rounded-sm bg-lime px-4 text-sm font-bold text-ink hover:brightness-95 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-white/50">
+                        Open board →
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => void handleCastToTv(nextWorkout.id)}
+                        className="inline-flex min-h-11 items-center rounded-sm border border-white/50 px-4 text-sm font-bold text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
+                      >
+                        Cast to TV
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
@@ -391,6 +423,11 @@ export default function DashboardPage() {
             )}
         </section>
       </main>
+      {toast && (
+        <div role="status" aria-live="polite" className="fixed bottom-5 left-1/2 z-50 w-[min(92vw,34rem)] -translate-x-1/2 rounded-lg bg-ink px-5 py-4 text-center text-sm font-semibold text-white shadow-lg">
+          {toast}
+        </div>
+      )}
     </>
   );
 }

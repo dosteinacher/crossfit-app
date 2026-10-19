@@ -214,12 +214,17 @@ export default function WorkoutsPage() {
                     )}
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line-2 pt-4">
                       <CapacityBar value={workout.registered_count} max={workout.max_participants} />
-                      <StatusAction
-                        status={status}
-                        disabled={pending || (full && !workout.is_registered)}
-                        onJoin={() => void handleRegistration(workout.id, false)}
-                        onUnregister={() => void handleRegistration(workout.id, true)}
-                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link href={`/workouts/${workout.id}/board`} className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas">
+                          Board
+                        </Link>
+                        <StatusAction
+                          status={status}
+                          disabled={pending || (full && !workout.is_registered)}
+                          onJoin={() => void handleRegistration(workout.id, false)}
+                          onUnregister={() => void handleRegistration(workout.id, true)}
+                        />
+                      </div>
                     </div>
                   </Card>
                 );
