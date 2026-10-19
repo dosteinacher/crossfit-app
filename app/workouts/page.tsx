@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Button, CapacityBar, Card, Loading, SegmentedControl, StatusAction } from '@/components/ui';
+import WorkoutFormatStamps from '@/components/WorkoutFormatStamps';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { WorkoutWithDetails } from '@/lib/types';
@@ -177,6 +178,7 @@ export default function WorkoutsPage() {
                     <Link href={`/workouts/${workout.id}`} className="mt-3 text-ink hover:underline">
                       <h2 className="font-display text-2xl font-bold uppercase leading-[.95]">{workout.title}</h2>
                     </Link>
+                    <WorkoutFormatStamps description={description} />
                     {hasDescription && (
                       <p className="mt-3 line-clamp-2 whitespace-pre-line text-base leading-snug text-ink-2">
                         {description}

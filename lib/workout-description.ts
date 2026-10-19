@@ -91,3 +91,44 @@ export function parseWorkoutDescription(text: string): WorkoutDescriptionPart[] 
     movements: [],
   }];
 }
+
+export function getWorkoutFormatStamps(description: string): string[] {
+  const stamps: string[] = [];
+  const addStamp = (stamp: string) => {
+    if (!stamps.includes(stamp)) stamps.push(stamp);
+  };
+  const source = typeof description === 'string' ? description : '';
+  const formatPatterns = [
+    { pattern: /\bAMRAP(?:\s+(\d+)\s*(?:minutes?|mins?|m)\b)?/i, label: 'AMRAP' },
+    { pattern: /\bEMOM(?:\s+(\d+)\s*(?:minutes?|mins?|m)\b)?/i, label: 'EMOM' },
+  ];
+
+  for (const { pattern, label } of formatPatterns) {
+    const match = source.match(pattern);
+    if (match) addStamp(match[1] ? `${label} · ${match[1]} MIN` : label);
+  }
+
+  const forTime = source.match(/\bFor\s+Time\b(?:\s*\(([^)]*)\))?/i);
+  if (forTime) {
+    const cap = forTime[1]?.match(/(\d+)\s*(?:minutes?|mins?|m)\b/i)?.[1];
+    addStamp(cap ? `FOR TIME · ${cap} MIN CAP` : 'FOR TIME');
+  }
+
+  const rounds = source.match(/\b(\d+)\s+Rounds?\b/i);
+  if (rounds) addStamp(`${rounds[1]} ROUNDS`);
+
+  const repScheme = source.match(/(?:^|\n)\s*(\d+(?:\s*[-/]\s*\d+){1,})\s*(?:\r?\n|$)/);
+  if (repScheme) addStamp(repScheme[1].replace(/\s+/g, ''));
+
+  if (stamps.length === 0) {
+    for (const part of parseWorkoutDescription(source)) {
+      if (part.sectionTitle !== 'Workout') {
+        addStamp(part.durationMinutes
+          ? `${part.sectionTitle.toUpperCase()} · ${part.durationMinutes} MIN`
+          : part.sectionTitle.toUpperCase());
+      }
+    }
+  }
+
+  return stamps.slice(0, 3);
+}

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { parseWorkoutDescription } from './workout-description';
+import { getWorkoutFormatStamps, parseWorkoutDescription } from './workout-description';
 
 // These imported workout examples are from public/workouts-template.csv; no live database is configured here.
 describe('parseWorkoutDescription', () => {
@@ -58,6 +58,18 @@ describe('parseWorkoutDescription', () => {
     assert.equal(part.sectionTitle, 'Strength');
     assert.equal(part.title, 'Back Squat');
     assert.deepEqual(part.lines, ['10 – 5 – 5 – 3 – 3', 'Build to a heavy, clean 3']);
+  });
+
+  it('extracts concise format stamps without duplicating a format', () => {
+    assert.deepEqual(
+      getWorkoutFormatStamps('AMRAP 20 minutes:\n10 Wall Balls\n15 Kettlebell Swings'),
+      ['AMRAP · 20 MIN']
+    );
+    assert.deepEqual(
+      getWorkoutFormatStamps('For Time (20 min cap):\n21-15-9\nThrusters\nPull-ups'),
+      ['FOR TIME · 20 MIN CAP', '21-15-9']
+    );
+    assert.deepEqual(getWorkoutFormatStamps('5 Rounds:\n5 Back Squats'), ['5 ROUNDS']);
   });
 
   it('never throws for a non-string input', () => {

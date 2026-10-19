@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Avatar, CapacityBar, Card, Label, Loading, StatusAction } from '@/components/ui';
+import WorkoutFormatStamps from '@/components/WorkoutFormatStamps';
 import { addDays, format, startOfWeek } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { Announcement, WorkoutWithDetails } from '@/lib/types';
@@ -150,6 +151,7 @@ export default function DashboardPage() {
                     <Link href={`/workouts/${nextWorkout.id}`} className="mt-4 block max-w-4xl text-white hover:text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
                       <h2 className="line-clamp-2 font-display text-[36px] font-black uppercase leading-[.9] md:text-[52px]">{nextWorkout.title}</h2>
                     </Link>
+                    <WorkoutFormatStamps description={nextWorkout.description || ''} tone="dark" />
                   </div>
 
                   {heroParts.length > 0 ? (
@@ -233,6 +235,7 @@ export default function DashboardPage() {
                       <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
                       <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
                         <span className="block truncate font-semibold text-ink group-hover:underline">{workout.title}</span>
+                        <WorkoutFormatStamps description={workout.description || ''} />
                         <span className="mt-1 block text-[13px] text-ink-2 md:hidden">
                           {format(date, 'HH:mm')}
                         </span>

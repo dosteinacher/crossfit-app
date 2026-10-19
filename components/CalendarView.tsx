@@ -17,6 +17,7 @@ import {
 } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { CapacityBar, Card, Label, SegmentedControl, StatusAction } from './ui';
+import WorkoutFormatStamps from './WorkoutFormatStamps';
 
 interface Workout {
   id: number;
@@ -126,6 +127,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
         <time className="hidden whitespace-nowrap text-sm font-bold tabular-nums text-ink md:block">{format(date, 'HH:mm')}</time>
         <Link href={`/workouts/${workout.id}`} className="min-w-0 group">
           <span className="block truncate font-semibold text-ink group-hover:underline">{workout.title}</span>
+          <WorkoutFormatStamps description={workout.description || ''} />
           <span className="mt-1 block text-[13px] text-ink-2 md:hidden">
             {format(date, 'HH:mm')}
           </span>
