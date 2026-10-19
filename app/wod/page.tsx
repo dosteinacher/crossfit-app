@@ -102,9 +102,11 @@ export default async function WODPage() {
                     #{index + 1}
                   </div>
                   <div className="flex items-center gap-3 min-w-0 flex-1 flex-nowrap overflow-hidden">
-                    <span className="text-2xl font-medium px-3 py-1 bg-[#64748b]/20 text-[#cbd5e1] border border-[#64748b]/60 rounded-lg shrink-0">
-                      {workout.workout_type}
-                    </span>
+                    {workout.workout_type.toLowerCase() !== 'general' && (
+                      <span className="text-2xl font-medium px-3 py-1 bg-[#64748b]/20 text-[#cbd5e1] border border-[#64748b]/60 rounded-lg shrink-0">
+                        {workout.workout_type}
+                      </span>
+                    )}
                     <span className="text-2xl font-bold text-[#f5f5f5] shrink-0 whitespace-nowrap">
                       {format(workoutDate, 'h:mm a')}
                     </span>

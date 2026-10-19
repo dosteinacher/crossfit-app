@@ -84,9 +84,11 @@ export default function AllWodsPage() {
             {workouts.map((workout) => (
               <Card key={workout.id} className="bg-pure-surface border-gray-300">
                 <div className="flex items-center gap-3 flex-wrap mb-3">
-                  <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg">
-                    {workout.workout_type}
-                  </span>
+                  {workout.workout_type.toLowerCase() !== 'general' && (
+                    <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/50 rounded-lg">
+                      {workout.workout_type}
+                    </span>
+                  )}
                   <span className="text-sm text-pure-text-light">
                     {format(new Date(workout.date), 'MMM d, yyyy · h:mm a')}
                   </span>

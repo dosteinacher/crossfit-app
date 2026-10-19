@@ -224,9 +224,11 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                     <Link key={workout.id} href={`/workouts/${workout.id}`}>
                       <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-surface border-gray-300">
                         <div className="flex justify-between items-start mb-3">
-                          <span className={`text-xs font-medium px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
-                            {workout.workout_type}
-                          </span>
+                          {workout.workout_type.toLowerCase() !== 'general' && (
+                            <span className={`text-[13px] font-bold uppercase tracking-wide px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
+                              {workout.workout_type}
+                            </span>
+                          )}
                           {workout.is_registered && (
                             <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">
                               Registered

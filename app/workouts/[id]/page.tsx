@@ -358,9 +358,11 @@ export default function WorkoutDetailPage() {
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/30 rounded">
-                  {workout.workout_type}
-                </span>
+                {workout.workout_type.toLowerCase() !== 'general' && (
+                  <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/30 rounded">
+                    {workout.workout_type}
+                  </span>
+                )}
                 {workout.is_registered && (
                   <span className="ml-2 text-sm font-medium px-3 py-1 bg-coastal-day text-white rounded">
                     Registered
