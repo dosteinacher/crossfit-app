@@ -358,9 +358,11 @@ export default function WorkoutDetailPage() {
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
-                <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/30 rounded">
-                  {workout.workout_type}
-                </span>
+                {workout.workout_type.toLowerCase() !== 'general' && (
+                  <span className="text-sm font-medium px-3 py-1 bg-coastal-sky/20 text-coastal-sky border border-coastal-sky/30 rounded">
+                    {workout.workout_type}
+                  </span>
+                )}
                 {workout.is_registered && (
                   <span className="ml-2 text-sm font-medium px-3 py-1 bg-coastal-day text-white rounded">
                     Registered
@@ -579,13 +581,13 @@ export default function WorkoutDetailPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleMarkAllAttendance(true)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-pure-green/20 text-pure-accent-ink border border-pure-green/40 hover:bg-pure-green/30 transition font-medium"
+                      className="text-[13px] px-3 py-1.5 rounded-lg bg-pure-green/20 text-pure-accent-ink border border-pure-green/40 hover:bg-pure-green/30 transition font-medium"
                     >
                       ✓ All attended
                     </button>
                     <button
                       onClick={() => handleMarkAllAttendance(false)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-gray-100/50 text-pure-text-light border border-gray-300 hover:bg-gray-100 transition font-medium"
+                      className="text-[13px] px-3 py-1.5 rounded-lg bg-gray-100/50 text-pure-text-light border border-gray-300 hover:bg-gray-100 transition font-medium"
                     >
                       ✗ Clear all
                     </button>
@@ -630,12 +632,12 @@ export default function WorkoutDetailPage() {
                     >
                       <span className="font-medium text-pure-ink">
                         {guest.name}
-                        <span className="ml-2 text-xs text-pure-text-light font-normal">Guest</span>
+                        <span className="ml-2 text-[13px] text-pure-text-light font-normal">Guest</span>
                       </span>
                       <button
                         onClick={() => handleDeleteGuest(guest.id)}
                         disabled={guestLoading}
-                        className="text-red-600 hover:text-red-700 text-xs font-medium disabled:opacity-50"
+                        className="text-red-600 hover:text-red-700 text-[13px] font-medium disabled:opacity-50"
                       >
                         Remove
                       </button>
@@ -681,7 +683,7 @@ export default function WorkoutDetailPage() {
                 className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pure-green resize-none"
               />
               <div className="flex items-center gap-3">
-                <label className="text-xs text-pure-text-light cursor-pointer hover:text-pure-ink">
+                <label className="text-[13px] text-pure-text-light cursor-pointer hover:text-pure-ink">
                   <input
                     type="file"
                     accept="image/*"
@@ -694,7 +696,7 @@ export default function WorkoutDetailPage() {
                   <button
                     type="button"
                     onClick={() => setPostImage(null)}
-                    className="text-xs text-red-600 hover:text-red-700"
+                    className="text-[13px] text-red-600 hover:text-red-700"
                   >
                     Remove
                   </button>
@@ -707,7 +709,7 @@ export default function WorkoutDetailPage() {
                   {postSubmitting ? 'Posting…' : 'Post'}
                 </button>
               </div>
-              {postError && <p className="text-xs text-red-600">{postError}</p>}
+              {postError && <p className="text-[13px] text-red-600">{postError}</p>}
             </div>
 
             {/* Feed */}
@@ -720,12 +722,12 @@ export default function WorkoutDetailPage() {
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
                         <p className="font-semibold text-pure-ink text-sm">{p.user_name}</p>
-                        <p className="text-xs text-pure-text-light">{format(new Date(p.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                        <p className="text-[13px] text-pure-text-light">{format(new Date(p.created_at), 'MMM d, yyyy · h:mm a')}</p>
                       </div>
                       {(p.user_id === user?.id || user?.is_admin) && (
                         <button
                           onClick={() => handleDeletePost(p.id)}
-                          className="text-xs text-red-600 hover:text-red-700"
+                          className="text-[13px] text-red-600 hover:text-red-700"
                         >
                           Delete
                         </button>
@@ -757,7 +759,7 @@ export default function WorkoutDetailPage() {
               <h3 className="text-sm font-semibold text-pure-text-light mb-2 uppercase tracking-wide">Edit History</h3>
               <div className="space-y-1">
                 {edits.map((e) => (
-                  <p key={e.id} className="text-xs text-pure-text-light">
+                  <p key={e.id} className="text-[13px] text-pure-text-light">
                     Edited by <span className="text-pure-text-light">{e.editor_name}</span> · {format(new Date(e.edited_at), 'MMM d, yyyy · h:mm a')}
                   </p>
                 ))}

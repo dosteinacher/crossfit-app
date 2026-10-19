@@ -244,7 +244,7 @@ export default function PollDetailPage() {
                           {format(new Date(option.date), 'h:mm a')}
                         </h3>
                         {option.label && (
-                          <span className="text-xs px-2 py-1 bg-gray-100 text-pure-text-light rounded">
+                          <span className="text-[13px] px-2 py-1 bg-gray-100 text-pure-text-light rounded">
                             {option.label}
                           </span>
                         )}
@@ -267,7 +267,7 @@ export default function PollDetailPage() {
 
                       {/* Voters */}
                       {option.voters.length > 0 && (
-                        <p className="text-xs text-pure-text-light">
+                        <p className="text-[13px] text-pure-text-light">
                           {option.voters.join(', ')}
                         </p>
                       )}

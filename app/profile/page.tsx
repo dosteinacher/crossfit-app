@@ -173,15 +173,15 @@ export default function ProfilePage() {
                           title={`${attended} attended`}
                         />
                       </div>
-                      <span className="text-xs text-pure-text-light">{label}</span>
+                      <span className="text-[13px] text-pure-text-light">{label}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-4 mt-3 justify-end">
-                  <span className="flex items-center gap-1.5 text-xs text-pure-text-light">
+                  <span className="flex items-center gap-1.5 text-[13px] text-pure-text-light">
                     <span className="w-3 h-3 rounded-sm bg-coastal-sky/30 inline-block" />Registered
                   </span>
-                  <span className="flex items-center gap-1.5 text-xs text-pure-text-light">
+                  <span className="flex items-center gap-1.5 text-[13px] text-pure-text-light">
                     <span className="w-3 h-3 rounded-sm bg-pure-green inline-block" />Attended
                   </span>
                 </div>
@@ -269,7 +269,7 @@ export default function ProfilePage() {
                       </div>
                       <div>
                         <p className="text-pure-ink font-medium text-sm">{label}</p>
-                        <p className="text-pure-text-light text-xs mt-0.5">{sublabel}</p>
+                        <p className="text-pure-text-light text-[13px] mt-0.5">{sublabel}</p>
                       </div>
                     </label>
                   ))}
@@ -290,13 +290,13 @@ export default function ProfilePage() {
                     type="text"
                     readOnly
                     value={calendarUrl}
-                    className="flex-1 px-3 py-2 bg-pure-bg border border-gray-300 rounded-lg text-pure-text-light text-xs font-mono truncate focus:outline-none"
+                    className="flex-1 px-3 py-2 bg-pure-bg border border-gray-300 rounded-lg text-pure-text-light text-[13px] font-mono truncate focus:outline-none"
                   />
                   <Button onClick={handleCopy} variant="secondary" className="shrink-0">
                     {copied ? '✓ Copied' : 'Copy'}
                   </Button>
                 </div>
-                <p className="text-pure-text-light text-xs mt-2">
+                <p className="text-pure-text-light text-[13px] mt-2">
                   Treat this URL like a password — it gives read access to your workout schedule.
                 </p>
               </Card>
@@ -313,7 +313,7 @@ export default function ProfilePage() {
                     <div className="bg-pure-surface border border-gray-300 rounded-lg p-4 hover:border-coastal-sky transition">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
-                          <span className={`text-xs px-2 py-0.5 rounded shrink-0 ${w.attended ? 'bg-pure-green/20 text-pure-accent-ink border border-pure-green/30' : 'bg-gray-100 text-pure-text-light'}`}>
+                          <span className={`text-[13px] px-2 py-0.5 rounded shrink-0 ${w.attended ? 'bg-pure-green/20 text-pure-accent-ink border border-pure-green/30' : 'bg-gray-100 text-pure-text-light'}`}>
                             {w.attended ? '✓ Attended' : 'Registered'}
                           </span>
                           <span className="text-pure-ink font-medium truncate group-hover:text-coastal-sky transition">{w.title}</span>

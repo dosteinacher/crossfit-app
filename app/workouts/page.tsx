@@ -3,26 +3,33 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Card, Loading, Button } from '@/components/ui';
+import { Button, CapacityBar, Card, Loading, SegmentedControl, StatusAction } from '@/components/ui';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
-import { getWorkoutTypeStyle } from '@/lib/workout-colors';
+import type { WorkoutWithDetails } from '@/lib/types';
 
 type RatingFilter = 'all' | 'unrated' | '1' | '2' | '3' | '4' | '5';
+type WorkoutFilter = 'all' | 'upcoming' | 'past' | 'mine';
+
+const FILTERS: Array<{ label: string; value: WorkoutFilter }> = [
+  { label: 'Upcoming', value: 'upcoming' },
+  { label: 'All', value: 'all' },
+  { label: 'Past', value: 'past' },
+  { label: 'My Schedule', value: 'mine' },
+];
 
 export default function WorkoutsPage() {
-  const { loading } = useAuth();
-  const [workouts, setWorkouts] = useState<any[]>([]);
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'mine'>('upcoming');
+  const { user, loading } = useAuth();
+  const [workouts, setWorkouts] = useState<WorkoutWithDetails[]>([]);
+  const [filter, setFilter] = useState<WorkoutFilter>('upcoming');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [registering, setRegistering] = useState<number | null>(null);
   const PAGE_SIZE = 12;
 
   useEffect(() => {
-    if (filter !== 'past') {
-      setRatingFilter('all');
-    }
+    if (filter !== 'past') setRatingFilter('all');
     setSearch('');
     setPage(1);
   }, [filter]);
@@ -32,46 +39,65 @@ export default function WorkoutsPage() {
   }, [search, ratingFilter]);
 
   useEffect(() => {
-    if (!loading) {
-      fetchWorkouts();
-    }
+    if (!loading) void fetchWorkouts();
   }, [filter, loading, ratingFilter]);
 
   const fetchWorkouts = async () => {
     try {
       const url = filter === 'upcoming' ? '/api/workouts?filter=upcoming' : '/api/workouts';
       const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        let filtered = data.workouts;
+      if (!response.ok) throw new Error('Could not load workouts');
+      const data = await response.json();
+      let filtered: WorkoutWithDetails[] = data.workouts || [];
 
-        if (filter === 'mine') {
-          filtered = filtered.filter((w: any) => w.is_registered);
-        } else if (filter === 'past') {
-          const now = new Date().toISOString();
-          filtered = filtered.filter((w: any) => w.date < now);
-          if (ratingFilter === 'unrated') {
-            filtered = filtered.filter((w: any) => w.rating == null);
-          } else if (ratingFilter !== 'all') {
-            const n = Number(ratingFilter);
-            filtered = filtered.filter((w: any) => Number(w.rating) === n);
-          }
+      if (filter === 'mine') {
+        filtered = filtered.filter((workout) => workout.is_registered);
+      } else if (filter === 'past') {
+        const now = new Date().toISOString();
+        filtered = filtered.filter((workout) => workout.date < now);
+        if (ratingFilter === 'unrated') {
+          filtered = filtered.filter((workout) => workout.rating == null);
+        } else if (ratingFilter !== 'all') {
+          const rating = Number(ratingFilter);
+          filtered = filtered.filter((workout) => Number(workout.rating) === rating);
         }
-
-        setWorkouts(filtered);
       }
+
+      setWorkouts(filtered);
     } catch (error) {
       console.error('Fetch workouts error:', error);
     }
   };
 
-  const q = search.trim().toLowerCase();
-  const filteredWorkouts = q
-    ? workouts.filter(
-        (w) =>
-          w.title?.toLowerCase().includes(q) ||
-          w.description?.toLowerCase().includes(q) ||
-          w.creator_name?.toLowerCase().includes(q)
+  const handleRegistration = async (workoutId: number, isRegistered: boolean) => {
+    setRegistering(workoutId);
+    try {
+      const response = await fetch(`/api/workouts/${workoutId}/register`, {
+        method: isRegistered ? 'DELETE' : 'POST',
+      });
+      if (!response.ok) throw new Error('Could not update workout registration');
+      setWorkouts((current) => current.map((workout) => (
+        workout.id === workoutId
+          ? {
+              ...workout,
+              is_registered: !isRegistered,
+              registered_count: Math.max(0, workout.registered_count + (isRegistered ? -1 : 1)),
+            }
+          : workout
+      )));
+    } catch (error) {
+      console.error('Workout registration error:', error);
+    } finally {
+      setRegistering(null);
+    }
+  };
+
+  const query = search.trim().toLowerCase();
+  const filteredWorkouts = query
+    ? workouts.filter((workout) =>
+        workout.title?.toLowerCase().includes(query) ||
+        workout.description?.toLowerCase().includes(query) ||
+        workout.creator_name?.toLowerCase().includes(query)
       )
     : workouts;
   const displayedWorkouts = filteredWorkouts.slice(0, page * PAGE_SIZE);
@@ -82,75 +108,31 @@ export default function WorkoutsPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-bg py-8">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-pure-ink">Workouts</h1>
-            <div className="flex gap-2">
-              <a
-                href="/api/export/workouts-txt"
-                download
-                className="inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold border-2 border-gray-300 text-pure-ink hover:bg-pure-surface hover:border-gray-400 transition"
-              >
+      <main className="min-h-screen bg-canvas py-6 md:py-10">
+        <div className="mx-auto max-w-[1120px] px-4">
+          <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="font-display text-4xl font-extrabold text-ink md:text-5xl">Workouts</h1>
+            <div className="flex items-center gap-2">
+              <a href="/api/export/workouts-txt" download className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-4 text-sm font-bold text-ink hover:bg-canvas">
                 Export as TXT
               </a>
-              <Link href="/workouts/create">
-                <Button>Create Workout</Button>
-              </Link>
+              {user?.is_admin && (
+                <Link href="/workouts/create" className="inline-flex min-h-11 items-center rounded-sm bg-lime px-4 text-[15px] font-bold text-ink hover:brightness-95">
+                  + New workout
+                </Link>
+              )}
             </div>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap items-end justify-between gap-3 mb-6 border-b border-gray-300">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilter('upcoming')}
-                className={`px-4 py-2 font-medium transition ${
-                  filter === 'upcoming'
-                    ? 'text-pure-accent-ink border-b-2 border-pure-green'
-                    : 'text-pure-text-light hover:text-pure-ink'
-                }`}
-              >
-                Upcoming
-              </button>
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 font-medium transition ${
-                  filter === 'all'
-                    ? 'text-pure-accent-ink border-b-2 border-pure-green'
-                    : 'text-pure-text-light hover:text-pure-ink'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilter('past')}
-                className={`px-4 py-2 font-medium transition ${
-                  filter === 'past'
-                    ? 'text-pure-accent-ink border-b-2 border-pure-green'
-                    : 'text-pure-text-light hover:text-pure-ink'
-                }`}
-              >
-                Past
-              </button>
-              <button
-                onClick={() => setFilter('mine')}
-                className={`px-4 py-2 font-medium transition ${
-                  filter === 'mine'
-                    ? 'text-pure-accent-ink border-b-2 border-pure-green'
-                    : 'text-pure-text-light hover:text-pure-ink'
-                }`}
-              >
-                My Schedule
-              </button>
-            </div>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <SegmentedControl items={FILTERS} value={filter} onChange={setFilter} ariaLabel="Filter workouts" className="max-w-full" />
             {filter === 'past' && (
               <select
                 id="workout-rating-filter"
                 aria-label="Filter past workouts by difficulty rating"
                 value={ratingFilter}
-                onChange={(e) => setRatingFilter(e.target.value as RatingFilter)}
-                className="mb-2 rounded-lg border border-gray-300 bg-pure-surface text-pure-text-light px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
+                onChange={(event) => setRatingFilter(event.target.value as RatingFilter)}
+                className="min-h-11 rounded-sm border border-line bg-paper px-3 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
               >
                 <option value="all">All ratings</option>
                 <option value="1">1 — easiest</option>
@@ -163,77 +145,66 @@ export default function WorkoutsPage() {
             )}
           </div>
 
-          {/* Search */}
           <div className="mb-6">
             <input
               type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by title, description, or coach…"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-pure-surface text-pure-ink placeholder:text-pure-text-light text-sm focus:outline-none focus:ring-2 focus:ring-pure-green focus:border-transparent"
+              aria-label="Search workouts"
+              className="min-h-11 w-full rounded-sm border border-line bg-paper px-4 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
             />
           </div>
 
-          {/* Workouts List */}
           {filteredWorkouts.length === 0 ? (
-            <Card className="bg-pure-surface border-gray-300">
-              <p className="text-pure-text-light text-center py-8">No workouts found</p>
+            <Card>
+              <p className="py-4 text-center text-base text-ink-2">No workouts found.</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedWorkouts.map((workout) => (
-                <Link key={workout.id} href={`/workouts/${workout.id}`}>
-                  <Card className="hover:shadow-xl hover:border-pure-green transition-all cursor-pointer h-full bg-pure-surface border-gray-300">
-                    <div className="flex justify-between items-start mb-3">
-                      <span className={`text-xs font-medium px-2 py-1 rounded border ${getWorkoutTypeStyle(workout.workout_type).badge}`}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {displayedWorkouts.map((workout) => {
+                const full = workout.registered_count >= workout.max_participants;
+                const status = workout.is_registered ? 'registered' : full ? 'full' : 'open';
+                const pending = registering === workout.id;
+                return (
+                  <Card key={workout.id} className="flex h-full flex-col !p-5">
+                    <time className="text-lg font-bold tabular-nums text-ink">{format(new Date(workout.date), 'EEE, MMM d · HH:mm')}</time>
+                    {workout.workout_type.toLowerCase() !== 'general' && (
+                      <span className="mt-3 w-fit rounded-full bg-canvas px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide text-ink-2">
                         {workout.workout_type}
                       </span>
-                      {workout.is_registered && (
-                        <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded">
-                          Registered
-                        </span>
-                      )}
-                    </div>
-                    
-                    <h3 className="text-xl font-bold text-pure-ink mb-2">
-                      {workout.title}
-                    </h3>
-                    
-                    <p className="text-sm text-pure-text-light mb-4 line-clamp-2">
+                    )}
+                    <Link href={`/workouts/${workout.id}`} className="mt-3 text-ink hover:underline">
+                      <h2 className="font-display text-2xl font-bold uppercase leading-[.95]">{workout.title}</h2>
+                    </Link>
+                    <p className="mt-3 line-clamp-2 min-h-12 whitespace-pre-line text-base leading-snug text-ink-2">
                       {workout.description || 'No description'}
                     </p>
-                    
-                    <div className="border-t border-gray-300 pt-3 mt-auto">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-pure-text-light">
-                          {format(new Date(workout.date), 'MMM d, h:mm a')}
-                        </span>
-                        <span className="text-pure-text-light">
-                          {workout.registered_count}/{workout.max_participants}
-                        </span>
-                      </div>
-                      <div className="text-xs text-pure-text-light mt-2">
-                        by {workout.creator_name}
-                      </div>
+                    <p className="mt-3 text-[13px] text-ink-2">by {workout.creator_name}</p>
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line-2 pt-4">
+                      <CapacityBar value={workout.registered_count} max={workout.max_participants} />
+                      <StatusAction
+                        status={status}
+                        disabled={pending || (full && !workout.is_registered)}
+                        onJoin={() => void handleRegistration(workout.id, false)}
+                        onUnregister={() => void handleRegistration(workout.id, true)}
+                      />
                     </div>
                   </Card>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           )}
 
           {hasMore && (
-            <div className="mt-8 text-center">
-              <button
-                onClick={() => setPage((p) => p + 1)}
-                className="px-6 py-2 rounded-lg border border-gray-300 text-pure-ink hover:bg-pure-surface transition font-medium"
-              >
+            <div className="mt-7 text-center">
+              <Button variant="secondary" onClick={() => setPage((current) => current + 1)}>
                 Load more ({filteredWorkouts.length - displayedWorkouts.length} remaining)
-              </button>
+              </Button>
             </div>
           )}
         </div>
-      </div>
+      </main>
     </>
   );
 }

@@ -265,7 +265,7 @@ export default function EditWorkoutPage() {
                   Participants
                 </label>
                 {participantError && (
-                  <p className="text-red-600 text-xs mb-2">{participantError}</p>
+                  <p className="text-red-600 text-[13px] mb-2">{participantError}</p>
                 )}
 
                 {participants.length === 0 ? (
@@ -282,7 +282,7 @@ export default function EditWorkoutPage() {
                           type="button"
                           onClick={() => handleRemoveParticipant(p.user_id)}
                           disabled={participantLoading}
-                          className="text-red-600 hover:text-red-700 text-xs font-medium disabled:opacity-50"
+                          className="text-red-600 hover:text-red-700 text-[13px] font-medium disabled:opacity-50"
                         >
                           Remove
                         </button>

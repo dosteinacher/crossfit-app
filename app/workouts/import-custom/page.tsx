@@ -252,9 +252,9 @@ export default function ImportCustomPage() {
                   {preview.map((row, idx) => (
                     <div key={idx} className="border-b border-gray-300 pb-2">
                       <p className="font-medium text-coastal-sky">{row.dateTime}</p>
-                      {row.warmUp && <p className="text-pure-text-light text-xs">Warm-up: {row.warmUp.substring(0, 50)}...</p>}
-                      {row.strength && <p className="text-pure-text-light text-xs">Strength: {row.strength.substring(0, 50)}...</p>}
-                      {row.teamOf2 && <p className="text-pure-text-light text-xs">Team of 2: {row.teamOf2.substring(0, 50)}...</p>}
+                      {row.warmUp && <p className="text-pure-text-light text-[13px]">Warm-up: {row.warmUp.substring(0, 50)}...</p>}
+                      {row.strength && <p className="text-pure-text-light text-[13px]">Strength: {row.strength.substring(0, 50)}...</p>}
+                      {row.teamOf2 && <p className="text-pure-text-light text-[13px]">Team of 2: {row.teamOf2.substring(0, 50)}...</p>}
                     </div>
                   ))}
                 </div>
