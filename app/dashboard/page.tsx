@@ -24,18 +24,37 @@ function getInitials(name: string) {
   return words.slice(0, 2).map((word) => word[0]).join('').toUpperCase() || '?';
 }
 
+function formatCountdown(minutes: number) {
+  if (minutes < 60) return `${minutes} MIN`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes ? `${hours}H ${remainingMinutes}M` : `${hours}H`;
+}
+
 export default function DashboardPage() {
   const { user, loading } = useAuth();
+  const [clock, setClock] = useState(() => new Date());
   const [workouts, setWorkouts] = useState<WorkoutWithDetails[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [registering, setRegistering] = useState<number | null>(null);
 
   useEffect(() => {
+    const interval = window.setInterval(() => setClock(new Date()), 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
     Promise.all([
-      fetch('/api/workouts?filter=upcoming').then((response) => response.json()),
-      fetch('/api/announcements').then((response) => response.json()),
+      fetch('/api/workouts').then(async (response) => {
+        if (!response.ok) throw new Error('Could not load workouts');
+        return response.json();
+      }),
+      fetch('/api/announcements').then(async (response) => {
+        if (!response.ok) throw new Error('Could not load announcements');
+        return response.json();
+      }),
     ])
       .then(([workoutData, announcementData]) => {
         setWorkouts(workoutData.workouts || []);
@@ -70,15 +89,21 @@ export default function DashboardPage() {
     }
   };
 
-  const now = new Date();
+  const now = clock;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 7);
   const nextSevenEnd = addDays(today, 7);
-  const upcomingWorkouts = workouts
-    .filter((workout) => new Date(workout.date) > now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const nextWorkout = upcomingWorkouts[0] ?? null;
+  const sortedWorkouts = [...workouts].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  const activeWorkout = sortedWorkouts.find((workout) => {
+    const start = new Date(workout.date).getTime();
+    return start <= now.getTime() && now.getTime() < start + 60 * 60_000;
+  });
+  const nextWorkout = activeWorkout ?? sortedWorkouts.find(
+    (workout) => new Date(workout.date) > now
+  ) ?? null;
   const nextSeven = workouts
     .filter((workout) => {
       const date = new Date(workout.date);
@@ -121,6 +146,10 @@ export default function DashboardPage() {
           <section>
             {nextWorkout && (() => {
               const date = new Date(nextWorkout.date);
+              const isOnNow = nextWorkout.id === activeWorkout?.id;
+              const countdownMinutes = Math.max(0, Math.ceil(
+                ((isOnNow ? date.getTime() + 60 * 60_000 : date.getTime()) - now.getTime()) / 60_000
+              ));
               const full = nextWorkout.registered_count >= nextWorkout.max_participants;
               const participants = [...nextWorkout.participants].sort((a, b) =>
                 Number(b.user_id === user?.id) - Number(a.user_id === user?.id)
@@ -138,16 +167,21 @@ export default function DashboardPage() {
                 <article className="rounded-xl bg-ink p-5 text-white md:p-[30px]">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full bg-lime px-3 py-1 text-[13px] font-bold uppercase tracking-wide text-ink">Up next</span>
+                      <span className="rounded-full bg-lime px-3 py-1 text-[13px] font-bold uppercase tracking-wide text-ink">{isOnNow ? 'On now' : 'Up next'}</span>
                       <span className="text-sm font-semibold text-white">{dateLabel}</span>
                     </div>
                     <span className="rounded-full border border-white/20 px-3 py-1 text-[13px] font-bold text-white">{status}</span>
                   </div>
 
                   <div className="mt-7">
-                    <time className="block font-display text-[72px] font-extrabold leading-[.82] tabular-nums text-lime md:text-[120px]">
-                      {format(date, 'HH:mm')}
-                    </time>
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                      <time className="block font-display text-[72px] font-extrabold leading-[.82] tabular-nums text-lime md:text-[120px]">
+                        {format(date, 'HH:mm')}
+                      </time>
+                      <span className="pb-1 text-sm font-bold uppercase tracking-wide text-white md:text-base">
+                        {isOnNow ? `Ends in ${formatCountdown(countdownMinutes)}` : `Starts in ${formatCountdown(countdownMinutes)}`}
+                      </span>
+                    </div>
                     <Link href={`/workouts/${nextWorkout.id}`} className="mt-4 block max-w-4xl text-white hover:text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40">
                       <h2 className="line-clamp-2 font-display text-[36px] font-black uppercase leading-[.9] md:text-[52px]">{nextWorkout.title}</h2>
                     </Link>
