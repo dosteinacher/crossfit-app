@@ -67,7 +67,7 @@ export default function ArchivePage() {
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-4xl font-extrabold text-ink md:text-5xl">Workout Library</h1>
+              <h1 className="font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">Workout Library</h1>
               <p className="mt-2 text-base text-ink-2">Browse saved templates and use one to plan a workout.</p>
             </div>
             <Link href="/archive/import" className="inline-flex min-h-11 items-center rounded-sm bg-lime px-4 text-[15px] font-bold text-ink hover:brightness-95">

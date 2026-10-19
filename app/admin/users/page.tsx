@@ -104,7 +104,7 @@ export default function UsersAdminPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <Link href="/admin" className="text-sm font-bold text-ink-2 underline decoration-line underline-offset-4 hover:text-ink">← Admin overview</Link>
-              <h1 className="mt-3 font-display text-4xl font-extrabold text-ink md:text-5xl">User Management</h1>
+              <h1 className="mt-3 font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">User Management</h1>
             </div>
             <p className="text-base text-ink-2"><span className="font-bold tabular-nums text-ink">{users.length}</span> members</p>
           </div>

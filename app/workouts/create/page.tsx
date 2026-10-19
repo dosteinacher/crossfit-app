@@ -244,7 +244,7 @@ function CreateWorkoutForm() {
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4 md:mb-8">
             <div>
               <p className="text-[13px] font-bold uppercase tracking-[.14em] text-ink-2">Workouts</p>
-              <h1 className="mt-2 font-display text-4xl font-extrabold text-ink md:text-5xl">
+              <h1 className="mt-2 font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">
               {templateId ? 'Schedule from Template' : 'Create New Workout'}
               </h1>
             </div>

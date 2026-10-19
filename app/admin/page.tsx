@@ -163,7 +163,7 @@ export default function AdminOverviewPage() {
         <div className="mx-auto max-w-[1120px] space-y-8 px-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="font-display text-4xl font-extrabold text-ink md:text-5xl">Admin Overview</h1>
+              <h1 className="font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">Admin Overview</h1>
               <p className="mt-2 text-base text-ink-2">Gym at a glance.</p>
             </div>
             <div className="flex items-center gap-3">
