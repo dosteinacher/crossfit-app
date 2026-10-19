@@ -43,7 +43,7 @@ module.exports = {
         // Mid-tier semantic stat/rating colour, darkened so it stays legible on white.
         'coastal-honey': '#8A6D1F',
         // Semantic aliases
-        'pure-text-light': '#383D44',   // Secondary text — ink family, not slate (9.6:1 on the card tint)
+        'pure-text-light': '#4A4D45',   // Legacy secondary-text alias kept equal to ink-2
       },
       fontFamily: {
         sans: ['var(--font-body)', 'Arial', 'Helvetica', 'sans-serif'],

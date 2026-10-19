@@ -162,18 +162,17 @@ export default function UsersAdminPage() {
                               <button
                                 type="button"
                                 aria-label={`Actions for ${user.name}`}
-                                aria-haspopup="menu"
                                 aria-expanded={openMenuUserId === user.id}
+                                aria-controls={`user-actions-${user.id}`}
                                 onClick={() => setOpenMenuUserId((openId) => openId === user.id ? null : user.id)}
                                 className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-2xl text-ink-2 hover:bg-canvas hover:text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
                               >
                                 ⋯
                               </button>
                               {openMenuUserId === user.id && (
-                                <div role="menu" className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-line bg-paper py-1 text-left shadow-card">
+                                <div id={`user-actions-${user.id}`} role="group" aria-label={`Actions for ${user.name}`} className="absolute right-0 z-20 mt-1 w-48 rounded-sm border border-line bg-paper py-1 text-left shadow-card">
                                   <button
                                     type="button"
-                                    role="menuitem"
                                     onClick={() => handleToggleAdmin(user.id, user.name, !user.is_admin)}
                                     className="min-h-11 w-full px-3 text-left text-sm font-semibold text-ink hover:bg-canvas"
                                   >
@@ -181,7 +180,6 @@ export default function UsersAdminPage() {
                                   </button>
                                   <button
                                     type="button"
-                                    role="menuitem"
                                     onClick={() => { setOpenMenuUserId(null); setDeleteTarget({ id: user.id, name: user.name }); }}
                                     className="min-h-11 w-full px-3 text-left text-sm font-semibold text-danger hover:bg-canvas"
                                   >

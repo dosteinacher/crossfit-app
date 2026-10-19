@@ -233,7 +233,7 @@ export default function EditPollPage() {
                           {option.label && (
                             <p className="text-sm text-pure-text-light">{option.label}</p>
                           )}
-                          <p className="text-xs text-pure-text-light mt-1">
+                          <p className="text-[13px] text-pure-text-light mt-1">
                             {option.vote_count} vote{option.vote_count !== 1 ? 's' : ''}
                           </p>
                         </div>
