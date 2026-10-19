@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import PhotoHero from '@/components/PhotoHero';
@@ -31,21 +31,7 @@ export default function WorkoutsPage() {
   const [upcomingSummary, setUpcomingSummary] = useState({ count: 0, registered: 0 });
   const PAGE_SIZE = 12;
 
-  useEffect(() => {
-    if (filter !== 'past') setRatingFilter('all');
-    setSearch('');
-    setPage(1);
-  }, [filter]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [search, ratingFilter]);
-
-  useEffect(() => {
-    if (!loading) void fetchWorkouts();
-  }, [filter, loading, ratingFilter]);
-
-  const fetchWorkouts = async () => {
+  const fetchWorkouts = useCallback(async () => {
     try {
       const response = await fetch(filter === 'upcoming' ? '/api/workouts?filter=upcoming' : '/api/workouts');
       if (!response.ok) throw new Error('Could not load workouts');
@@ -80,7 +66,21 @@ export default function WorkoutsPage() {
     } catch (error) {
       console.error('Fetch workouts error:', error);
     }
-  };
+  }, [filter, ratingFilter]);
+
+  useEffect(() => {
+    if (filter !== 'past') setRatingFilter('all');
+    setSearch('');
+    setPage(1);
+  }, [filter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, ratingFilter]);
+
+  useEffect(() => {
+    if (!loading) void fetchWorkouts();
+  }, [fetchWorkouts, loading]);
 
   const handleRegistration = async (workoutId: number, isRegistered: boolean) => {
     const isUpcoming = workouts.some(
