@@ -51,10 +51,6 @@ function statusFor(workout: Workout, now: Date): 'registered' | 'open' | 'full' 
   return 'open';
 }
 
-function attendeeCount(workout: Workout): number {
-  return workout.participants?.filter((participant) => participant.attended).length ?? 0;
-}
-
 export default function CalendarView({ workouts }: CalendarViewProps) {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -140,7 +136,6 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
         </Link>
         <div className="hidden flex-col items-end gap-1 md:flex">
           <CapacityBar value={workout.registered_count} max={workout.max_participants} />
-          <span className="text-[13px] font-medium text-ink-2">{attendeeCount(workout)} attended</span>
         </div>
         {status === 'past' ? (
           <span className="hidden min-h-11 items-center px-3 text-sm font-semibold text-ink-2 md:inline-flex">Past</span>
@@ -232,8 +227,11 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                                 : `${format(parseISO(workout.date), 'HH:mm')}${workoutFormat ? ` · ${workoutFormat}` : ''}`}
                             </span>
                           <span className="mt-0.5 block truncate">{workout.title}</span>
-                          <span className="mt-0.5 block truncate text-[13px] font-medium">
-                            {attendeeCount(workout)} attended · {workout.registered_count} registered
+                          <span
+                            aria-label={`${workout.registered_count} of ${workout.max_participants} registered`}
+                            className="mt-0.5 block truncate text-[13px] font-medium"
+                          >
+                            {workout.registered_count}/{workout.max_participants}
                           </span>
                         </Link>
                       );
