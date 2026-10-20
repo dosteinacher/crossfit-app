@@ -51,6 +51,10 @@ function statusFor(workout: Workout, now: Date): 'registered' | 'open' | 'full' 
   return 'open';
 }
 
+function attendeeCount(workout: Workout): number {
+  return workout.participants?.filter((participant) => participant.attended).length ?? 0;
+}
+
 export default function CalendarView({ workouts }: CalendarViewProps) {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -74,6 +78,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
   const sortedWorkouts = [...calendarWorkouts].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+  const newestFirstWorkouts = [...sortedWorkouts].reverse();
   const now = new Date();
   const todayStart = startOfDay(now);
   const workoutsByDate: Record<string, Workout[]> = {};
@@ -83,7 +88,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
   }
 
   const groupedWorkouts = new Map<string, Workout[]>();
-  for (const workout of sortedWorkouts) {
+  for (const workout of newestFirstWorkouts) {
     const weekKey = format(startOfWeek(parseISO(workout.date), { weekStartsOn: 1 }), 'yyyy-MM-dd');
     const group = groupedWorkouts.get(weekKey) || [];
     group.push(workout);
@@ -133,7 +138,10 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
             {format(date, 'HH:mm')}
           </span>
         </Link>
-        <CapacityBar value={workout.registered_count} max={workout.max_participants} className="hidden md:inline-flex" />
+        <div className="hidden flex-col items-end gap-1 md:flex">
+          <CapacityBar value={workout.registered_count} max={workout.max_participants} />
+          <span className="text-[13px] font-medium text-ink-2">{attendeeCount(workout)} attended</span>
+        </div>
         {status === 'past' ? (
           <span className="hidden min-h-11 items-center px-3 text-sm font-semibold text-ink-2 md:inline-flex">Past</span>
         ) : (
@@ -224,6 +232,9 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
                                 : `${format(parseISO(workout.date), 'HH:mm')}${workoutFormat ? ` · ${workoutFormat}` : ''}`}
                             </span>
                           <span className="mt-0.5 block truncate">{workout.title}</span>
+                          <span className="mt-0.5 block truncate text-[13px] font-medium">
+                            {attendeeCount(workout)} attended · {workout.registered_count} registered
+                          </span>
                         </Link>
                       );
                     })}
