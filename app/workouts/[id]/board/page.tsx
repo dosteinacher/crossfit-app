@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { Avatar, Loading } from '@/components/ui';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
-import { parseWorkoutDescription } from '@/lib/workout-description';
+import { parseWorkout } from '@/lib/workoutNotation';
 
 type BoardWorkout = WorkoutWithDetails & { guests: Guest[] };
 type TextScale = 1 | 1.25 | 1.5;
@@ -24,14 +24,6 @@ function getStoredTextScale(): TextScale {
     console.warn('Could not read whiteboard text size preference:', storageError);
     return 1;
   }
-}
-
-function getMovementPresentation(movement: string) {
-  const noteMatch = movement.match(/\(([^)]+)\)\s*$/);
-  return {
-    name: noteMatch ? movement.slice(0, noteMatch.index).trim() : movement,
-    note: noteMatch?.[1] || '',
-  };
 }
 
 export default function WorkoutBoardPage() {
@@ -91,11 +83,11 @@ export default function WorkoutBoardPage() {
   }, [textScale, textScaleLoaded]);
 
   const parts = useMemo(
-    () => workout ? parseWorkoutDescription(workout.description || '') : [],
+    () => workout ? parseWorkout(workout.description || '').parts : [],
     [workout]
   );
   const part = parts[activePart] || parts[0];
-  const durationSeconds = (part?.durationMinutes || 0) * 60;
+  const durationSeconds = (part?.minutes || 0) * 60;
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -226,8 +218,8 @@ export default function WorkoutBoardPage() {
   const asideBorder = tvMode && !tvDarkMode ? 'border-line' : 'border-white/30';
   const asideHover = tvMode && !tvDarkMode ? 'hover:bg-white' : 'hover:bg-white/10';
   const partTitle = part?.title || 'Workout';
-  const partDisplayTitle = part?.durationMinutes
-    ? `${partTitle} — ${part.durationMinutes}′`
+  const partDisplayTitle = part?.minutes
+    ? `${partTitle} — ${part.minutes}′`
     : partTitle;
 
   return (
@@ -284,27 +276,40 @@ export default function WorkoutBoardPage() {
           </h1>
 
           <div className={`divide-y-2 ${darkBoard ? 'divide-white/20' : 'divide-line-2'}`}>
-            {(part?.movements.length ? part.movements : [{ reps: null, movement: 'No movements listed' }]).map((movement, index) => {
-              const presentation = getMovementPresentation(movement.movement);
-              return (
-                <div key={`${movement.movement}-${index}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-4 md:gap-5 md:py-5">
-                  <span className={`min-w-[1.7em] font-display text-[4em] font-extrabold leading-none tabular-nums ${darkBoard ? 'text-white' : 'text-ink'}`}>
-                    {movement.reps || '—'}
-                  </span>
-                  <span
-                    className={`min-w-0 font-sans font-bold leading-tight ${darkBoard ? 'text-white' : 'text-ink'}`}
-                    style={{ fontSize: `clamp(${24 * displayScale}px, ${3.2 * displayScale}vw, ${40 * displayScale}px)` }}
-                  >
-                    {presentation.name}
-                  </span>
-                  {presentation.note && (
-                    <span className={`max-w-[6em] text-right font-sans text-[1.5em] font-semibold leading-tight ${darkBoard ? 'text-white' : 'text-ink-2'}`}>
-                      {presentation.note}
+            {part?.blocks.length ? part.blocks.map((block, index) => {
+              if (block.type === 'movement') {
+                return (
+                  <div key={`${block.name}-${index}`} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-4 md:gap-5 md:py-5">
+                    <span className={`min-w-[1.7em] font-display text-[4em] font-extrabold leading-none tabular-nums ${darkBoard ? 'text-white' : 'text-ink'}`}>
+                      {block.reps || '—'}
                     </span>
-                  )}
-                </div>
-              );
-            })}
+                    <div className="min-w-0">
+                      <p
+                        className={`font-sans font-bold leading-tight ${darkBoard ? 'text-white' : 'text-ink'}`}
+                        style={{ fontSize: `clamp(${24 * displayScale}px, ${3.2 * displayScale}vw, ${40 * displayScale}px)` }}
+                      >
+                        {block.name}
+                        {block.load && <span className={`ml-2 text-[.62em] ${darkBoard ? 'text-white/80' : 'text-ink-2'}`}>{block.load}</span>}
+                      </p>
+                      {block.alt && (
+                        <p className={`mt-1 text-[.85em] ${darkBoard ? 'text-white/75' : 'text-ink-2'}`}>↳ {block.alt}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              const labelClass = darkBoard ? 'text-white' : 'text-ink';
+              const secondaryClass = darkBoard ? 'text-white/75' : 'text-ink-2';
+              if (block.type === 'section' || block.type === 'sub') {
+                return <p key={`${block.name}-${index}`} className={`border-b border-current/20 py-3 font-bold uppercase tracking-[.14em] ${secondaryClass}`}>{block.name}</p>;
+              }
+              if (block.type === 'note') {
+                return <p key={`${block.name}-${index}`} className="border-l-4 border-lime bg-lime/15 px-4 py-3 font-semibold">{block.name}</p>;
+              }
+              return <p key={`${block.name}-${index}`} className={`py-3 font-semibold ${block.type === 'scheme' ? labelClass : secondaryClass}`}>{block.name}</p>;
+            }) : (
+              <p className={`py-4 font-semibold ${darkBoard ? 'text-white/75' : 'text-ink-2'}`}>No movements listed</p>
+            )}
           </div>
         </div>
 
