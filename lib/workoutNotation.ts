@@ -306,6 +306,12 @@ function parseExplicit(lines: SourceLine[], warnings: WorkoutWarning[]): Workout
       const segments = value.replace(/^#\s*/, '').split('|');
       current = parseHeaderSegments(segments.shift() || '', segments);
       parts.push(current);
+      if (!current.minutes) {
+        warnings.push({
+          line: source.line,
+          message: `Part ${parts.length} has no minutes. The timer will count up.`,
+        });
+      }
       continue;
     }
     if (!current) {
@@ -330,11 +336,66 @@ export function parseWorkout(text: string): ParsedWorkout {
       .map((value, index) => ({ text: value.trim(), line: index + 1 }))
       .filter((source) => source.text.length > 0);
     const hasNotationHeader = lines.some((source) => /^#(?!#)\s*/.test(source.text));
-    result.parts = hasNotationHeader
-      ? parseExplicit(lines, result.warnings)
-      : splitLegacyParts(lines).map((group) => parseLegacyGroup(group, result.warnings));
+    if (hasNotationHeader) {
+      result.parts = parseExplicit(lines, result.warnings);
+    } else {
+      const groups = splitLegacyParts(lines);
+      result.parts = groups.map((group, index) => {
+        const part = parseLegacyGroup(group, result.warnings);
+        if (!part.minutes && group[0]) {
+          result.warnings.push({
+            line: group[0].line,
+            message: `Part ${index + 1} has no minutes. The timer will count up.`,
+          });
+        }
+        return part;
+      });
+    }
+    result.warnings.sort((left, right) => left.line - right.line);
     return result;
   } catch {
     return { parts: [], warnings: [] };
   }
+}
+
+export function getMainWorkoutFormat(text: string) {
+  const { parts } = parseWorkout(text);
+  const activeParts = parts.filter((part) =>
+    !/warm[\s-]?up|aufwärmen|cool[\s-]?down|abkühlen/i.test(part.title)
+  );
+  const mainPart = activeParts.at(-1) || parts.at(-1);
+  if (!mainPart) return undefined;
+  return mainPart.format || detectWorkoutFormat([
+    mainPart.title,
+    ...mainPart.meta,
+    ...mainPart.blocks.map((block) => block.name),
+  ].join('\n'));
+}
+
+export function convertLegacyWorkoutToNotation(text: string) {
+  const { parts } = parseWorkout(text);
+  return parts.map((part) => {
+    const segments = [
+      part.minutes ? String(part.minutes) : '',
+      part.format || '',
+      part.team || '',
+      ...part.meta,
+    ].filter(Boolean);
+    const header = `# ${part.title}${segments.map((segment) => ` | ${segment}`).join('')}`;
+    const body = part.blocks.map((block) => {
+      switch (block.type) {
+        case 'section':
+          return `## ${block.name}`;
+        case 'sub':
+          return `> ${block.name}`;
+        case 'note':
+          return `! ${block.name}`;
+        case 'movement':
+          return `${block.reps ? `${block.reps} ` : ''}${block.name}${block.load ? ` @ ${block.load}` : ''}${block.alt ? ` / ${block.alt}` : ''}`;
+        default:
+          return block.name;
+      }
+    });
+    return [header, ...body].join('\n');
+  }).join('\n\n');
 }

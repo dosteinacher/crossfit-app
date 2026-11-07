@@ -5,7 +5,11 @@ import {
   getWorkoutFormatStamps,
   getWorkoutScoreboard,
 } from './workout-description';
-import { parseWorkout } from './workoutNotation';
+import {
+  convertLegacyWorkoutToNotation,
+  getMainWorkoutFormat,
+  parseWorkout,
+} from './workoutNotation';
 
 const PURE_EXAMPLE = `# Warm-up | 15
 2 Rounds
@@ -207,6 +211,25 @@ describe('parseWorkout', () => {
     }), { format: 'AMRAP', minutes: 12, benchmark: 'FOUR CORNERS' });
   });
 
+  it('uses the last non-warm-up part format for the workout type field', () => {
+    assert.equal(
+      getMainWorkoutFormat('# Warm-up | 10 | Skill\n10 Air Squats\n# Metcon | 20 | AMRAP\n12 Wall Balls'),
+      'AMRAP'
+    );
+    assert.equal(getMainWorkoutFormat('# Warm-up | 10\n10 Air Squats'), undefined);
+  });
+
+  it('converts legacy descriptions to PURE notation and preserves their source for undo', () => {
+    const legacy = 'AMRAP 20 minutes:\n10 Wall Balls\n15 Kettlebell Swings';
+    const converted = convertLegacyWorkoutToNotation(legacy);
+    assert.match(converted, /^# AMRAP 20 minutes \| 20 \| AMRAP/m);
+    assert.deepEqual(parseWorkout(converted).parts[0].blocks.map(({ reps, name }) => ({ reps, name })), [
+      { reps: '10', name: 'Wall Balls' },
+      { reps: '15', name: 'Kettlebell Swings' },
+    ]);
+    assert.equal(legacy, 'AMRAP 20 minutes:\n10 Wall Balls\n15 Kettlebell Swings');
+  });
+
   it('returns no parts for empty text and never throws for non-string input', () => {
     assert.deepEqual(parseWorkout(''), { parts: [], warnings: [] });
     assert.deepEqual(parseWorkout('   '), { parts: [], warnings: [] });
@@ -214,9 +237,10 @@ describe('parseWorkout', () => {
   });
 
   it('warns when a line without reps is shown as plain text', () => {
-    const result = parseWorkout('# WOD\nSwitch every round');
+    const result = parseWorkout('# WOD | 15\nSwitch every round\n# Part 2\n5 Burpees');
     assert.deepEqual(result.warnings, [
       { line: 2, message: 'No reps found. Shown as a text line.' },
+      { line: 3, message: 'Part 2 has no minutes. The timer will count up.' },
     ]);
   });
 });

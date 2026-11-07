@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Button, ErrorMessage, SuccessMessage, SegmentedControl } from '@/components/ui';
+import WorkoutDescriptionEditor from '@/components/WorkoutDescriptionEditor';
+import { getMainWorkoutFormat } from '@/lib/workoutNotation';
 import { generateWorkout } from '@/lib/workout-generator';
 import {
   EXERCISES,
@@ -36,7 +38,6 @@ function CreateWorkoutForm() {
   const [usersLoadError, setUsersLoadError] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [attendeeSearch, setAttendeeSearch] = useState('');
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   // Workout generator state (optional section)
   const [genExpanded, setGenExpanded] = useState(false);
@@ -51,6 +52,7 @@ function CreateWorkoutForm() {
   const [genSuccess, setGenSuccess] = useState('');
 
   const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
+  const parsedWorkoutType = getMainWorkoutFormat(description);
   const visibleUsers = users.filter((user) =>
     `${user.name} ${user.email}`.toLowerCase().includes(attendeeSearch.trim().toLowerCase())
   );
@@ -65,13 +67,6 @@ function CreateWorkoutForm() {
     // Fetch users for pre-selection
     fetchUsers();
   }, [pollDate]);
-
-  useEffect(() => {
-    if (descriptionRef.current) {
-      descriptionRef.current.style.height = 'auto';
-      descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`;
-    }
-  }, [description]);
 
   // Pre-select users from poll after users are loaded
   useEffect(() => {
@@ -200,7 +195,7 @@ function CreateWorkoutForm() {
         body: JSON.stringify({
           title,
           description,
-          workout_type: workoutType,
+          workout_type: parsedWorkoutType || workoutType,
           date: dateTime,
           max_participants: parseInt(maxParticipants),
           pre_selected_user_ids: selectedUserIds,
@@ -218,7 +213,7 @@ function CreateWorkoutForm() {
             body: JSON.stringify({
               title,
               description,
-              workout_type: workoutType,
+              workout_type: parsedWorkoutType || workoutType,
               category: 'Custom',
             }),
           });
@@ -261,7 +256,7 @@ function CreateWorkoutForm() {
             </div>
           )}
 
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid items-start gap-6">
             <div className="space-y-6">
           {/* Workout generator (optional) */}
           {!templateId && (
@@ -446,27 +441,34 @@ function CreateWorkoutForm() {
                   </div>
 
                   <div>
-                    <label htmlFor="workout-description" className="mb-1.5 block text-sm font-bold text-ink">Description</label>
-                    <textarea
-                      ref={descriptionRef}
-                      id="workout-description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Describe the workout, movements, and any notes..."
-                      rows={5}
-                      className="min-h-40 w-full resize-none overflow-hidden rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                    <WorkoutDescriptionEditor
+                      description={description}
+                      onChange={setDescription}
+                      title={title}
                     />
                   </div>
 
                   <div>
                     <p className="mb-2 text-sm font-bold text-ink">Workout type</p>
-                    <SegmentedControl
-                      items={workoutTypes.map((type) => ({ label: type, value: type }))}
-                      value={workoutType}
-                      onChange={setWorkoutType}
-                      ariaLabel="Workout type"
-                      className="w-full flex-wrap"
-                    />
+                    {parsedWorkoutType ? (
+                      <>
+                        <input
+                          value={parsedWorkoutType}
+                          readOnly
+                          aria-describedby="create-workout-type-source"
+                          className="min-h-11 w-full rounded-sm border border-line bg-canvas px-3 py-2 text-base text-ink"
+                        />
+                        <p id="create-workout-type-source" className="mt-1 text-[13px] text-ink-2">From description</p>
+                      </>
+                    ) : (
+                      <SegmentedControl
+                        items={workoutTypes.map((type) => ({ label: type, value: type }))}
+                        value={workoutType}
+                        onChange={setWorkoutType}
+                        ariaLabel="Workout type"
+                        className="w-full flex-wrap"
+                      />
+                    )}
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -599,30 +601,6 @@ function CreateWorkoutForm() {
               </form>
             </div>
 
-            <aside className="order-first lg:order-none lg:sticky lg:top-6 lg:self-start">
-              <Card className="!bg-ink !text-white">
-                <p className="text-[13px] font-bold uppercase tracking-[.14em] text-white/75">Live preview</p>
-                <div className="mt-5 flex flex-wrap items-start justify-between gap-3">
-                  <h2 className="font-display text-3xl font-extrabold text-white">{title.trim() || 'Workout title'}</h2>
-                  <span className="rounded-sm bg-lime px-2.5 py-1 text-[13px] font-bold text-ink">{workoutType}</span>
-                </div>
-                <p className="mt-3 text-sm text-white/80">
-                  {date || 'Date not set'}{time ? ` · ${time}` : ''}
-                </p>
-                <div className="my-5 border-t border-white/20" />
-                <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-white">
-                  {description.trim() || 'Your workout description will appear here.'}
-                </p>
-                <div className="mt-6 border-t border-white/20 pt-4">
-                  <p className="text-sm font-bold text-white">{selectedUserIds.length} selected · {maxParticipants || '0'} spots max</p>
-                  {selectedUserIds.length > 0 && (
-                    <p className="mt-2 text-sm text-white/80">
-                      {users.filter((user) => selectedUserIds.includes(user.id)).map((user) => user.name).join(', ')}
-                    </p>
-                  )}
-                </div>
-              </Card>
-            </aside>
           </div>
         </div>
       </main>
