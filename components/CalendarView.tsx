@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { CapacityBar, Card, Label, SegmentedControl, StatusAction } from './ui';
 import WorkoutFormatStamps from './WorkoutFormatStamps';
 import { getWorkoutFormat } from '@/lib/workout-description';
+import { getCalendarAgendaWorkouts } from '@/lib/calendar-agenda';
 
 interface Workout {
   id: number;
@@ -55,6 +56,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [isMobile, setIsMobile] = useState(false);
   const [calendarWorkouts, setCalendarWorkouts] = useState(workouts);
   const [registering, setRegistering] = useState<number | null>(null);
 
@@ -63,7 +65,13 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
   }, [workouts]);
 
   useEffect(() => {
-    setViewMode(window.matchMedia('(max-width: 767px)').matches ? 'list' : 'month');
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mediaQuery.matches);
+    setViewMode(mediaQuery.matches ? 'list' : 'month');
+
+    const updateIsMobile = (event: MediaQueryListEvent) => setIsMobile(event.matches);
+    mediaQuery.addEventListener('change', updateIsMobile);
+    return () => mediaQuery.removeEventListener('change', updateIsMobile);
   }, []);
 
   const monthStart = startOfMonth(currentMonth);
@@ -74,9 +82,9 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
   const sortedWorkouts = [...calendarWorkouts].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
-  const newestFirstWorkouts = [...sortedWorkouts].reverse();
   const now = new Date();
   const todayStart = startOfDay(now);
+  const agendaWorkouts = getCalendarAgendaWorkouts(calendarWorkouts, now, isMobile);
   const workoutsByDate: Record<string, Workout[]> = {};
   for (const workout of sortedWorkouts) {
     const key = format(parseISO(workout.date), 'yyyy-MM-dd');
@@ -84,7 +92,7 @@ export default function CalendarView({ workouts }: CalendarViewProps) {
   }
 
   const groupedWorkouts = new Map<string, Workout[]>();
-  for (const workout of newestFirstWorkouts) {
+  for (const workout of agendaWorkouts) {
     const weekKey = format(startOfWeek(parseISO(workout.date), { weekStartsOn: 1 }), 'yyyy-MM-dd');
     const group = groupedWorkouts.get(weekKey) || [];
     group.push(workout);
