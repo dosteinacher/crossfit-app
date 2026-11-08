@@ -104,6 +104,16 @@ describe('parseWorkout', () => {
     ]);
   });
 
+  it('parses legacy bullet-prefixed movement lines', () => {
+    const result = parseWorkout('# WOD | 20\n* 12 Strict Pull-Ups / Seated Band Lat Pulldowns\n- 18 DB Push Press\n• 24 Box Jumps');
+    assert.deepEqual(result.parts[0].blocks.map(({ type, reps, name, alt }) => ({ type, reps, name, alt })), [
+      { type: 'movement', reps: '12', name: 'Strict Pull-Ups', alt: 'Seated Band Lat Pulldowns' },
+      { type: 'movement', reps: '18', name: 'DB Push Press', alt: undefined },
+      { type: 'movement', reps: '24', name: 'Box Jumps', alt: undefined },
+    ]);
+    assert.deepEqual(result.warnings, []);
+  });
+
   // These legacy samples come from the import template because this worktree has no live database connection.
   it('parses legacy imported workout descriptions without PURE markers', () => {
     const legacyDescriptions = [
