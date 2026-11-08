@@ -6,6 +6,11 @@ import Link from 'next/link';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
 import type { WorkoutBlock, WorkoutPart } from '@/lib/workoutNotation';
 import { parseWorkout } from '@/lib/workoutNotation';
+import {
+  getFitScaleCandidates,
+  getTotalMovementCount,
+  getUniqueWorkoutStamps,
+} from '@/lib/workout-tv-layout';
 
 type BoardWorkout = WorkoutWithDetails & { guests: Guest[] };
 type PersistedTimerState = {
@@ -19,7 +24,7 @@ const STAGE_WIDTH = 1920;
 const STAGE_HEIGHT = 1080;
 const TIMER_STORAGE_PREFIX = 'pure-tv-timer:';
 const TEXT_SCALE_STORAGE_KEY = 'pure-tv-text-scale';
-const TEXT_SCALES = [1.25, 1.5, 1.75] as const;
+const TEXT_SCALES = [1, 1.1, 1.2] as const;
 
 function formatTime(seconds: number) {
   const safeSeconds = Math.max(0, Math.floor(seconds));
@@ -57,10 +62,10 @@ function getPartGroups(part: WorkoutPart | undefined) {
 function getStoredTextScale(): number {
   try {
     const stored = Number(localStorage.getItem(TEXT_SCALE_STORAGE_KEY));
-    return TEXT_SCALES.includes(stored as (typeof TEXT_SCALES)[number]) ? stored : 1.25;
+    return TEXT_SCALES.includes(stored as (typeof TEXT_SCALES)[number]) ? stored : 1.1;
   } catch (storageError) {
     console.warn('Could not read TV board text size preference:', storageError);
-    return 1;
+    return 1.1;
   }
 }
 
@@ -97,9 +102,8 @@ function WorkoutTvContent({
   const contentRef = useRef<HTMLDivElement>(null);
   const [fitScale, setFitScale] = useState(1);
   const { groups, notes, schemes } = useMemo(() => getPartGroups(part), [part]);
-  const hasDenseSection = groups.some(
-    (group) => group.blocks.filter((block) => block.type === 'movement').length > 6
-  );
+  const movementCount = getTotalMovementCount(groups);
+  const twoColumns = movementCount > 6;
   const repeatNote = notes.some((note) => /\b(?:repeat|again|wieder|beginnt|start again|loop)\b/i.test(note.name));
 
   useLayoutEffect(() => {
@@ -108,8 +112,7 @@ function WorkoutTvContent({
     if (!viewport || !content) return;
 
     const measure = () => {
-      const multipliers = hasDenseSection ? [1, 0.9, 0.8] : [1.15, 1, 0.9, 0.8];
-      const candidates = multipliers.map((multiplier) => multiplier * textScale);
+      const candidates = getFitScaleCandidates(textScale);
       let nextScale = candidates[candidates.length - 1];
       for (const candidate of candidates) {
         content.style.fontSize = `${16 * candidate}px`;
@@ -130,7 +133,7 @@ function WorkoutTvContent({
     observer.observe(viewport);
     observer.observe(content);
     return () => observer.disconnect();
-  }, [hasDenseSection, part, textScale]);
+  }, [movementCount, part, textScale]);
 
   const text = dark ? 'text-white' : 'text-ink';
   const secondary = dark ? 'text-[#C9CBC4]' : 'text-ink-2';
@@ -154,8 +157,7 @@ function WorkoutTvContent({
                 {part.format}
               </span>
             )}
-            {[part?.team, ...(part?.meta || []), ...schemes.map((scheme) => scheme.name)]
-              .filter((stamp): stamp is string => Boolean(stamp))
+            {getUniqueWorkoutStamps([part?.team, ...(part?.meta || []), ...schemes.map((scheme) => scheme.name)])
               .map((stamp, index) => (
                 <span
                   key={`${stamp}-${index}`}
@@ -179,8 +181,6 @@ function WorkoutTvContent({
         {groups.length ? (
           <div className="space-y-[.7em]">
             {groups.map((group, groupIndex) => {
-              const movementCount = group.blocks.filter((block) => block.type === 'movement').length;
-              const twoColumns = movementCount > 6;
               return (
                 <section key={`${group.title || 'main'}-${groupIndex}`} className="min-w-0">
                   {group.title && (
@@ -273,7 +273,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [activeLoaded, setActiveLoaded] = useState(false);
-  const [textScale, setTextScale] = useState(1.25);
+  const [textScale, setTextScale] = useState(1.1);
   const [dark, setDark] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [stageScale, setStageScale] = useState(1);
@@ -579,7 +579,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate font-display text-[28px] font-extrabold uppercase leading-tight">{navPart.title}</span>
+                    <span className="block truncate font-display text-[26px] font-extrabold uppercase leading-tight">{navPart.title}</span>
                     <span className="block truncate text-[20px] font-bold leading-tight">
                       {navPart.minutes ? `${navPart.minutes}′` : 'COUNT UP'}{selected || done ? ` · ${selected ? 'now' : 'done'}` : ''}
                     </span>
