@@ -19,7 +19,7 @@ const STAGE_WIDTH = 1920;
 const STAGE_HEIGHT = 1080;
 const TIMER_STORAGE_PREFIX = 'pure-tv-timer:';
 const TEXT_SCALE_STORAGE_KEY = 'pure-tv-text-scale';
-const TEXT_SCALES = [1, 1.25, 1.5] as const;
+const TEXT_SCALES = [1.25, 1.5, 1.75] as const;
 
 function formatTime(seconds: number) {
   const safeSeconds = Math.max(0, Math.floor(seconds));
@@ -57,7 +57,7 @@ function getPartGroups(part: WorkoutPart | undefined) {
 function getStoredTextScale(): number {
   try {
     const stored = Number(localStorage.getItem(TEXT_SCALE_STORAGE_KEY));
-    return TEXT_SCALES.includes(stored as (typeof TEXT_SCALES)[number]) ? stored : 1;
+    return TEXT_SCALES.includes(stored as (typeof TEXT_SCALES)[number]) ? stored : 1.25;
   } catch (storageError) {
     console.warn('Could not read TV board text size preference:', storageError);
     return 1;
@@ -273,7 +273,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [activeLoaded, setActiveLoaded] = useState(false);
-  const [textScale, setTextScale] = useState(1);
+  const [textScale, setTextScale] = useState(1.25);
   const [dark, setDark] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [stageScale, setStageScale] = useState(1);
@@ -587,7 +587,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
                 </button>
               );
             }) : (
-              <div className="flex items-center px-6 font-display text-[28px] font-extrabold uppercase text-ink">No workout parts</div>
+              <div className="flex items-center px-6 font-display text-[28px] font-extrabold uppercase text-ink">Workout overview</div>
             )}
           </nav>
 
@@ -601,12 +601,12 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
               {format(now, 'HH:mm')}
             </time>
           </div>
-          <p className="mt-2 text-[20px] font-semibold uppercase tracking-[.08em] text-[#C9CBC4]">
+          <p className="mt-2 text-[24px] font-semibold uppercase tracking-[.08em] text-[#C9CBC4]">
             {format(startDate, 'EEE dd MMM')} · CLASS START {format(startDate, 'HH:mm')}
           </p>
 
           <div className="mt-7">
-            <p className="mb-2 text-[20px] font-bold uppercase tracking-[.16em] text-lime">{formatLabel}</p>
+            <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-lime">{formatLabel}</p>
             <button
               type="button"
               onClick={startTimer}
@@ -623,7 +623,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
             <div className="mt-1 h-3 overflow-hidden rounded-full bg-[#2A2C27]" role="progressbar" aria-label="Part timer progress" aria-valuenow={Math.round(partProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
               <div className="h-full bg-lime transition-[width] duration-300" style={{ width: `${partProgress * 100}%` }} />
             </div>
-            <div className="mt-2 flex items-center justify-between gap-2 text-[20px] font-semibold text-[#C9CBC4]">
+            <div className="mt-2 flex items-center justify-between gap-2 text-[24px] font-semibold text-[#C9CBC4]">
               <span>{formatTime(elapsedSeconds)} done</span>
               <span>{timerRunning ? 'RUNNING' : 'PAUSED'}</span>
             </div>
@@ -635,11 +635,11 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
           </div>
 
           <section className="mt-6 border-t border-[#2A2C27] pt-5">
-            <p className="mb-2 text-[20px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">After this</p>
+            <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">After this</p>
             {upcomingPart ? (
               <>
                 <p className="truncate font-display text-[44px] font-extrabold uppercase leading-[.95] text-white">{upcomingPart.title}</p>
-                <p className="mt-2 text-[22px] font-semibold text-[#C9CBC4]">
+                <p className="mt-2 text-[24px] font-semibold text-[#C9CBC4]">
                   Starts {format(partStartDate, 'HH:mm')} · {upcomingPart.minutes ? `${upcomingPart.minutes}′` : 'COUNT UP'}
                 </p>
               </>
@@ -649,12 +649,12 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
           </section>
 
           <section className="mt-6 border-t border-[#2A2C27] pt-5">
-            <p className="mb-2 text-[20px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">Team</p>
+            <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">Team</p>
             <p className="text-[30px] font-bold leading-snug text-white">{teamLabel}</p>
           </section>
 
           <section className="mt-auto border-t border-[#2A2C27] pt-5">
-            <div className="mb-2 flex items-baseline justify-between gap-3 text-[20px] font-bold uppercase tracking-[.1em] text-[#C9CBC4]">
+            <div className="mb-2 flex items-baseline justify-between gap-3 text-[24px] font-bold uppercase tracking-[.1em] text-[#C9CBC4]">
               <span>Class</span>
               <span>{classDoneMinutes} / {totalMinutes} min · Ends {format(endDate, 'HH:mm')}</span>
             </div>

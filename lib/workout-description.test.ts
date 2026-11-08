@@ -114,6 +114,15 @@ describe('parseWorkout', () => {
     assert.deepEqual(result.warnings, []);
   });
 
+  it('cleans accidental toolbar markers from part titles and detail lines', () => {
+    const result = parseWorkout(
+      '# WARM U# NAME | | 15\n3 Rounds of ##\n10 Air Squats\n# STRENGTH# NAME | | 20\n5 Back Squats'
+    );
+    assert.deepEqual(result.parts.map(({ title }) => title), ['Warm-up', 'STRENGTH']);
+    assert.equal(result.parts[0].blocks[0].name, '3 Rounds');
+    assert.equal(result.parts[0].blocks.some((block) => /#|\|/.test(block.name)), false);
+  });
+
   // These legacy samples come from the import template because this worktree has no live database connection.
   it('parses legacy imported workout descriptions without PURE markers', () => {
     const legacyDescriptions = [

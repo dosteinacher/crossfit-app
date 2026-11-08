@@ -11,20 +11,20 @@ import type { Guest, WorkoutWithDetails } from '@/lib/types';
 import { parseWorkout } from '@/lib/workoutNotation';
 
 type BoardWorkout = WorkoutWithDetails & { guests: Guest[] };
-type TextScale = 1 | 1.25 | 1.5;
+type TextScale = 1.5 | 1.75 | 2;
 
-const TEXT_SCALES: TextScale[] = [1, 1.25, 1.5];
+const TEXT_SCALES: TextScale[] = [1.5, 1.75, 2];
 const DEFAULT_PART_TITLES = ['Warm-up', 'Strength', 'WOD'];
 const TEXT_SCALE_STORAGE_KEY = 'pure-whiteboard-text-scale';
 
 function getStoredTextScale(): TextScale {
-  if (typeof window === 'undefined') return 1;
+  if (typeof window === 'undefined') return 1.5;
   try {
     const savedScale = Number(localStorage.getItem(TEXT_SCALE_STORAGE_KEY));
-    return TEXT_SCALES.includes(savedScale as TextScale) ? savedScale as TextScale : 1;
+    return TEXT_SCALES.includes(savedScale as TextScale) ? savedScale as TextScale : 1.5;
   } catch (storageError) {
     console.warn('Could not read whiteboard text size preference:', storageError);
-    return 1;
+    return 1.5;
   }
 }
 
@@ -36,13 +36,12 @@ export default function WorkoutBoardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activePart, setActivePart] = useState(0);
-  const [textScale, setTextScale] = useState<TextScale>(1);
+  const [textScale, setTextScale] = useState<TextScale>(1.5);
   const [textScaleLoaded, setTextScaleLoaded] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const [round, setRound] = useState(1);
   const tvMode = searchParams.get('tv') === '1';
-  const [tvDarkMode, setTvDarkMode] = useState(true);
   const elapsedSecondsRef = useRef(0);
   const touchStartX = useRef<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -91,14 +90,14 @@ export default function WorkoutBoardPage() {
   const durationSeconds = (part?.minutes || 0) * 60;
 
   useEffect(() => {
-    if (!timerRunning || tvMode) return;
+    if (!timerRunning) return;
     const intervalId = window.setInterval(() => {
       const nextElapsedSeconds = elapsedSecondsRef.current + 1;
       elapsedSecondsRef.current = nextElapsedSeconds;
       setElapsedSeconds(nextElapsedSeconds);
     }, 1000);
     return () => window.clearInterval(intervalId);
-  }, [activePart, durationSeconds, parts.length, timerRunning, tvMode]);
+  }, [activePart, durationSeconds, parts.length, timerRunning]);
 
   useEffect(() => {
     let active = true;
@@ -178,50 +177,33 @@ export default function WorkoutBoardPage() {
     );
   }
 
+  if (tvMode) return <WorkoutTvBoard workout={workout} />;
+
   const date = parseISO(workout.date);
   const nextScale = TEXT_SCALES[(TEXT_SCALES.indexOf(textScale) + 1) % TEXT_SCALES.length];
-  const displayScale = tvMode ? 1.5 : textScale;
-  const darkBoard = tvMode && tvDarkMode;
-  const asideTheme = darkBoard ? 'bg-[#141512] text-white' : tvMode ? 'bg-canvas text-ink' : 'bg-ink text-white';
-  const asideText = tvMode && !tvDarkMode ? 'text-ink' : 'text-white';
-  const asideBorder = tvMode && !tvDarkMode ? 'border-line' : 'border-white/30';
-  const asideHover = tvMode && !tvDarkMode ? 'hover:bg-white' : 'hover:bg-white/10';
-  if (tvMode) return <WorkoutTvBoard workout={workout} />;
+  const displayScale = textScale;
 
   return (
     <main
-      className={`flex min-h-screen flex-col ${darkBoard ? 'bg-ink text-white' : 'bg-paper text-ink'}`}
-      style={{ fontSize: `${16 * displayScale}px` }}
+      className="flex min-h-screen flex-col bg-paper text-ink"
+      style={{ fontSize: '16px' }}
     >
       <div className="h-2 shrink-0 bg-lime" />
-      <header className={`flex flex-wrap items-center justify-between gap-3 border-b-2 px-4 py-3 md:px-7 ${darkBoard ? 'border-white/20' : 'border-ink'}`}>
-        <Link href="/dashboard" className={`font-display text-[1.5em] font-extrabold uppercase ${darkBoard ? 'text-white' : 'text-ink'}`} aria-label="PURE Dashboard">PURE</Link>
-        <div className={`flex flex-1 items-center justify-center text-center font-bold uppercase tabular-nums ${darkBoard ? 'text-white' : 'text-ink'}`}>
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink px-4 py-3 md:px-7">
+        <Link href="/dashboard" className="font-display text-[1.5em] font-extrabold uppercase text-ink" aria-label="PURE Dashboard">PURE</Link>
+        <div className="flex flex-1 items-center justify-center text-center font-bold uppercase tabular-nums text-ink">
           {format(date, 'EEE dd MMM')} · {format(date, 'HH:mm')} · Team of {workout.max_participants}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {tvMode ? (
-            <button
-              type="button"
-              onClick={() => setTvDarkMode((dark) => !dark)}
-              className={`inline-flex min-h-11 items-center justify-center rounded-sm border px-3 font-bold focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40 ${darkBoard ? 'border-white/30 text-white hover:bg-white/10' : 'border-line text-ink hover:bg-canvas'}`}
-              aria-label={`Switch to ${tvDarkMode ? 'light' : 'dark'} TV theme`}
-            >
-              {tvDarkMode ? 'Light mode' : 'Dark mode'}
-            </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setTextScale(nextScale)}
-                aria-label={`Change text size from ${textScale}x to ${nextScale}x`}
-                className="inline-flex min-h-11 items-center justify-center rounded-sm border border-line px-3 font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
-              >
-                A <span className="ml-1 text-[1.2em]">A+</span>
-              </button>
-              <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-11 items-center justify-center rounded-sm bg-ink px-4 font-bold text-white hover:bg-ink-2">Exit</Link>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => setTextScale(nextScale)}
+            aria-label={`Change text size from ${textScale}x to ${nextScale}x`}
+            className="inline-flex min-h-11 items-center justify-center rounded-sm border border-line px-3 font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
+          >
+            A <span className="ml-1 text-[1.2em]">A+</span>
+          </button>
+          <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-11 items-center justify-center rounded-sm bg-ink px-4 font-bold text-white hover:bg-ink-2">Exit</Link>
         </div>
       </header>
 
@@ -237,12 +219,11 @@ export default function WorkoutBoardPage() {
             blocks={part?.blocks || []}
             activePart={activePart}
             totalParts={parts.length}
-            dark={darkBoard}
             displayScale={displayScale}
           />
         </div>
 
-        <aside className={`flex flex-col gap-5 rounded-xl p-5 md:p-6 ${asideTheme}`}>
+        <aside className="flex flex-col gap-5 rounded-xl bg-ink p-5 text-white md:p-6">
           <button
             type="button"
             onClick={() => setTimerRunning((running) => !running)}
@@ -250,35 +231,35 @@ export default function WorkoutBoardPage() {
             className="flex min-h-40 flex-col items-center justify-center rounded-lg text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
           >
             <span className="font-display text-[7.5em] font-extrabold leading-none tabular-nums">{timerLabel}</span>
-            <span className={`mt-2 font-bold uppercase tracking-[.14em] ${asideText}`}>{timerRunning ? 'Tap to pause' : 'Tap to start'}</span>
+            <span className="mt-2 font-bold uppercase tracking-[.14em] text-white">{timerRunning ? 'Tap to pause' : 'Tap to start'}</span>
           </button>
 
           <div>
-            <p className={`mb-2 text-center font-bold uppercase tracking-[.14em] ${asideText}`}>Round</p>
+            <p className="mb-2 text-center font-bold uppercase tracking-[.14em] text-white">Round</p>
             <div className="flex items-center justify-center gap-4">
-              <button type="button" onClick={() => setRound((value) => Math.max(0, value - 1))} aria-label="Decrease round" className={`inline-flex h-16 w-16 items-center justify-center rounded-sm border ${asideBorder} text-[2em] font-bold ${asideText} ${asideHover}`}>−</button>
-              <span className={`min-w-14 text-center font-display text-[4em] font-extrabold leading-none tabular-nums ${asideText}`}>{round}</span>
+              <button type="button" onClick={() => setRound((value) => Math.max(0, value - 1))} aria-label="Decrease round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm border border-white/30 text-[2em] font-bold text-white hover:bg-white/10">−</button>
+              <span className="min-w-14 text-center font-display text-[4em] font-extrabold leading-none tabular-nums text-white">{round}</span>
               <button type="button" onClick={() => setRound((value) => value + 1)} aria-label="Increase round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm bg-lime text-[2em] font-bold text-ink hover:brightness-95">+</button>
             </div>
           </div>
 
-          <div className={`min-h-0 border-t pt-4 ${tvMode && !tvDarkMode ? 'border-line' : 'border-white/20'}`}>
-            <p className={`mb-3 font-bold uppercase tracking-[.14em] ${asideText}`}>Team · {teamNames.length || workout.max_participants}</p>
+          <div className="min-h-0 border-t border-white/20 pt-4">
+            <p className="mb-3 font-bold uppercase tracking-[.14em] text-white">Team · {teamNames.length || workout.max_participants}</p>
             <div className="max-h-48 space-y-2 overflow-y-auto">
               {teamNames.length ? teamNames.map((name, index) => (
                 <div key={`${name}-${index}`} className="flex items-center gap-3">
                   <Avatar initials={name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()} className="h-9 w-9 bg-white text-ink" />
-                  <span className={`font-semibold ${asideText}`}>{name}</span>
+                  <span className="font-semibold text-white">{name}</span>
                 </div>
               )) : (
-                <p className={`text-[.9em] ${asideText}`}>No team members registered yet.</p>
+                <p className="text-[.9em] text-white">No team members registered yet.</p>
               )}
             </div>
           </div>
         </aside>
       </section>
 
-      <nav className={`grid shrink-0 grid-cols-3 gap-2 border-t p-3 md:gap-3 md:px-6 md:py-4 ${darkBoard ? 'border-white/20 bg-ink' : 'border-line bg-paper'}`} aria-label="Workout parts">
+      <nav className="grid shrink-0 grid-cols-3 gap-2 border-t border-line bg-paper p-3 md:gap-3 md:px-6 md:py-4" aria-label="Workout parts">
         {DEFAULT_PART_TITLES.map((defaultTitle, index) => {
           const selected = activePart === index;
           const title = parts[index]?.title || defaultTitle;
@@ -290,7 +271,7 @@ export default function WorkoutBoardPage() {
               onClick={() => changePart(index)}
               aria-current={selected ? 'step' : undefined}
               className={`flex min-h-14 flex-col items-center justify-center rounded-sm px-2 py-2 text-center font-bold uppercase disabled:cursor-default disabled:opacity-50 ${
-                selected ? 'bg-lime text-ink' : darkBoard ? 'border border-white/30 text-white hover:bg-white/10' : 'border border-line text-ink-2 hover:bg-canvas'
+                selected ? 'bg-lime text-ink' : 'border border-line text-ink-2 hover:bg-canvas'
               }`}
             >
               <span className="text-[.85em] tabular-nums">{String(index + 1).padStart(2, '0')}</span>

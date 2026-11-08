@@ -50,7 +50,13 @@ const ROUNDS_SCHEME = /^\d+\s+(?:rounds?|runden?)\b/i;
 const EMOM_SCHEME = /^emom\s+\d+\b/i;
 
 function cleanTitle(value: string) {
-  return value.trim().replace(/^[«„“"]|[»“”"]$/g, '').trim() || 'Workout';
+  return value
+    .trim()
+    .replace(/#\s*NAME\b/gi, '')
+    .replace(/\s*\|+\s*$/, '')
+    .replace(/^warm\s+u\b/i, 'Warm-up')
+    .replace(/^[«„“"]|[»“”"]$/g, '')
+    .trim() || 'Workout';
 }
 
 export function detectWorkoutFormat(value: string): WorkoutPart['format'] | undefined {
@@ -145,7 +151,13 @@ function parseMovement(value: string, line: number): WorkoutBlock | null {
 }
 
 function parseContentLine(source: SourceLine, warnings: WorkoutWarning[], legacyMovementContext = false): WorkoutBlock {
-  const value = source.text.trim().replace(/^(?:[-*•]\s+)/, '');
+  const value = source.text.trim()
+    .replace(/^(?:[-*•]\s+)/, '')
+    .replace(/\s+#\s*NAME\b/gi, '')
+    .replace(/\s*#+\s*$/, '')
+    .replace(/\s*\|+\s*$/, '')
+    .replace(/\s+of\s*$/i, '')
+    .trim();
   if (/^##\s+/.test(value)) {
     return { type: 'section', name: value.replace(/^##\s+/, '').trim(), line: source.line };
   }

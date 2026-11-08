@@ -72,12 +72,29 @@ export default function WorkoutDescriptionEditor({
     if (mobileTab === 'preview') setMobileTab('write');
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const nextDescription = `${description.slice(0, start)}${snippet}${description.slice(end)}`;
+    const isLineMarker = /^(?:#|!)/.test(snippet);
+    let insertAt = start;
+    let insertedText = snippet;
+    if (isLineMarker) {
+      const lineStart = description.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+      const lineEnd = description.indexOf('\n', start);
+      const lineText = description.slice(lineStart, lineEnd < 0 ? description.length : lineEnd);
+      if (lineText.trim()) {
+        insertAt = lineEnd < 0 ? description.length : lineEnd + 1;
+        if (lineEnd < 0) insertedText = `\n${snippet}`;
+      } else {
+        insertAt = lineStart;
+      }
+    }
+    const nextDescription = `${description.slice(0, insertAt)}${insertedText}${description.slice(isLineMarker ? insertAt : end)}`;
+    const selectionOffset = isLineMarker && insertAt === description.length && description.slice(insertAt - 1) !== '\n'
+      ? 1
+      : 0;
     onChange(nextDescription);
     setPreviousDescription(null);
     requestAnimationFrame(() => {
       textarea.focus();
-      textarea.setSelectionRange(start + selectionStart, start + selectionEnd);
+      textarea.setSelectionRange(insertAt + selectionOffset + selectionStart, insertAt + selectionOffset + selectionEnd);
       syncPreviewToCursor(textarea);
     });
   };
