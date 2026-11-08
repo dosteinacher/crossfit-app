@@ -6,6 +6,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { Avatar, Loading } from '@/components/ui';
 import WorkoutPartContent from '@/components/WorkoutPartContent';
+import WorkoutTvBoard from '@/components/WorkoutTvBoard';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
 import { parseWorkout } from '@/lib/workoutNotation';
 
@@ -42,7 +43,6 @@ export default function WorkoutBoardPage() {
   const [round, setRound] = useState(1);
   const tvMode = searchParams.get('tv') === '1';
   const [tvDarkMode, setTvDarkMode] = useState(true);
-  const [tvCursorHidden, setTvCursorHidden] = useState(false);
   const elapsedSecondsRef = useRef(0);
   const touchStartX = useRef<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -91,46 +91,14 @@ export default function WorkoutBoardPage() {
   const durationSeconds = (part?.minutes || 0) * 60;
 
   useEffect(() => {
-    if (!timerRunning) return;
+    if (!timerRunning || tvMode) return;
     const intervalId = window.setInterval(() => {
       const nextElapsedSeconds = elapsedSecondsRef.current + 1;
-      if (tvMode && durationSeconds > 0 && nextElapsedSeconds >= durationSeconds) {
-        if (activePart + 1 < parts.length) {
-          elapsedSecondsRef.current = 0;
-          setElapsedSeconds(0);
-          setActivePart(activePart + 1);
-        } else {
-          elapsedSecondsRef.current = durationSeconds;
-          setElapsedSeconds(durationSeconds);
-          setTimerRunning(false);
-        }
-        return;
-      }
       elapsedSecondsRef.current = nextElapsedSeconds;
       setElapsedSeconds(nextElapsedSeconds);
     }, 1000);
     return () => window.clearInterval(intervalId);
   }, [activePart, durationSeconds, parts.length, timerRunning, tvMode]);
-
-  useEffect(() => {
-    if (!tvMode) return;
-    let timeoutId = 0;
-    const showCursor = () => {
-      setTvCursorHidden(false);
-      window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(() => setTvCursorHidden(true), 3000);
-    };
-    timeoutId = window.setTimeout(() => setTvCursorHidden(true), 3000);
-    window.addEventListener('mousemove', showCursor);
-    window.addEventListener('keydown', showCursor);
-    window.addEventListener('touchstart', showCursor);
-    return () => {
-      window.clearTimeout(timeoutId);
-      window.removeEventListener('mousemove', showCursor);
-      window.removeEventListener('keydown', showCursor);
-      window.removeEventListener('touchstart', showCursor);
-    };
-  }, [tvMode]);
 
   useEffect(() => {
     let active = true;
@@ -218,9 +186,11 @@ export default function WorkoutBoardPage() {
   const asideText = tvMode && !tvDarkMode ? 'text-ink' : 'text-white';
   const asideBorder = tvMode && !tvDarkMode ? 'border-line' : 'border-white/30';
   const asideHover = tvMode && !tvDarkMode ? 'hover:bg-white' : 'hover:bg-white/10';
+  if (tvMode) return <WorkoutTvBoard workout={workout} />;
+
   return (
     <main
-      className={`flex min-h-screen flex-col ${darkBoard ? 'bg-ink text-white' : 'bg-paper text-ink'} ${tvMode && tvCursorHidden ? 'cursor-none' : ''}`}
+      className={`flex min-h-screen flex-col ${darkBoard ? 'bg-ink text-white' : 'bg-paper text-ink'}`}
       style={{ fontSize: `${16 * displayScale}px` }}
     >
       <div className="h-2 shrink-0 bg-lime" />
