@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Card, Input, TextArea, Button, ErrorMessage, SuccessMessage, Loading, TimeInput } from '@/components/ui';
+import WorkoutDescriptionEditor from '@/components/WorkoutDescriptionEditor';
+import { Card, Input, Button, ErrorMessage, SuccessMessage, Loading, TimeInput } from '@/components/ui';
+import { getMainWorkoutFormat } from '@/lib/workoutNotation';
 
 interface Participant {
   user_id: number;
@@ -40,6 +42,7 @@ export default function EditWorkoutPage() {
   const [participantLoading, setParticipantLoading] = useState(false);
 
   const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
+  const parsedWorkoutType = getMainWorkoutFormat(description);
 
   useEffect(() => {
     fetchWorkout();
@@ -105,7 +108,7 @@ export default function EditWorkoutPage() {
         body: JSON.stringify({
           title,
           description,
-          workout_type: workoutType,
+          workout_type: parsedWorkoutType || workoutType,
           date: dateTime,
           max_participants: parseInt(maxParticipants),
         }),
@@ -190,7 +193,7 @@ export default function EditWorkoutPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-pure-bg py-8">
-        <div className="container mx-auto px-4 max-w-2xl">
+        <div className="container mx-auto max-w-[1200px] px-4">
           <h1 className="text-4xl font-bold mb-8 text-pure-ink">Edit Workout</h1>
 
           <Card>
@@ -207,31 +210,40 @@ export default function EditWorkoutPage() {
                 required
               />
 
-              <TextArea
-                label="Description"
-                value={description}
+              <WorkoutDescriptionEditor
+                description={description}
                 onChange={setDescription}
-                placeholder="Describe the workout, movements, and any notes..."
-                rows={16}
-                textareaClassName="min-h-[22rem]"
+                title={title}
               />
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-pure-ink mb-1">
                   Workout Type <span className="text-red-700">*</span>
                 </label>
-                <select
-                  value={workoutType}
-                  onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
-                  required
-                >
-                  {workoutTypes.map((type) => (
-                    <option key={type} value={type} className="bg-pure-bg text-pure-ink">
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                {parsedWorkoutType ? (
+                  <>
+                    <input
+                      value={parsedWorkoutType}
+                      readOnly
+                      aria-describedby="edit-workout-type-source"
+                      className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-pure-ink"
+                    />
+                    <p id="edit-workout-type-source" className="mt-1 text-[13px] text-pure-text-light">From description</p>
+                  </>
+                ) : (
+                  <select
+                    value={workoutType}
+                    onChange={(e) => setWorkoutType(e.target.value)}
+                    className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
+                    required
+                  >
+                    {workoutTypes.map((type) => (
+                      <option key={type} value={type} className="bg-pure-bg text-pure-ink">
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

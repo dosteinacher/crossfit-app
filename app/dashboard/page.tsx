@@ -10,7 +10,7 @@ import { addDays, format, startOfWeek } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { Announcement, WorkoutWithDetails } from '@/lib/types';
 import { getDashboardStats } from '@/lib/dashboard-stats';
-import { parseWorkoutDescription } from '@/lib/workout-description';
+import { parseWorkout } from '@/lib/workoutNotation';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -27,8 +27,8 @@ function getInitials(name: string) {
 }
 
 function getWorkoutDurationMinutes(workout: WorkoutWithDetails) {
-  const partMinutes = parseWorkoutDescription(workout.description || '')
-    .reduce((total, part) => total + (part.durationMinutes || 0), 0);
+  const partMinutes = parseWorkout(workout.description || '').parts
+    .reduce((total, part) => total + (part.minutes || 0), 0);
   return partMinutes || 60;
 }
 
@@ -161,7 +161,7 @@ export default function DashboardPage() {
   const firstName = user?.name.split(/\s+/)[0] || 'there';
   const announcement = announcements[0];
   const greeting = getGreeting();
-  const heroParts = nextWorkout?.description ? parseWorkoutDescription(nextWorkout.description).slice(0, 3) : [];
+  const heroParts = nextWorkout?.description ? parseWorkout(nextWorkout.description).parts.slice(0, 3) : [];
 
   return (
     <>
@@ -219,10 +219,10 @@ export default function DashboardPage() {
                   : `OPEN · ${nextWorkout.registered_count}/${nextWorkout.max_participants}`;
               const elapsedMinutes = Math.max(0, (now.getTime() - date.getTime()) / 60_000);
               let cumulativeMinutes = 0;
-              const timedParts = heroParts.filter((part) => part.durationMinutes);
+              const timedParts = heroParts.filter((part) => part.minutes);
               const currentPart = timedParts.find((part) => {
-                if (!part.durationMinutes) return false;
-                cumulativeMinutes += part.durationMinutes;
+                if (!part.minutes) return false;
+                cumulativeMinutes += part.minutes;
                 return elapsedMinutes < cumulativeMinutes;
               }) || timedParts.at(-1) || heroParts[0];
               const onNowPart = isOnNow && currentPart
@@ -272,18 +272,16 @@ export default function DashboardPage() {
                       {heroParts.map((part, index) => (
                         <div key={`${part.title}-${index}`} className={`min-h-32 rounded-lg border p-3 ${isOnNow ? 'border-ink/20 bg-white/30' : 'border-[#2A2C27] bg-[#141512]'}`}>
                           <p className={`text-[13px] font-bold uppercase tracking-wide ${isOnNow ? 'text-ink' : 'text-white'}`}>
-                            {String(index + 1).padStart(2, '0')} · {part.sectionTitle}{part.durationMinutes ? ` · ${part.durationMinutes}′` : ''}
+                            {String(index + 1).padStart(2, '0')} · {part.title}{part.minutes ? ` · ${part.minutes}′` : ''}
                           </p>
-                          {part.title !== part.sectionTitle && (
-                            <p className={`mt-2 line-clamp-2 font-display text-xl font-bold leading-tight ${isOnNow ? 'text-ink' : 'text-white'}`}>{part.title}</p>
-                          )}
                           <div className={`mt-2 space-y-1 text-sm leading-snug ${isOnNow ? 'text-ink' : 'text-white'}`}>
-                            {part.movements.length ? part.movements.slice(0, 5).map((movement, movementIndex) => (
-                              <p key={`${movement.movement}-${movementIndex}`} className="line-clamp-1">
-                                {movement.reps ? `${movement.reps} ` : ''}{movement.movement}
+                            {part.blocks.filter((block) => block.type === 'movement').slice(0, 5).map((movement, movementIndex) => (
+                              <p key={`${movement.name}-${movementIndex}`} className="line-clamp-1">
+                                {movement.reps ? `${movement.reps} ` : ''}{movement.name}{movement.load ? ` ${movement.load}` : ''}
                               </p>
-                            )) : part.lines.slice(0, 3).map((line, lineIndex) => (
-                              <p key={`${line}-${lineIndex}`} className="line-clamp-1">{line}</p>
+                            ))}
+                            {!part.blocks.some((block) => block.type === 'movement') && part.blocks.slice(0, 3).map((block, blockIndex) => (
+                              <p key={`${block.name}-${blockIndex}`} className="line-clamp-1">{block.name}</p>
                             ))}
                           </div>
                         </div>
