@@ -145,7 +145,7 @@ function parseMovement(value: string, line: number): WorkoutBlock | null {
 }
 
 function parseContentLine(source: SourceLine, warnings: WorkoutWarning[], legacyMovementContext = false): WorkoutBlock {
-  const value = source.text.trim();
+  const value = source.text.trim().replace(/^(?:[-*•]\s+)/, '');
   if (/^##\s+/.test(value)) {
     return { type: 'section', name: value.replace(/^##\s+/, '').trim(), line: source.line };
   }

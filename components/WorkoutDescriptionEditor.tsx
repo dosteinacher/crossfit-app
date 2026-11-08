@@ -9,6 +9,36 @@ import WorkoutPartContent from '@/components/WorkoutPartContent';
 
 type EditorTab = 'write' | 'preview';
 
+function getCursorLine(textarea: HTMLTextAreaElement) {
+  return textarea.value.slice(0, textarea.selectionStart).split('\n').length;
+}
+
+function getPartStarts(description: string, parts: ReturnType<typeof parseWorkout>['parts']) {
+  if (parts.length <= 1) return [1];
+  const lines = description.split('\n');
+  const explicitStarts = lines.flatMap((value, index) => /^#(?!#)\s/.test(value.trim()) ? [index + 1] : []);
+
+  if (explicitStarts.length === parts.length) return explicitStarts;
+  let previousStart = 0;
+  return parts.map((part, index) => {
+    if (index === 0) {
+      previousStart = 1;
+      return previousStart;
+    }
+    const blockLines = part.blocks.map((block) => block.line).filter((blockLine) => blockLine > 0);
+    previousStart = Math.max(previousStart + 1, blockLines.length ? Math.min(...blockLines) : previousStart + 1);
+    return previousStart;
+  });
+}
+
+function getPartIndexForLine(starts: number[], line: number) {
+  let selectedIndex = 0;
+  starts.forEach((start, index) => {
+    if (start <= line) selectedIndex = index;
+  });
+  return selectedIndex;
+}
+
 export default function WorkoutDescriptionEditor({
   description,
   onChange,
@@ -22,12 +52,19 @@ export default function WorkoutDescriptionEditor({
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const [mobileTab, setMobileTab] = useState<EditorTab>('write');
   const [previousDescription, setPreviousDescription] = useState<string | null>(null);
-  const [previewPartIndex, setPreviewPartIndex] = useState(0);
+  const [cursorLine, setCursorLine] = useState(1);
   const parsed = useMemo(() => parseWorkout(description), [description]);
   const isPureNotation = /^\s*#(?!#)\s/m.test(description);
   const lines = description.split('\n');
-  const selectedPreviewPartIndex = Math.min(previewPartIndex, Math.max(0, parsed.parts.length - 1));
+  const partStarts = getPartStarts(description, parsed.parts);
+  const selectedPreviewPartIndex = parsed.parts.length
+    ? getPartIndexForLine(partStarts, cursorLine)
+    : 0;
   const previewPart = parsed.parts[selectedPreviewPartIndex];
+
+  const syncPreviewToCursor = (textarea: HTMLTextAreaElement) => {
+    setCursorLine(getCursorLine(textarea));
+  };
 
   const insertSnippet = (snippet: string, selectionStart = snippet.length, selectionEnd = selectionStart) => {
     const textarea = textareaRef.current;
@@ -41,6 +78,7 @@ export default function WorkoutDescriptionEditor({
     requestAnimationFrame(() => {
       textarea.focus();
       textarea.setSelectionRange(start + selectionStart, start + selectionEnd);
+      syncPreviewToCursor(textarea);
     });
   };
 
@@ -52,6 +90,7 @@ export default function WorkoutDescriptionEditor({
     textarea.focus();
     textarea.setSelectionRange(lineStart, lineEnd);
     textarea.scrollTop = Math.max(0, (line - 1) * 24);
+    setCursorLine(line);
   };
 
   const convertDescription = () => {
@@ -144,7 +183,13 @@ export default function WorkoutDescriptionEditor({
                 ref={textareaRef}
                 id="workout-description"
                 value={description}
-                onChange={(event) => handleDescriptionChange(event.target.value)}
+                onChange={(event) => {
+                  handleDescriptionChange(event.target.value);
+                  syncPreviewToCursor(event.currentTarget);
+                }}
+                onClick={(event) => syncPreviewToCursor(event.currentTarget)}
+                onKeyUp={(event) => syncPreviewToCursor(event.currentTarget)}
+                onSelect={(event) => syncPreviewToCursor(event.currentTarget)}
                 onScroll={(event) => {
                   if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop;
                 }}
@@ -194,8 +239,10 @@ export default function WorkoutDescriptionEditor({
                     type="button"
                     aria-label={`Preview part ${index + 1}: ${part.title}`}
                     aria-pressed={selectedPreviewPartIndex === index}
-                    onClick={() => setPreviewPartIndex(index)}
-                    className={`min-h-8 min-w-8 rounded-sm px-2 text-[13px] font-bold ${previewPartIndex === index ? 'bg-lime text-ink' : 'border border-line bg-paper text-ink-2'}`}
+                    onClick={() => {
+                      setCursorLine(partStarts[index] || 1);
+                    }}
+                    className={`min-h-8 min-w-8 rounded-sm px-2 text-[13px] font-bold ${selectedPreviewPartIndex === index ? 'bg-lime text-ink' : 'border border-line bg-paper text-ink-2'}`}
                   >
                     {index + 1}
                   </button>
@@ -203,11 +250,11 @@ export default function WorkoutDescriptionEditor({
               </div>
             )}
           </div>
-          <div className="aspect-video overflow-hidden rounded-sm border-[6px] border-ink bg-paper">
+          <div className="aspect-video max-h-[34rem] overflow-auto rounded-sm border-[6px] border-ink bg-paper">
             {previewPart ? (
               <div
-                className="origin-top-left p-6"
-                style={{ width: '160%', minHeight: '160%', transform: 'scale(.625)' }}
+                className="p-6"
+                style={{ width: '160%', minHeight: '160%', zoom: 0.625 }}
               >
                 <p className="mb-4 font-display text-4xl font-black uppercase text-ink">{title.trim() || 'Workout title'}</p>
                 <WorkoutPartContent
