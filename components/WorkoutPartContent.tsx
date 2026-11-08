@@ -49,7 +49,7 @@ export default function WorkoutPartContent({
               <div key={`${block.name}-${index}`} className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 ${compact ? 'py-4' : 'py-4 md:gap-5 md:py-5'}`}>
                 <span
                   className={`min-w-[1.7em] font-display text-[4em] font-extrabold leading-none tabular-nums ${primaryText}`}
-                  style={{ fontSize: `${64 * displayScale}px` }}
+                  style={{ fontSize: compact ? '40px' : `${42 * displayScale}px` }}
                 >
                   {block.reps || '—'}
                 </span>
@@ -74,7 +74,18 @@ export default function WorkoutPartContent({
           if (block.type === 'note') {
             return <p key={`${block.name}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className="border-l-4 border-lime bg-lime/15 px-4 py-3 font-semibold">{block.name}</p>;
           }
-          return <p key={`${block.name}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className={`py-3 font-semibold ${block.type === 'scheme' ? primaryText : secondaryText}`}>{block.name}</p>;
+          if (block.type === 'scheme') {
+            return (
+              <p
+                key={`${block.name}-${index}`}
+                style={{ fontSize: compact ? '24px' : `${24 * displayScale}px` }}
+                className={`my-2 inline-flex rounded-sm border-l-4 border-lime bg-canvas px-3 py-2 font-display font-extrabold uppercase leading-tight ${primaryText}`}
+              >
+                {block.name}
+              </p>
+            );
+          }
+          return <p key={`${block.name}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className={`py-3 font-semibold ${secondaryText}`}>{block.name}</p>;
         }) : (
           <p className={`py-4 font-semibold ${secondaryText}`} style={{ fontSize: `${16 * displayScale}px` }}>No movements listed</p>
         )}
