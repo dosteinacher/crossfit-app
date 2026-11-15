@@ -24,7 +24,7 @@ export default function WodClock() {
 
   return (
     <div className="text-right tabular-nums">
-      <p className="text-3xl font-bold text-ink">{format(now, 'h:mm:ss a')}</p>
+      <p className="text-3xl font-bold text-ink">{format(now, 'HH:mm:ss')}</p>
       <p className="mt-1 text-base text-ink-2">{format(now, 'EEEE, MMMM d, yyyy')}</p>
     </div>
   );

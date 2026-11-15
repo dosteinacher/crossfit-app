@@ -441,7 +441,7 @@ export default function WorkoutDetailPage() {
               </div>
               <div>
                 <span className="font-medium">Time:</span>{' '}
-                {format(new Date(workout.date), 'h:mm a')}
+                {format(new Date(workout.date), 'HH:mm')}
               </div>
             </div>
 
@@ -722,7 +722,7 @@ export default function WorkoutDetailPage() {
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
                         <p className="font-semibold text-pure-ink text-sm">{p.user_name}</p>
-                        <p className="text-[13px] text-pure-text-light">{format(new Date(p.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                        <p className="text-[13px] text-pure-text-light">{format(new Date(p.created_at), 'MMM d, yyyy · HH:mm')}</p>
                       </div>
                       {(p.user_id === user?.id || user?.is_admin) && (
                         <button
@@ -760,7 +760,7 @@ export default function WorkoutDetailPage() {
               <div className="space-y-1">
                 {edits.map((e) => (
                   <p key={e.id} className="text-[13px] text-pure-text-light">
-                    Edited by <span className="text-pure-text-light">{e.editor_name}</span> · {format(new Date(e.edited_at), 'MMM d, yyyy · h:mm a')}
+                    Edited by <span className="text-pure-text-light">{e.editor_name}</span> · {format(new Date(e.edited_at), 'MMM d, yyyy · HH:mm')}
                   </p>
                 ))}
               </div>

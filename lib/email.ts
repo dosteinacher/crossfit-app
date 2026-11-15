@@ -6,6 +6,20 @@ import { generateICSFile, generateICSFilename, ICSAction, WorkoutData, UserData 
 // Default from email
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@crossfit-app.com';
 
+function formatWorkoutDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Zurich',
+    hourCycle: 'h23',
+    timeZoneName: 'short',
+  }).format(date);
+}
+
 // Initialize Resend lazily to avoid errors when API key is not configured
 let resend: Resend | null = null;
 function getResendClient(): Resend | null {
@@ -57,7 +71,7 @@ export async function sendCalendarInvite(
           <h2>Workout Cancelled</h2>
           <p>The following workout has been cancelled:</p>
           <h3>${workout.title}</h3>
-          <p><strong>Date:</strong> ${new Date(workout.date).toLocaleString()}</p>
+          <p><strong>Date:</strong> ${formatWorkoutDate(new Date(workout.date))}</p>
           ${workout.description ? `<p><strong>Description:</strong> ${workout.description}</p>` : ''}
           <p>The calendar event has been removed from your calendar.</p>
         `;
@@ -67,7 +81,7 @@ Workout Cancelled
 The following workout has been cancelled:
 
 ${workout.title}
-Date: ${new Date(workout.date).toLocaleString()}
+Date: ${formatWorkoutDate(new Date(workout.date))}
 ${workout.description ? `Description: ${workout.description}` : ''}
 
 The calendar event has been removed from your calendar.
@@ -76,17 +90,7 @@ The calendar event has been removed from your calendar.
 
       case 'update':
         subject = `Workout Updated: ${workout.title}`;
-        const updateDate = new Date(workout.date);
-        const updateDateStr = new Intl.DateTimeFormat('en-US', { 
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long', 
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          timeZone: 'Europe/Zurich',
-          timeZoneName: 'short'
-        }).format(updateDate);
+        const updateDateStr = formatWorkoutDate(new Date(workout.date));
         htmlBody = `
           <h2>Workout Updated</h2>
           <p>A workout you're registered for has been updated:</p>
@@ -112,18 +116,8 @@ Your calendar has been updated with the latest details.
 
       default: // create
         subject = `Workout Invitation: ${workout.title}`;
-        const createDate = new Date(workout.date);
-        // Format date in a readable way - the date is stored in UTC but represents the local workout time
-        const createDateStr = new Intl.DateTimeFormat('en-US', { 
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long', 
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          timeZone: 'Europe/Zurich',
-          timeZoneName: 'short'
-        }).format(createDate);
+        // The date is stored in UTC but represents the local workout time.
+        const createDateStr = formatWorkoutDate(new Date(workout.date));
         htmlBody = `
           <h2>Workout Invitation</h2>
           <p>You've been registered for the following workout:</p>

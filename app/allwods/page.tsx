@@ -90,7 +90,7 @@ export default function AllWodsPage() {
                     </span>
                   )}
                   <span className="text-sm text-pure-text-light">
-                    {format(new Date(workout.date), 'MMM d, yyyy · h:mm a')}
+                    {format(new Date(workout.date), 'MMM d, yyyy · HH:mm')}
                   </span>
                 </div>
 

@@ -108,7 +108,7 @@ export default async function WODPage() {
                       </span>
                     )}
                     <span className="shrink-0 whitespace-nowrap text-2xl font-bold tabular-nums text-ink">
-                      {format(workoutDate, 'h:mm a')}
+                      {format(workoutDate, 'HH:mm')}
                     </span>
                     <h2 className="min-w-0 shrink truncate font-display text-3xl font-extrabold text-ink">
                       {workout.title}

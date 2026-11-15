@@ -241,7 +241,7 @@ export default function PollDetailPage() {
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-bold text-pure-ink">
                           {format(new Date(option.date), 'EEEE, MMM d')} at{' '}
-                          {format(new Date(option.date), 'h:mm a')}
+                          {format(new Date(option.date), 'HH:mm')}
                         </h3>
                         {option.label && (
                           <span className="text-[13px] px-2 py-1 bg-gray-100 text-pure-text-light rounded">

@@ -228,7 +228,7 @@ export default function EditPollPage() {
                         <div>
                           <p className="text-pure-ink font-medium">
                             {format(new Date(option.date), 'EEEE, MMM d')} at{' '}
-                            {format(new Date(option.date), 'h:mm a')}
+                            {format(new Date(option.date), 'HH:mm')}
                           </p>
                           {option.label && (
                             <p className="text-sm text-pure-text-light">{option.label}</p>
