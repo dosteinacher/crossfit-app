@@ -12,10 +12,20 @@ export interface WorkoutBlock {
 export interface WorkoutPart {
   title: string;
   minutes?: number;
-  format?: 'AMRAP' | 'EMOM' | 'FOR TIME' | 'CHIPPER' | 'INTERVALS' | 'SKILL' | 'STRENGTH';
+  format?: 'AMRAP' | 'EMOM' | 'FOR TIME' | 'CHIPPER' | 'INTERVALS' | 'TABATA' | 'SKILL' | 'STRENGTH';
   team?: string;
+  timer?: IntervalTimer;
   meta: string[];
   blocks: WorkoutBlock[];
+}
+
+export interface IntervalTimer {
+  rounds: number;
+  work: number;
+  rest: number;
+  sets: number;
+  setRest: number;
+  prep: number;
 }
 
 export interface WorkoutWarning {
@@ -39,6 +49,7 @@ const FORMAT_PATTERNS: Array<[WorkoutPart['format'], RegExp]> = [
   ['FOR TIME', /\bfor\s*time\b|auf\s*zeit|so schnell wie möglich/i],
   ['CHIPPER', /\bchipper\b/i],
   ['INTERVALS', /\bintervals?\b|\bintervalle?\b/i],
+  ['TABATA', /\btabata\b/i],
   ['SKILL', /\bskill\b|\btechnik\b/i],
   ['STRENGTH', /\bstrength\b|\bkraft\b/i],
 ];
@@ -48,6 +59,143 @@ const REP_SCHEME = /^\d+(?:(?:\s*[-–—]\s*\d+)+|(?:\s*[x×]\s*\d+))?$/;
 const REP_PREFIX = /^(\d+(?:(?:\s*[-–—]\s*\d+)+|(?:\s*[x×]\s*\d+))?|\d+:\d{2}|\d+(?:[.,]\d+)?\s*(?:m|km))\s+(.+)$/i;
 const ROUNDS_SCHEME = /^\d+\s+(?:rounds?|runden?)\b/i;
 const EMOM_SCHEME = /^emom\s+\d+\b/i;
+const TABATA_TIMER: IntervalTimer = { rounds: 8, work: 20, rest: 10, sets: 1, setRest: 60, prep: 10 };
+const TIMER_DEFAULTS = { sets: 1, setRest: 60, prep: 10 };
+
+function parseTimerDuration(value: string) {
+  const normalized = value.trim();
+  if (/^\d+$/.test(normalized)) return Number(normalized);
+  const match = normalized.match(/^(\d+):(\d{2})$/);
+  if (!match || Number(match[2]) > 59) return undefined;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function clampTimerValue(
+  key: keyof IntervalTimer,
+  value: number,
+  line: number,
+  warnings: WorkoutWarning[],
+) {
+  const limits: Record<keyof IntervalTimer, [number, number]> = {
+    rounds: [1, 50],
+    work: [5, 600],
+    rest: [0, 300],
+    sets: [1, 10],
+    setRest: [0, 600],
+    prep: [0, 30],
+  };
+  const [minimum, maximum] = limits[key];
+  const clamped = Math.max(minimum, Math.min(maximum, value));
+  if (clamped !== value) {
+    warnings.push({
+      line,
+      message: `Timer ${key} was clamped to ${clamped}.`,
+    });
+  }
+  return clamped;
+}
+
+function parseTimerLine(value: string, line: number, warnings: WorkoutWarning[]): IntervalTimer | undefined {
+  const segments = value.replace(/^~\s*/, '').split('|').map((segment) => segment.trim());
+  const expression = segments.shift() || '';
+  let rounds: number | undefined;
+  let work: number | undefined;
+  let rest: number | undefined;
+  const preset = expression.match(/^tabata$/i);
+  const hiit = expression.match(/^hiit\s+(\d+)\s*\/\s*(\d+)$/i);
+  const emom = expression.match(/^emom\s+(\d+)$/i);
+  const interval = expression.match(/^(\d+)\s*[x×]\s*(\d+(?::\d{2})?)\s*\/\s*(\d+(?::\d{2})?)$/i);
+
+  if (preset) {
+    ({ rounds, work, rest } = TABATA_TIMER);
+  } else if (hiit) {
+    rounds = 10;
+    work = Number(hiit[1]);
+    rest = Number(hiit[2]);
+  } else if (emom) {
+    rounds = Number(emom[1]);
+    work = 60;
+    rest = 0;
+  } else if (interval) {
+    rounds = Number(interval[1]);
+    work = parseTimerDuration(interval[2]);
+    rest = parseTimerDuration(interval[3]);
+  } else {
+    warnings.push({ line, message: 'Unrecognized interval timer line. The timer was not set.' });
+    return undefined;
+  }
+
+  if (rounds === undefined || work === undefined || rest === undefined) {
+    warnings.push({ line, message: 'Invalid interval timer duration. The timer was not set.' });
+    return undefined;
+  }
+
+  const timer: IntervalTimer = {
+    rounds: clampTimerValue('rounds', rounds, line, warnings),
+    work: clampTimerValue('work', work, line, warnings),
+    rest: clampTimerValue('rest', rest, line, warnings),
+    ...TIMER_DEFAULTS,
+  };
+
+  for (const option of segments) {
+    let match = option.match(/^(\d+)\s+sets?$/i);
+    if (match) {
+      timer.sets = clampTimerValue('sets', Number(match[1]), line, warnings);
+      continue;
+    }
+    match = option.match(/^set\s+rest\s+(.+)$/i);
+    if (match) {
+      const duration = parseTimerDuration(match[1]);
+      if (duration === undefined) {
+        warnings.push({ line, message: 'Invalid set rest duration. The default was used.' });
+      } else {
+        timer.setRest = clampTimerValue('setRest', duration, line, warnings);
+      }
+      continue;
+    }
+    match = option.match(/^prep\s+(.+)$/i);
+    if (match) {
+      if (/^off$/i.test(match[1])) {
+        timer.prep = 0;
+      } else {
+        const duration = parseTimerDuration(match[1]);
+        if (duration === undefined) {
+          warnings.push({ line, message: 'Invalid prep duration. The default was used.' });
+        } else {
+          timer.prep = clampTimerValue('prep', duration, line, warnings);
+        }
+      }
+      continue;
+    }
+    warnings.push({ line, message: `Unrecognized timer option: ${option}.` });
+  }
+
+  return timer;
+}
+
+function formatTimerDuration(seconds: number) {
+  return seconds < 60
+    ? String(seconds)
+    : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+export function serializeTimer(timer: IntervalTimer) {
+  const preset = timer.rounds === 8 && timer.work === 20 && timer.rest === 10
+    ? 'Tabata'
+    : timer.rounds === 10 && timer.work === 40 && timer.rest === 20
+      ? 'HIIT 40/20'
+      : timer.rounds === 10 && timer.work === 30 && timer.rest === 30
+        ? 'HIIT 30/30'
+        : timer.work === 60 && timer.rest === 0
+          ? `EMOM ${timer.rounds}`
+          : `${timer.rounds} x ${formatTimerDuration(timer.work)}/${formatTimerDuration(timer.rest)}`;
+  const options = [
+    timer.sets !== TIMER_DEFAULTS.sets ? `${timer.sets} sets` : '',
+    timer.setRest !== TIMER_DEFAULTS.setRest ? `set rest ${formatTimerDuration(timer.setRest)}` : '',
+    timer.prep !== TIMER_DEFAULTS.prep ? `prep ${timer.prep === 0 ? 'off' : formatTimerDuration(timer.prep)}` : '',
+  ].filter(Boolean);
+  return `~ ${[preset, ...options].join(' | ')}`;
+}
 
 function cleanTitle(value: string) {
   return value
@@ -310,6 +458,8 @@ function parseLegacyGroup(group: SourceLine[], warnings: WorkoutWarning[]): Work
 
 function parseExplicit(lines: SourceLine[], warnings: WorkoutWarning[]): WorkoutPart[] {
   const parts: WorkoutPart[] = [];
+  const partLines: number[] = [];
+  const timerLineSeen: boolean[] = [];
   let current: WorkoutPart | undefined;
   for (const source of lines) {
     const value = source.text.trim();
@@ -318,6 +468,8 @@ function parseExplicit(lines: SourceLine[], warnings: WorkoutWarning[]): Workout
       const segments = value.replace(/^#\s*/, '').split('|');
       current = parseHeaderSegments(segments.shift() || '', segments);
       parts.push(current);
+      partLines.push(source.line);
+      timerLineSeen.push(false);
       if (!current.minutes) {
         warnings.push({
           line: source.line,
@@ -329,6 +481,21 @@ function parseExplicit(lines: SourceLine[], warnings: WorkoutWarning[]): Workout
     if (!current) {
       current = { title: 'Workout', meta: [], blocks: [] };
       parts.push(current);
+      partLines.push(source.line);
+      timerLineSeen.push(false);
+    }
+    if (/^~/.test(value)) {
+      const currentIndex = parts.length - 1;
+      if (timerLineSeen[currentIndex]) {
+        warnings.push({
+          line: source.line,
+          message: `Part ${parts.length} has more than one timer line (~); only the first is used.`,
+        });
+      } else {
+        timerLineSeen[currentIndex] = true;
+        current.timer = parseTimerLine(value, source.line, warnings);
+      }
+      continue;
     }
     if (/^team(?:s)?\s+(?:of|von)\s+\d+\b/i.test(value)) {
       current.meta.push(value);
@@ -336,6 +503,16 @@ function parseExplicit(lines: SourceLine[], warnings: WorkoutWarning[]): Workout
     }
     current.blocks.push(parseContentLine(source, warnings));
   }
+  parts.forEach((part, index) => {
+    if (part.format === 'TABATA' && !timerLineSeen[index]) {
+      part.timer = { ...TABATA_TIMER };
+    } else if (part.format === 'INTERVALS' && !timerLineSeen[index]) {
+      warnings.push({
+        line: partLines[index] || 1,
+        message: `Part ${index + 1} is 'Intervals' but has no timer line (~). The timer will count up.`,
+      });
+    }
+  });
   return parts;
 }
 

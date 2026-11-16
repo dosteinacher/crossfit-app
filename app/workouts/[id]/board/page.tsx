@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { Avatar, Loading } from '@/components/ui';
+import IntervalTimerBoard from '@/components/IntervalTimerBoard';
 import WorkoutPartContent from '@/components/WorkoutPartContent';
 import WorkoutTvBoard from '@/components/WorkoutTvBoard';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
+import { pauseStoredIntervalTimer } from '@/lib/intervalTimerPersistence';
 import { parseWorkout } from '@/lib/workoutNotation';
 
 type BoardWorkout = WorkoutWithDetails & { guests: Guest[] };
@@ -90,16 +92,17 @@ export default function WorkoutBoardPage() {
   const durationSeconds = (part?.minutes || 0) * 60;
 
   useEffect(() => {
-    if (!timerRunning) return;
+    if (!timerRunning || part?.timer) return;
     const intervalId = window.setInterval(() => {
       const nextElapsedSeconds = elapsedSecondsRef.current + 1;
       elapsedSecondsRef.current = nextElapsedSeconds;
       setElapsedSeconds(nextElapsedSeconds);
     }, 1000);
     return () => window.clearInterval(intervalId);
-  }, [activePart, durationSeconds, parts.length, timerRunning]);
+  }, [activePart, durationSeconds, part?.timer, parts.length, timerRunning]);
 
   useEffect(() => {
+    if (part?.timer) return;
     let active = true;
     const requestWakeLock = async () => {
       if (!('wakeLock' in navigator) || !navigator.wakeLock) return;
@@ -131,7 +134,7 @@ export default function WorkoutBoardPage() {
         wakeLockRef.current = null;
       }
     };
-  }, []);
+  }, [part?.timer]);
 
   const timerSeconds = durationSeconds > 0
     ? Math.max(0, durationSeconds - elapsedSeconds)
@@ -144,11 +147,13 @@ export default function WorkoutBoardPage() {
 
   const changePart = useCallback((index: number) => {
     if (index < 0 || index >= parts.length) return;
+    if (parts[activePart]?.timer) pauseStoredIntervalTimer(workoutId, activePart);
     setActivePart(index);
     elapsedSecondsRef.current = 0;
     setElapsedSeconds(0);
     setTimerRunning(false);
-  }, [parts.length]);
+  }, [activePart, parts, workoutId]);
+  const advanceIntervalPart = useCallback(() => changePart(activePart + 1), [activePart, changePart]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
     touchStartX.current = event.touches[0]?.clientX ?? null;
@@ -224,24 +229,39 @@ export default function WorkoutBoardPage() {
         </div>
 
         <aside className="flex flex-col gap-5 rounded-xl bg-ink p-5 text-white md:p-6">
-          <button
-            type="button"
-            onClick={() => setTimerRunning((running) => !running)}
-            aria-label={timerRunning ? 'Pause timer' : durationSeconds > 0 ? 'Start countdown timer' : 'Start stopwatch'}
-            className="flex min-h-40 flex-col items-center justify-center rounded-lg text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
-          >
-            <span className="font-display text-[7.5em] font-extrabold leading-none tabular-nums">{timerLabel}</span>
-            <span className="mt-2 font-bold uppercase tracking-[.14em] text-white">{timerRunning ? 'Tap to pause' : 'Tap to start'}</span>
-          </button>
+          {part?.timer ? (
+            <IntervalTimerBoard
+              key={`${workout.id}-${activePart}`}
+              size="compact"
+              workoutId={workout.id}
+              partIndex={activePart}
+              partTitle={part.title}
+              timer={part.timer}
+              upcomingPartTitle={parts[activePart + 1]?.title}
+              onAutoAdvance={parts[activePart + 1] ? advanceIntervalPart : undefined}
+            />
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setTimerRunning((running) => !running)}
+                aria-label={timerRunning ? 'Pause timer' : durationSeconds > 0 ? 'Start countdown timer' : 'Start stopwatch'}
+                className="flex min-h-40 flex-col items-center justify-center rounded-lg text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
+              >
+                <span className="font-display text-[7.5em] font-extrabold leading-none tabular-nums">{timerLabel}</span>
+                <span className="mt-2 font-bold uppercase tracking-[.14em] text-white">{timerRunning ? 'Tap to pause' : 'Tap to start'}</span>
+              </button>
 
-          <div>
-            <p className="mb-2 text-center font-bold uppercase tracking-[.14em] text-white">Round</p>
-            <div className="flex items-center justify-center gap-4">
-              <button type="button" onClick={() => setRound((value) => Math.max(0, value - 1))} aria-label="Decrease round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm border border-white/30 text-[2em] font-bold text-white hover:bg-white/10">−</button>
-              <span className="min-w-14 text-center font-display text-[4em] font-extrabold leading-none tabular-nums text-white">{round}</span>
-              <button type="button" onClick={() => setRound((value) => value + 1)} aria-label="Increase round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm bg-lime text-[2em] font-bold text-ink hover:brightness-95">+</button>
-            </div>
-          </div>
+              <div>
+                <p className="mb-2 text-center font-bold uppercase tracking-[.14em] text-white">Round</p>
+                <div className="flex items-center justify-center gap-4">
+                  <button type="button" onClick={() => setRound((value) => Math.max(0, value - 1))} aria-label="Decrease round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm border border-white/30 text-[2em] font-bold text-white hover:bg-white/10">−</button>
+                  <span className="min-w-14 text-center font-display text-[4em] font-extrabold leading-none tabular-nums text-white">{round}</span>
+                  <button type="button" onClick={() => setRound((value) => value + 1)} aria-label="Increase round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm bg-lime text-[2em] font-bold text-ink hover:brightness-95">+</button>
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="min-h-0 border-t border-white/20 pt-4">
             <p className="mb-3 font-bold uppercase tracking-[.14em] text-white">Team · {teamNames.length || workout.max_participants}</p>
