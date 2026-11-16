@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { format } from 'date-fns';
-import { buildTimeline, stateAt, type Phase } from '@/lib/intervalTimer';
+import { buildTimeline, cueAt, stateAt, type Phase, type TimerCue } from '@/lib/intervalTimer';
 import {
   getIntervalTimerStorageKey,
   restoreIntervalTimerState,
@@ -14,6 +14,7 @@ type Volume = 'low' | 'medium' | 'high';
 
 const SOUND_STORAGE_KEY = 'pure.board.sound';
 const VOLUME_STORAGE_KEY = 'pure.board.volume';
+const VOLUME_GAIN: Record<Volume, number> = { low: 0.07, medium: 0.18, high: 0.36 };
 
 const PHASE_STYLE: Record<Phase, { label: string; color: string; className: string }> = {
   prep: { label: 'GET READY', color: '#FF8A1F', className: 'text-[#FF8A1F]' },
@@ -78,6 +79,9 @@ export default function IntervalTimerBoard({
   const [volume, setVolume] = useState<Volume>('medium');
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioWarningRef = useRef(false);
+  const lastCueElapsedRef = useRef<number | null>(null);
   const advanceRef = useRef(onAutoAdvance);
 
   const elapsed = Math.min(end, accumulated + (running && startedAt !== null
@@ -176,6 +180,88 @@ export default function IntervalTimerBoard({
     };
   }, [running]);
 
+  const ensureAudioContext = useCallback(() => {
+    try {
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        audioContextRef.current = new AudioContext();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        void audioContextRef.current.resume().catch((audioError: unknown) => {
+          if (!audioWarningRef.current) {
+            audioWarningRef.current = true;
+            console.warn('Interval timer audio is unavailable:', audioError);
+          }
+        });
+      }
+      return audioContextRef.current;
+    } catch (audioError) {
+      if (!audioWarningRef.current) {
+        audioWarningRef.current = true;
+        console.warn('Interval timer audio is unavailable:', audioError);
+      }
+      return null;
+    }
+  }, []);
+
+  useEffect(() => () => {
+    const audio = audioContextRef.current;
+    audioContextRef.current = null;
+    if (audio && audio.state !== 'closed') {
+      void audio.close().catch((audioError: unknown) => {
+        if (!audioWarningRef.current) {
+          audioWarningRef.current = true;
+          console.warn('Could not close interval timer audio:', audioError);
+        }
+      });
+    }
+  }, []);
+
+  const playCue = useCallback((cue: TimerCue, secondsLeft: number) => {
+    if (!preferencesLoaded || !soundEnabled) return;
+    const audio = ensureAudioContext();
+    if (!audio) return;
+
+    const notes = cue === 'finish'
+      ? [{ frequency: 880, delay: 0 }, { frequency: 1046, delay: 0.18 }, { frequency: 1318, delay: 0.36 }]
+      : [{
+        frequency: cue === 'phaseStart-work'
+          ? 880
+          : cue === 'phaseStart-rest'
+            ? 520
+            : 520 + (4 - secondsLeft) * 80,
+        delay: 0,
+      }];
+    const duration = cue === 'tick' ? 0.08 : cue === 'finish' ? 0.16 : 0.18;
+    const start = audio.currentTime;
+
+    notes.forEach(({ frequency, delay }) => {
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      const noteStart = start + delay;
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, noteStart);
+      gain.gain.setValueAtTime(0.0001, noteStart);
+      gain.gain.exponentialRampToValueAtTime(VOLUME_GAIN[volume], noteStart + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + duration);
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start(noteStart);
+      oscillator.stop(noteStart + duration);
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        gain.disconnect();
+      };
+    });
+  }, [ensureAudioContext, preferencesLoaded, soundEnabled, volume]);
+
+  useEffect(() => {
+    if (!timerLoaded || !preferencesLoaded || !running) return;
+    const cue = cueAt(timer, elapsed);
+    if (!cue || lastCueElapsedRef.current === elapsed) return;
+    lastCueElapsedRef.current = elapsed;
+    playCue(cue, timerState.segLeft);
+  }, [elapsed, playCue, preferencesLoaded, running, timer, timerLoaded, timerState.segLeft]);
+
   useEffect(() => {
     if (!running) return;
     let active = true;
@@ -239,13 +325,14 @@ export default function IntervalTimerBoard({
   const setPosition = useCallback((position: number) => {
     const timestamp = Date.now();
     const nextElapsed = Math.max(0, Math.min(end, position));
+    lastCueElapsedRef.current = null;
     setAccumulated(nextElapsed);
     setStartedAt(running ? timestamp : null);
     setNow(timestamp);
   }, [end, running]);
 
   const toggleTimer = useCallback(() => {
-    if (!timerLoaded) return;
+    if (!timerLoaded || !preferencesLoaded) return;
     onActivity?.();
     if (running) {
       const timestamp = Date.now();
@@ -256,20 +343,22 @@ export default function IntervalTimerBoard({
       return;
     }
     const timestamp = Date.now();
+    if (soundEnabled && preferencesLoaded) ensureAudioContext();
     setAccumulated(timerState.done ? 0 : elapsed);
     setStartedAt(timestamp);
     setRunning(true);
     setNow(timestamp);
-  }, [elapsed, end, liveElapsed, onActivity, running, timerLoaded, timerState.done]);
+  }, [elapsed, end, ensureAudioContext, liveElapsed, onActivity, preferencesLoaded, running, soundEnabled, timerLoaded, timerState.done]);
 
   const stopTimer = useCallback(() => {
-    if (!timerLoaded) return;
+    if (!timerLoaded || !preferencesLoaded) return;
     onActivity?.();
+    lastCueElapsedRef.current = null;
     setAccumulated(0);
     setStartedAt(null);
     setRunning(false);
     setNow(Date.now());
-  }, [onActivity, timerLoaded]);
+  }, [onActivity, preferencesLoaded, timerLoaded]);
 
   const previousInterval = useCallback(() => {
     onActivity?.();
@@ -296,13 +385,14 @@ export default function IntervalTimerBoard({
 
   const toggleSound = useCallback(() => {
     onActivity?.();
-    setSoundEnabled((enabled) => !enabled);
-  }, [onActivity]);
+    if (!soundEnabled) ensureAudioContext();
+    setSoundEnabled(!soundEnabled);
+  }, [ensureAudioContext, onActivity, soundEnabled]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target;
-      if (!timerLoaded || (target instanceof HTMLElement && target.closest('button, input, select, textarea, [contenteditable="true"]'))) return;
+      if (!timerLoaded || !preferencesLoaded || (target instanceof HTMLElement && target.closest('button, input, select, textarea, [contenteditable="true"]'))) return;
       if (event.key === ' ' || event.key === 'Enter' || event.key === 'OK') {
         event.preventDefault();
         toggleTimer();
@@ -321,11 +411,12 @@ export default function IntervalTimerBoard({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [nextInterval, previousInterval, stopTimer, timerLoaded, toggleSound, toggleTimer]);
+  }, [nextInterval, preferencesLoaded, previousInterval, stopTimer, timerLoaded, toggleSound, toggleTimer]);
 
   const phaseWordClass = phaseStyle?.className || 'text-white';
   const remainingLabel = formatTime(timerState.totalLeft);
   const controlsShowing = size === 'compact' || controlsVisible;
+  const timerControlsReady = timerLoaded && preferencesLoaded;
   const buttonClass = size === 'stage'
     ? 'h-[68px] rounded-xl bg-[#1E1F1B] font-display text-[22px] font-black uppercase'
     : 'h-12 rounded-lg bg-[#1E1F1B] font-display text-[15px] font-black uppercase';
@@ -334,6 +425,7 @@ export default function IntervalTimerBoard({
       <button
         type="button"
         onClick={toggleSound}
+        disabled={!preferencesLoaded}
         aria-label={soundEnabled ? 'Turn sound off' : 'Turn sound on'}
         aria-pressed={soundEnabled}
         className={`shrink-0 rounded-lg border px-3 py-2 font-display text-[15px] font-extrabold uppercase leading-none ${
@@ -344,6 +436,7 @@ export default function IntervalTimerBoard({
       </button>
       <select
         aria-label="Sound volume"
+        disabled={!preferencesLoaded}
         value={volume}
         onChange={(event) => {
           const value = event.target.value;
@@ -362,7 +455,7 @@ export default function IntervalTimerBoard({
     <div className={`grid gap-2 ${size === 'stage' ? 'grid-cols-[96px_72px_minmax(0,1fr)_72px]' : 'grid-cols-[64px_44px_minmax(0,1fr)_44px]'}`}>
       <button
         type="button"
-        disabled={!timerLoaded}
+        disabled={!timerControlsReady}
         onClick={stopTimer}
         aria-label="Stop interval timer"
         className={`${buttonClass} text-[#FF8A1F]`}
@@ -371,7 +464,7 @@ export default function IntervalTimerBoard({
       </button>
       <button
         type="button"
-        disabled={!timerLoaded}
+        disabled={!timerControlsReady}
         onClick={previousInterval}
         aria-label="Previous interval"
         className={`${buttonClass} text-white`}
@@ -380,7 +473,7 @@ export default function IntervalTimerBoard({
       </button>
       <button
         type="button"
-        disabled={!timerLoaded}
+        disabled={!timerControlsReady}
         onClick={toggleTimer}
         aria-label={running ? 'Pause interval timer' : timerState.done ? 'Restart interval timer' : elapsed > 0 ? 'Resume interval timer' : 'Start interval timer'}
         className={`${buttonClass} bg-lime text-ink`}
@@ -389,7 +482,7 @@ export default function IntervalTimerBoard({
       </button>
       <button
         type="button"
-        disabled={!timerLoaded}
+        disabled={!timerControlsReady}
         onClick={nextInterval}
         aria-label="Next interval"
         className={`${buttonClass} text-white`}
@@ -414,7 +507,7 @@ export default function IntervalTimerBoard({
 
         <button
           type="button"
-          disabled={!timerLoaded}
+          disabled={!timerControlsReady}
           onClick={toggleTimer}
           aria-label={running ? 'Pause interval timer' : timerState.done ? 'Restart interval timer' : 'Start interval timer'}
           className="flex min-h-[150px] flex-col items-center justify-center rounded-lg border border-white/10 bg-[#0B0C0A] px-3 py-4 text-center focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
@@ -501,7 +594,7 @@ export default function IntervalTimerBoard({
         <p className={`font-display text-[88px] font-black uppercase leading-[.88] ${phaseWordClass}`}>{phaseLabel}</p>
         <button
           type="button"
-          disabled={!timerLoaded}
+          disabled={!timerControlsReady}
           onClick={toggleTimer}
           aria-label={running ? 'Pause interval timer' : timerState.done ? 'Restart interval timer' : 'Start interval timer'}
           className={`block w-full overflow-hidden text-left font-display text-[clamp(92px,9.15vw,176px)] font-black leading-[.82] tracking-[-.03em] tabular-nums focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40 ${phaseWordClass}`}
