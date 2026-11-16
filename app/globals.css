@@ -133,6 +133,28 @@ h1, h2, h3 {
 
 .board-compact-desktop {
   display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.board-timer-setup {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+}
+
+.board-timer-setup-fields {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.board-timer-setup-actions {
+  flex: 0 0 auto;
 }
 
 .board-timer-mobile-bar,
@@ -250,6 +272,19 @@ h1, h2, h3 {
     background: var(--ink);
     color: white;
     container-type: inline-size;
+  }
+
+  .board-timer-sheet-setup-open {
+    display: flex;
+    height: 90dvh;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .board-timer-sheet-setup-open .board-timer-setup {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
   }
 }
 

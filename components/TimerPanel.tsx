@@ -9,7 +9,15 @@ import {
   type PersistedIntervalTimer,
 } from '@/lib/intervalTimerPersistence';
 import type { WorkoutPart } from '@/lib/workoutNotation';
-import { getBoardTimerDuration, getDefaultBoardTimerMode } from '@/lib/boardTimer';
+import BoardTimerSetup from '@/components/BoardTimerSetup';
+import {
+  boardTimerConfigurationsEqual,
+  getBoardTimerConfigurationDuration,
+  getBoardTimerOverrideStorageKey,
+  getDefaultBoardTimerConfiguration,
+  isBoardTimerConfiguration,
+  type BoardTimerConfiguration,
+} from '@/lib/boardTimer';
 
 type Volume = 'low' | 'medium' | 'high';
 
@@ -68,9 +76,15 @@ export default function TimerPanel({
   stageFooter?: (state: { elapsedSeconds: number; partProgress: number }) => ReactNode;
 }) {
   const storageKey = getIntervalTimerStorageKey(workoutId, partIndex);
-  const mode = getDefaultBoardTimerMode(part);
-  const timer = part.timer;
-  const duration = getBoardTimerDuration(part, mode);
+  const overrideStorageKey = getBoardTimerOverrideStorageKey(workoutId, partIndex);
+  const defaultConfiguration = useMemo(() => getDefaultBoardTimerConfiguration(part), [part]);
+  const [timerOverride, setTimerOverride] = useState<BoardTimerConfiguration | null>(null);
+  const [overrideLoaded, setOverrideLoaded] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const configuration = timerOverride || defaultConfiguration;
+  const mode = configuration.mode;
+  const timer = mode === 'intervals' ? configuration.timer : undefined;
+  const duration = mode === 'intervals' ? undefined : getBoardTimerConfigurationDuration(configuration);
   const { end: intervalEnd } = useMemo(
     () => timer ? buildTimeline(timer) : { segs: [], end: 0 },
     [timer]
@@ -90,6 +104,7 @@ export default function TimerPanel({
   const audioWarningRef = useRef(false);
   const lastCueElapsedRef = useRef<number | null>(null);
   const advanceRef = useRef(onAutoAdvance);
+  const skipTimerRestoreRef = useRef(false);
 
   const elapsed = Math.min(end, accumulated + (running && startedAt !== null
     ? Math.max(0, Math.floor((now - startedAt) / 1000))
@@ -106,7 +121,7 @@ export default function TimerPanel({
     ? 'NEXT PART'
     : timerState?.next
       ? `${PHASE_STYLE[timerState.next.phase].label} ${formatTime(timerState.next.dur)}`
-      : mode === 'emom' ? 'NEXT MINUTE' : duration === undefined ? 'NO CAP' : 'FINISH';
+      : mode === 'emom' ? `NEXT ${configuration.everyMinutes === 1 ? 'MINUTE' : 'ROUND'}` : duration === undefined ? 'NO CAP' : 'FINISH';
   const totalLeft = timerState?.totalLeft ?? (
     duration === undefined ? 0 : Math.max(0, duration - elapsed)
   );
@@ -123,13 +138,42 @@ export default function TimerPanel({
     : mode === 'countdown'
       ? formatTime(Math.max(0, (duration || 0) - elapsed), true)
       : mode === 'emom'
-        ? formatTime(elapsed >= (duration || 0) ? 0 : 60 - (elapsed % 60), true)
+        ? formatTime(elapsed >= (duration || 0) ? 0 : ((configuration.everyMinutes || 1) * 60) - (elapsed % ((configuration.everyMinutes || 1) * 60)), true)
         : formatTime(elapsed, true);
   const emomMinute = mode === 'emom'
-    ? Math.min(Math.max(1, Math.ceil((duration || 0) / 60)), Math.floor(elapsed / 60) + 1)
+    ? Math.min(configuration.minutes || 1, Math.floor(elapsed / ((configuration.everyMinutes || 1) * 60)) + 1)
     : 0;
 
   useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      try {
+        const raw = localStorage.getItem(overrideStorageKey);
+        if (raw) {
+          const saved: unknown = JSON.parse(raw);
+          if (isBoardTimerConfiguration(saved)) {
+            setTimerOverride(saved);
+          } else {
+            console.warn('Ignoring malformed board timer override:', overrideStorageKey);
+            setTimerOverride(null);
+          }
+        } else {
+          setTimerOverride(null);
+        }
+      } catch (storageError) {
+        console.warn('Could not restore board timer override:', storageError);
+        setTimerOverride(null);
+      }
+      setOverrideLoaded(true);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [overrideStorageKey]);
+
+  useEffect(() => {
+    if (!overrideLoaded) return;
+    if (skipTimerRestoreRef.current) {
+      skipTimerRestoreRef.current = false;
+      return;
+    }
     const frameId = window.requestAnimationFrame(() => {
       try {
         const raw = localStorage.getItem(storageKey);
@@ -160,7 +204,7 @@ export default function TimerPanel({
       setTimerLoaded(true);
     });
     return () => window.cancelAnimationFrame(frameId);
-  }, [end, storageKey]);
+  }, [end, overrideLoaded, storageKey]);
 
   useEffect(() => {
     if (!timerLoaded) return;
@@ -423,6 +467,87 @@ export default function TimerPanel({
     setSoundEnabled(!soundEnabled);
   }, [ensureAudioContext, onActivity, soundEnabled]);
 
+  const applyConfiguration = useCallback((nextConfiguration: BoardTimerConfiguration, start: boolean) => {
+    const nextOverride = boardTimerConfigurationsEqual(nextConfiguration, defaultConfiguration)
+      ? null
+      : nextConfiguration;
+    try {
+      if (nextOverride) {
+        localStorage.setItem(overrideStorageKey, JSON.stringify(nextOverride));
+      } else {
+        localStorage.removeItem(overrideStorageKey);
+      }
+    } catch (storageError) {
+      console.warn('Could not persist board timer override:', storageError);
+    }
+
+    const timestamp = Date.now();
+    skipTimerRestoreRef.current = true;
+    lastCueElapsedRef.current = null;
+    setTimerOverride(nextOverride);
+    setAccumulated(0);
+    setStartedAt(start ? timestamp : null);
+    setRunning(start);
+    setNow(timestamp);
+    setSetupOpen(false);
+    if (start) {
+      onActivity?.();
+      if (soundEnabled) ensureAudioContext();
+    }
+  }, [defaultConfiguration, ensureAudioContext, onActivity, overrideStorageKey, soundEnabled]);
+
+  const finishSetup = useCallback((nextConfiguration: BoardTimerConfiguration) => {
+    if (boardTimerConfigurationsEqual(nextConfiguration, configuration)) {
+      setSetupOpen(false);
+      return;
+    }
+    applyConfiguration(nextConfiguration, false);
+  }, [applyConfiguration, configuration]);
+
+  const resetOverride = useCallback(() => {
+    try {
+      localStorage.removeItem(overrideStorageKey);
+    } catch (storageError) {
+      console.warn('Could not reset board timer override:', storageError);
+    }
+    skipTimerRestoreRef.current = true;
+    lastCueElapsedRef.current = null;
+    setTimerOverride(null);
+    setAccumulated(0);
+    setStartedAt(null);
+    setRunning(false);
+    setNow(Date.now());
+  }, [overrideStorageKey]);
+
+  const timerControlsReady = timerLoaded && preferencesLoaded && overrideLoaded;
+  const setupControls = (
+    <div className="flex min-w-0 items-center gap-2">
+      {timerOverride && (
+        <div className="flex min-w-0 items-center gap-1 rounded-full border border-lime/50 px-2 py-1 text-[9px] font-bold uppercase tracking-[.08em] text-lime">
+          <span className="truncate">EDITED ON BOARD ·</span>
+          <button type="button" disabled={!timerControlsReady} onClick={resetOverride} className="shrink-0 underline underline-offset-2 disabled:opacity-50">RESET</button>
+        </div>
+      )}
+      <button
+        type="button"
+        disabled={!timerControlsReady}
+        onClick={() => setSetupOpen(true)}
+        aria-label={timerOverride ? 'Edit timer setup' : 'Set timer'}
+        className="min-h-9 shrink-0 rounded-lg border border-[#3A3C36] px-2 font-display text-[12px] font-extrabold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime disabled:opacity-50"
+      >
+        {timerOverride ? 'TIMER ✎' : '⏱ SET TIMER'}
+      </button>
+    </div>
+  );
+  const renderSetup = () => (
+    <BoardTimerSetup
+      initialConfiguration={configuration}
+      partTitle={part.title || 'Workout'}
+      onStart={(nextConfiguration) => applyConfiguration(nextConfiguration, true)}
+      onDone={finishSetup}
+    />
+  );
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target;
@@ -453,7 +578,7 @@ export default function TimerPanel({
   const currentRound = timerState?.round || 1;
   const currentSet = timerState?.set || 1;
   const modeTitle = mode === 'countup' && duration !== undefined
-    ? `TIME CAP · ${part.minutes}′`
+    ? `TIME CAP · ${configuration.minutes}′`
     : mode === 'intervals'
       ? 'INTERVALS'
       : mode === 'countup'
@@ -473,7 +598,6 @@ export default function TimerPanel({
   const startLabel = running ? 'Ⅱ Pause' : done ? '↻ Restart' : elapsed > 0 ? '▶ Resume' : '▶ Start';
   const timeButtonLabel = running ? 'Pause timer' : done ? 'Restart timer' : elapsed > 0 ? 'Resume timer' : 'Start timer';
   const controlsShowing = size === 'compact' || controlsVisible;
-  const timerControlsReady = timerLoaded && preferencesLoaded;
   const buttonClass = size === 'stage'
     ? 'h-[68px] rounded-xl bg-[#1E1F1B] font-display text-[22px] font-black uppercase'
     : 'h-12 rounded-lg bg-[#1E1F1B] font-display text-[15px] font-black uppercase';
@@ -551,14 +675,17 @@ export default function TimerPanel({
 
   const compactContent = () => (
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-2">
+          <div className="flex min-w-0 items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="font-display text-[15px] font-black uppercase leading-none text-white">{modeTitle}</p>
             <p className="mt-1 truncate text-[11px] font-bold uppercase tracking-[.08em] text-[#8A8D84]">
               {part.title} · {partSummary}
             </p>
           </div>
-          {soundControls}
+            {setupControls}
+          </div>
+          <div className="flex justify-end">{soundControls}</div>
         </div>
 
         <button
@@ -570,7 +697,7 @@ export default function TimerPanel({
         >
           {mode === 'emom' && (
             <span className="font-display text-[28px] font-black uppercase leading-[.9] text-[#8A8D84]">
-              {String(emomMinute).padStart(2, '0')} / {Math.max(1, Math.ceil((duration || 0) / 60))}
+              {String(emomMinute).padStart(2, '0')} / {configuration.minutes || 1}
             </span>
           )}
           <span className={`font-display text-[clamp(1.75rem,9cqw,2.125rem)] font-black uppercase leading-[.9] ${phaseWordClass}`} aria-live="polite" aria-atomic="true">{phaseLabel}</span>
@@ -625,7 +752,7 @@ export default function TimerPanel({
           <div className="border-t border-[#2A2C27] pt-3">
             <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Minute</p>
             <p className="font-display text-[clamp(1.875rem,10cqw,2.5rem)] font-black leading-none tabular-nums text-white">
-              {String(emomMinute).padStart(2, '0')}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {Math.max(1, Math.ceil((duration || 0) / 60))}</span>
+              {String(emomMinute).padStart(2, '0')}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {configuration.minutes || 1}</span>
             </p>
           </div>
         ) : null}
@@ -653,7 +780,9 @@ export default function TimerPanel({
   if (size === 'compact') {
     return (
       <>
-        <div className="board-compact-desktop">{compactContent()}</div>
+        <div className="board-compact-desktop">
+          {setupOpen ? renderSetup() : compactContent()}
+        </div>
         <div className="board-timer-mobile-bar">
           <button
             type="button"
@@ -669,7 +798,7 @@ export default function TimerPanel({
             {mode === 'intervals' && timer ? (
               <span className="text-[11px] font-bold tabular-nums text-[#C9CBC4]">R {String(currentRound).padStart(2, '0')}/{timer.rounds}</span>
             ) : mode === 'emom' ? (
-              <span className="text-[11px] font-bold tabular-nums text-[#C9CBC4]">{String(emomMinute).padStart(2, '0')}/{Math.max(1, Math.ceil((duration || 0) / 60))}</span>
+              <span className="text-[11px] font-bold tabular-nums text-[#C9CBC4]">{String(emomMinute).padStart(2, '0')}/{configuration.minutes || 1}</span>
             ) : null}
           </button>
           <button
@@ -690,7 +819,12 @@ export default function TimerPanel({
               onClick={() => setMobileExpanded(false)}
               aria-label="Close timer panel"
             />
-            <section className="board-timer-sheet" role="dialog" aria-modal="true" aria-label="Timer panel">
+            <section
+              className={`board-timer-sheet ${setupOpen ? 'board-timer-sheet-setup-open' : ''}`}
+              role="dialog"
+              aria-modal="true"
+              aria-label={setupOpen ? 'Timer setup' : 'Timer panel'}
+            >
               <div className="mb-3 flex justify-end">
                 <button
                   type="button"
@@ -701,7 +835,7 @@ export default function TimerPanel({
                   ×
                 </button>
               </div>
-              {compactContent()}
+              {setupOpen ? renderSetup() : compactContent()}
             </section>
           </div>
         )}
@@ -712,22 +846,27 @@ export default function TimerPanel({
   const clock = currentTime || new Date();
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 bg-ink px-10 py-[34px] text-white">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-display text-[30px] font-black uppercase leading-none">PURE</span>
-        {soundControls}
-        <time className="shrink-0 font-sans text-[24px] font-bold tabular-nums" dateTime={clock.toISOString()}>
-          {format(clock, 'HH:mm')}
-        </time>
-      </div>
+      {setupOpen ? renderSetup() : (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-display text-[30px] font-black uppercase leading-none">PURE</span>
+            {soundControls}
+            <time className="shrink-0 font-sans text-[24px] font-bold tabular-nums" dateTime={clock.toISOString()}>
+              {format(clock, 'HH:mm')}
+            </time>
+          </div>
 
-      <p className="truncate text-[20px] font-bold uppercase tracking-[.12em] text-[#8A8D84]">
-        {part.title} · {modeTitle} · {partSummary}
-      </p>
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <p className="truncate text-[20px] font-bold uppercase tracking-[.12em] text-[#8A8D84]">
+              {part.title} · {modeTitle} · {partSummary}
+            </p>
+            {setupControls}
+          </div>
 
-      <div className="min-w-0">
+          <div className="min-w-0">
         {mode === 'emom' && (
           <p className="mb-2 font-display text-[38px] font-black uppercase leading-none text-[#8A8D84]">
-            {String(emomMinute).padStart(2, '0')} / {Math.max(1, Math.ceil((duration || 0) / 60))}
+            {String(emomMinute).padStart(2, '0')} / {configuration.minutes || 1}
           </p>
         )}
         <p className={`font-display text-[88px] font-black uppercase leading-[.88] ${phaseWordClass}`} aria-live="polite" aria-atomic="true">{phaseLabel}</p>
@@ -789,7 +928,7 @@ export default function TimerPanel({
         <div className="border-t-2 border-[#2A2C27] pt-5">
           <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Minute</p>
           <p className="font-display text-[72px] font-black leading-none tabular-nums text-white">
-            {String(emomMinute).padStart(2, '0')}<span className="ml-2 text-[40px] text-[#8A8D84]">/ {Math.max(1, Math.ceil((duration || 0) / 60))}</span>
+            {String(emomMinute).padStart(2, '0')}<span className="ml-2 text-[40px] text-[#8A8D84]">/ {configuration.minutes || 1}</span>
           </p>
         </div>
       )}
@@ -811,12 +950,14 @@ export default function TimerPanel({
         </p>
       )}
 
-      <div className="mt-auto flex flex-col gap-5">
-        <div className={`transition-opacity ${controlsShowing ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-          {controls}
-        </div>
-        {stageFooter?.({ elapsedSeconds: elapsed, partProgress })}
-      </div>
+          <div className="mt-auto flex flex-col gap-5">
+            <div className={`transition-opacity ${controlsShowing ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+              {controls}
+            </div>
+            {stageFooter?.({ elapsedSeconds: elapsed, partProgress })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
