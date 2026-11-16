@@ -4,6 +4,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { addMinutes, format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
+import IntervalTimerBoard from '@/components/IntervalTimerBoard';
+import { pauseStoredIntervalTimer } from '@/lib/intervalTimerPersistence';
 import type { WorkoutBlock, WorkoutPart } from '@/lib/workoutNotation';
 import { parseWorkout } from '@/lib/workoutNotation';
 import {
@@ -352,7 +354,11 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
           const restoredDuration = (parts[savedPart]?.minutes || 0) * 60;
           setActivePart(savedPart);
           setElapsedSeconds(restoredDuration ? Math.min(restoredElapsed, restoredDuration) : restoredElapsed);
-          setTimerRunning(Boolean(saved.timerRunning && (!restoredDuration || restoredElapsed < restoredDuration)));
+          setTimerRunning(Boolean(
+            !parts[savedPart]?.timer &&
+            saved.timerRunning &&
+            (!restoredDuration || restoredElapsed < restoredDuration)
+          ));
         }
       } catch (storageError) {
         console.warn('Could not restore TV workout timer state:', storageError);
@@ -383,13 +389,13 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   }, []);
 
   useEffect(() => {
-    if (!timerRunning) return;
+    if (!timerRunning || part?.timer) return;
     const intervalId = window.setInterval(() => setElapsedSeconds((seconds) => seconds + 1), 1000);
     return () => window.clearInterval(intervalId);
-  }, [timerRunning, activePart]);
+  }, [timerRunning, activePart, part?.timer]);
 
   useEffect(() => {
-    if (!timerRunning || !durationSeconds || elapsedSeconds < durationSeconds) return;
+    if (part?.timer || !timerRunning || !durationSeconds || elapsedSeconds < durationSeconds) return;
     completionTimerRef.current = window.setTimeout(() => {
       setTimerRunning(false);
       if (soundEnabled) playTone(1046, 0.5);
@@ -407,7 +413,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     return () => {
       if (completionTimerRef.current !== null) window.clearTimeout(completionTimerRef.current);
     };
-  }, [activePart, durationSeconds, elapsedSeconds, parts, soundEnabled, timerRunning]);
+  }, [activePart, durationSeconds, elapsedSeconds, part?.timer, parts, soundEnabled, timerRunning]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(revealControls);
@@ -432,6 +438,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
 
   const changePart = useCallback((index: number) => {
     if (index < 0 || index >= parts.length) return;
+    if (parts[activePart]?.timer) pauseStoredIntervalTimer(workout.id, activePart);
     if (nextTimerRef.current !== null) window.clearTimeout(nextTimerRef.current);
     if (countInTimerRef.current !== null) window.clearTimeout(countInTimerRef.current);
     if (completionTimerRef.current !== null) window.clearTimeout(completionTimerRef.current);
@@ -443,7 +450,8 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     setActivePart(index);
     setElapsedSeconds(0);
     setTimerRunning(false);
-  }, [parts.length]);
+  }, [activePart, parts, workout.id]);
+  const advanceIntervalPart = useCallback(() => changePart(activePart + 1), [activePart, changePart]);
 
   const startTimer = useCallback(() => {
     if (timerRunning) {
@@ -513,8 +521,10 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
         changePart(activePart + 1);
       } else if (event.key === ' ' || event.key === 'Enter') {
         event.preventDefault();
+        if (part?.timer) return;
         startTimer();
       } else if (event.key.toLowerCase() === 'r') {
+        if (part?.timer) return;
         resetPart();
       } else if (event.key.toLowerCase() === 'f') {
         void toggleFullscreen();
@@ -526,7 +536,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activePart, changePart, resetPart, revealControls, startTimer, toggleFullscreen, workout.id]);
+  }, [activePart, changePart, part?.timer, resetPart, revealControls, startTimer, toggleFullscreen, workout.id]);
 
   const changeTextScale = () => {
     const currentIndex = TEXT_SCALES.indexOf(textScale as (typeof TEXT_SCALES)[number]);
@@ -594,6 +604,51 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
           <WorkoutTvContent part={part} dark={dark} textScale={textScale} />
         </div>
 
+        {part?.timer ? (
+          <aside className="flex min-h-0 flex-col overflow-hidden bg-[#141512] text-white">
+            <IntervalTimerBoard
+              key={`${workout.id}-${activePart}`}
+              size="stage"
+              workoutId={workout.id}
+              partIndex={activePart}
+              partTitle={part.title}
+              timer={part.timer}
+              upcomingPartTitle={upcomingPart?.title}
+              currentTime={now}
+              controlsVisible={controlsVisible}
+              onActivity={revealControls}
+              onAutoAdvance={upcomingPart ? advanceIntervalPart : undefined}
+              stageFooter={({ elapsedSeconds: intervalElapsed, partProgress: intervalProgress }) => {
+                const classMinutes = Math.floor((minutesBeforePart * 60 + intervalElapsed) / 60);
+                return (
+                  <>
+                    <section className="border-t border-[#2A2C27] pt-5">
+                      <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">Team</p>
+                      <p className="text-[30px] font-bold leading-snug text-white">{teamLabel}</p>
+                    </section>
+                    <section className="border-t border-[#2A2C27] pt-5">
+                      <div className="mb-2 flex items-baseline justify-between gap-3 text-[24px] font-bold uppercase tracking-[.1em] text-[#C9CBC4]">
+                        <span>Class</span>
+                        <span>{classMinutes} / {totalMinutes} min · Ends {format(endDate, 'HH:mm')}</span>
+                      </div>
+                      <div className="flex h-[10px] gap-1" aria-label={`Class progress: ${classMinutes} of ${totalMinutes} minutes`}>
+                        {parts.map((item, index) => {
+                          const width = `${((item.minutes || 1) / (parts.reduce((sum, entry) => sum + (entry.minutes || 1), 0))) * 100}%`;
+                          const fill = index < activePart ? 1 : index === activePart ? intervalProgress : 0;
+                          return (
+                            <div key={`${item.title}-${index}`} className="min-w-[4px] flex-1 overflow-hidden rounded-sm bg-[#2A2C27]" style={{ flexBasis: width }}>
+                              <div className={`h-full ${index < activePart ? 'bg-[#C9CBC4]' : 'bg-lime'}`} style={{ width: `${fill * 100}%` }} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  </>
+                );
+              }}
+            />
+          </aside>
+        ) : (
         <aside className="flex min-h-0 flex-col overflow-hidden bg-[#141512] px-10 py-[34px] text-white">
           <div className="flex items-center justify-between gap-4">
             <span className="font-display text-[30px] font-black uppercase leading-none">PURE</span>
@@ -671,6 +726,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
             </div>
           </section>
         </aside>
+        )}
 
         <div
           className={`absolute bottom-5 left-5 z-20 max-w-[calc(100%-580px)] rounded-sm border border-white/30 bg-[#141512]/95 px-5 py-4 text-white shadow-xl transition-opacity ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
@@ -681,7 +737,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
             <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-11 items-center rounded-sm bg-white px-3 text-[20px] font-bold text-ink">Exit</Link>
             <button type="button" onClick={changeTextScale} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">A A+</button>
             <button type="button" onClick={() => setDark((value) => !value)} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">{dark ? 'Light' : 'Dark'}</button>
-            <button type="button" onClick={() => setSoundEnabled((value) => !value)} aria-pressed={soundEnabled} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">Sound {soundEnabled ? 'On' : 'Off'}</button>
+            {!part?.timer && <button type="button" onClick={() => setSoundEnabled((value) => !value)} aria-pressed={soundEnabled} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">Sound {soundEnabled ? 'On' : 'Off'}</button>}
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[20px] font-semibold text-[#C9CBC4]">
             <span>← → part</span><span>Space / Enter start</span><span>R reset</span><span>F fullscreen</span><span>D dark / light</span><span>Esc exit</span>
