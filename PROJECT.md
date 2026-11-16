@@ -14,7 +14,7 @@ Concise facts about this repo so tools and teammates don’t rely on stale guess
 - Deployed on **Vercel** (see `VERCEL_DEPLOY.md`, `DEPLOYMENT.md`, `DEPLOY_QUICK.md`).
 - **PostgreSQL** via **`POSTGRES_URL`** or **`DATABASE_URL`** (`@vercel/postgres`, Neon when provisioned from Vercel).
 - **Without** a DB URL in dev: **in-memory mock** (`lib/db/mock.ts`) — data **lost on restart**.
-- Schema / tables: **`lib/db/postgres.ts`** (`CREATE TABLE IF NOT EXISTS …`). Not Cloudflare D1.
+- Schema / tables: **`lib/db/postgres.ts`** (`CREATE TABLE IF NOT EXISTS …`).
 
 ## Auth & roles
 

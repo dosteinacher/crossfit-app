@@ -18,5 +18,3 @@ Use **[`VERCEL_DEPLOY.md`](./VERCEL_DEPLOY.md)** for:
 3. Create **Storage → Postgres** so `POSTGRES_URL` is available to the app.  
 4. Run the SQL from `VERCEL_DEPLOY.md` in the Neon console if tables are not created automatically.  
 5. Deploy; register with `ADMIN_EMAIL` for the first admin user.
-
-Older instructions that referenced Cloudflare Pages / D1 are obsolete for this project.
