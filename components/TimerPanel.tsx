@@ -8,7 +8,8 @@ import {
   restoreIntervalTimerState,
   type PersistedIntervalTimer,
 } from '@/lib/intervalTimerPersistence';
-import type { IntervalTimer } from '@/lib/workoutNotation';
+import type { WorkoutPart } from '@/lib/workoutNotation';
+import { getBoardTimerDuration, getDefaultBoardTimerMode } from '@/lib/boardTimer';
 
 type Volume = 'low' | 'medium' | 'high';
 
@@ -43,12 +44,11 @@ function getStoredSoundPreferences() {
   }
 }
 
-export default function IntervalTimerBoard({
+export default function TimerPanel({
   size,
   workoutId,
   partIndex,
-  partTitle,
-  timer,
+  part,
   upcomingPartTitle,
   currentTime,
   controlsVisible = true,
@@ -59,8 +59,7 @@ export default function IntervalTimerBoard({
   size: 'stage' | 'compact';
   workoutId: number | string;
   partIndex: number;
-  partTitle: string;
-  timer: IntervalTimer;
+  part: WorkoutPart;
   upcomingPartTitle?: string;
   currentTime?: Date;
   controlsVisible?: boolean;
@@ -69,7 +68,14 @@ export default function IntervalTimerBoard({
   stageFooter?: (state: { elapsedSeconds: number; partProgress: number }) => ReactNode;
 }) {
   const storageKey = getIntervalTimerStorageKey(workoutId, partIndex);
-  const { end } = useMemo(() => buildTimeline(timer), [timer]);
+  const mode = getDefaultBoardTimerMode(part);
+  const timer = part.timer;
+  const duration = getBoardTimerDuration(part, mode);
+  const { end: intervalEnd } = useMemo(
+    () => timer ? buildTimeline(timer) : { segs: [], end: 0 },
+    [timer]
+  );
+  const end = mode === 'intervals' ? intervalEnd : duration ?? Number.MAX_SAFE_INTEGER;
   const [accumulated, setAccumulated] = useState(0);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
@@ -87,22 +93,40 @@ export default function IntervalTimerBoard({
   const elapsed = Math.min(end, accumulated + (running && startedAt !== null
     ? Math.max(0, Math.floor((now - startedAt) / 1000))
     : 0));
-  const timerState = useMemo(() => stateAt(timer, elapsed), [elapsed, timer]);
-  const phase = timerState.done ? undefined : timerState.seg?.phase;
+  const timerState = useMemo(() => timer ? stateAt(timer, elapsed) : undefined, [elapsed, timer]);
+  const done = timerState?.done ?? (duration !== undefined && elapsed >= duration);
+  const phase = timerState?.done ? undefined : timerState?.seg?.phase;
   const phaseStyle = phase ? PHASE_STYLE[phase] : undefined;
-  const phaseLabel = phaseStyle?.label || 'DONE';
+  const phaseLabel = phaseStyle?.label || (
+    done ? 'DONE' : mode === 'countup' ? 'COUNT UP' : mode === 'countdown' ? 'COUNTDOWN' : mode === 'emom' ? 'EMOM' : 'INTERVALS'
+  );
   const phaseColor = phaseStyle?.color || '#FFFFFF';
-  const nextLabel = timerState.done
+  const nextLabel = done
     ? 'NEXT PART'
-    : timerState.next
+    : timerState?.next
       ? `${PHASE_STYLE[timerState.next.phase].label} ${formatTime(timerState.next.dur)}`
-      : 'FINISH';
-  const partProgress = timerState.done
+      : mode === 'emom' ? 'NEXT MINUTE' : duration === undefined ? 'NO CAP' : 'FINISH';
+  const totalLeft = timerState?.totalLeft ?? (
+    duration === undefined ? 0 : Math.max(0, duration - elapsed)
+  );
+  const partProgress = done
     ? 1
-    : Math.max(0, Math.min(1, elapsed / Math.max(1, end)));
-  const advanceAnnouncement = timerState.done && upcomingPartTitle && onAutoAdvance
+    : duration !== undefined
+      ? Math.max(0, Math.min(1, elapsed / Math.max(1, duration)))
+      : 0;
+  const advanceAnnouncement = done && upcomingPartTitle && onAutoAdvance
     ? `NEXT: ${String(partIndex + 2).padStart(2, '0')} ${upcomingPartTitle}`
     : '';
+  const displayTime = mode === 'intervals'
+    ? formatTime(timerState?.segLeft || 0, true)
+    : mode === 'countdown'
+      ? formatTime(Math.max(0, (duration || 0) - elapsed), true)
+      : mode === 'emom'
+        ? formatTime(elapsed >= (duration || 0) ? 0 : 60 - (elapsed % 60), true)
+        : formatTime(elapsed, true);
+  const emomMinute = mode === 'emom'
+    ? Math.min(Math.max(1, Math.ceil((duration || 0) / 60)), Math.floor(elapsed / 60) + 1)
+    : 0;
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -255,12 +279,12 @@ export default function IntervalTimerBoard({
   }, [ensureAudioContext, preferencesLoaded, soundEnabled, volume]);
 
   useEffect(() => {
-    if (!timerLoaded || !preferencesLoaded || !running) return;
+    if (!timer || !timerLoaded || !preferencesLoaded || !running) return;
     const cue = cueAt(timer, elapsed);
     if (!cue || lastCueElapsedRef.current === elapsed) return;
     lastCueElapsedRef.current = elapsed;
-    playCue(cue, timerState.segLeft);
-  }, [elapsed, playCue, preferencesLoaded, running, timer, timerLoaded, timerState.segLeft]);
+    playCue(cue, timerState?.segLeft || 0);
+  }, [elapsed, playCue, preferencesLoaded, running, timer, timerLoaded, timerState?.segLeft]);
 
   useEffect(() => {
     if (!running) return;
@@ -297,24 +321,24 @@ export default function IntervalTimerBoard({
   }, [running]);
 
   useEffect(() => {
-    if (!timerLoaded || !running || !timerState.done) return;
+    if (!timerLoaded || !running || !done) return;
     const frameId = window.requestAnimationFrame(() => {
       setAccumulated(end);
       setStartedAt(null);
       setRunning(false);
     });
     return () => window.cancelAnimationFrame(frameId);
-  }, [end, running, timerLoaded, timerState.done]);
+  }, [done, end, running, timerLoaded]);
 
   useEffect(() => {
     advanceRef.current = onAutoAdvance;
   }, [onAutoAdvance]);
 
   useEffect(() => {
-    if (!timerState.done || !upcomingPartTitle || !onAutoAdvance) return;
+    if (!timerLoaded || !done || (mode !== 'intervals' && duration === undefined) || !upcomingPartTitle || !onAutoAdvance) return;
     const timeoutId = window.setTimeout(() => advanceRef.current?.(), 10_000);
     return () => window.clearTimeout(timeoutId);
-  }, [onAutoAdvance, partIndex, timerState.done, upcomingPartTitle]);
+  }, [done, duration, mode, onAutoAdvance, partIndex, timerLoaded, upcomingPartTitle]);
 
   const liveElapsed = useCallback(() => (
     running && startedAt !== null
@@ -344,11 +368,11 @@ export default function IntervalTimerBoard({
     }
     const timestamp = Date.now();
     if (soundEnabled && preferencesLoaded) ensureAudioContext();
-    setAccumulated(timerState.done ? 0 : elapsed);
+    setAccumulated(done ? 0 : elapsed);
     setStartedAt(timestamp);
     setRunning(true);
     setNow(timestamp);
-  }, [elapsed, end, ensureAudioContext, liveElapsed, onActivity, preferencesLoaded, running, soundEnabled, timerLoaded, timerState.done]);
+  }, [done, elapsed, end, ensureAudioContext, liveElapsed, onActivity, preferencesLoaded, running, soundEnabled, timerLoaded]);
 
   const stopTimer = useCallback(() => {
     if (!timerLoaded || !preferencesLoaded) return;
@@ -362,26 +386,35 @@ export default function IntervalTimerBoard({
 
   const previousInterval = useCallback(() => {
     onActivity?.();
+    if (mode !== 'intervals' || !timer) {
+      setPosition(liveElapsed() - 60);
+      return;
+    }
     const { segs } = buildTimeline(timer);
+    const index = timerState?.index ?? -1;
     if (!segs.length) return;
-    if (timerState.done) {
+    if (done) {
       setPosition(segs[segs.length - 1].start);
       return;
     }
-    const current = segs[timerState.index];
+    const current = segs[index];
     if (!current) return;
-    const currentStart = timerState.index === 0 || liveElapsed() - current.start > 2
+    const currentStart = index === 0 || liveElapsed() - current.start > 2
       ? current.start
-      : segs[timerState.index - 1].start;
+      : segs[index - 1].start;
     setPosition(currentStart);
-  }, [liveElapsed, onActivity, setPosition, timer, timerState.done, timerState.index]);
+  }, [done, liveElapsed, mode, onActivity, setPosition, timer, timerState?.index]);
 
   const nextInterval = useCallback(() => {
     onActivity?.();
-    if (timerState.done) return;
+    if (mode !== 'intervals' || !timer) {
+      setPosition(liveElapsed() + 60);
+      return;
+    }
+    if (done) return;
     const { segs, end: timelineEnd } = buildTimeline(timer);
-    setPosition(segs[timerState.index + 1]?.start ?? timelineEnd);
-  }, [onActivity, setPosition, timer, timerState.done, timerState.index]);
+    setPosition(segs[(timerState?.index ?? -1) + 1]?.start ?? timelineEnd);
+  }, [done, liveElapsed, mode, onActivity, setPosition, timer, timerState?.index]);
 
   const toggleSound = useCallback(() => {
     onActivity?.();
@@ -414,7 +447,30 @@ export default function IntervalTimerBoard({
   }, [nextInterval, preferencesLoaded, previousInterval, stopTimer, timerLoaded, toggleSound, toggleTimer]);
 
   const phaseWordClass = phaseStyle?.className || 'text-white';
-  const remainingLabel = formatTime(timerState.totalLeft);
+  const remainingLabel = duration === undefined && mode !== 'intervals' ? '—' : formatTime(totalLeft);
+  const roundProgress = timerState?.roundProgress || [];
+  const currentRound = timerState?.round || 1;
+  const currentSet = timerState?.set || 1;
+  const modeTitle = mode === 'countup' && duration !== undefined
+    ? `TIME CAP · ${part.minutes}′`
+    : mode === 'intervals'
+      ? 'INTERVALS'
+      : mode === 'countup'
+        ? 'COUNT UP'
+        : mode === 'countdown'
+          ? 'COUNTDOWN'
+          : 'EMOM';
+  const partSummary = timer
+    ? `${timer.rounds} × ${formatTime(timer.work)} / ${formatTime(timer.rest)}${timer.sets > 1 ? ` · ${timer.sets} sets` : ''}`
+    : part.format === 'AMRAP'
+      ? `${part.minutes || 'Set duration'} minute AMRAP`
+      : part.format === 'EMOM'
+        ? `${part.minutes || 'Set duration'} minute EMOM`
+        : part.format === 'FOR TIME' || part.format === 'CHIPPER'
+            ? part.minutes ? part.format : 'No time cap'
+          : part.format || 'Stopwatch';
+  const startLabel = running ? 'Ⅱ Pause' : done ? '↻ Restart' : elapsed > 0 ? '▶ Resume' : '▶ Start';
+  const timeButtonLabel = running ? 'Pause timer' : done ? 'Restart timer' : elapsed > 0 ? 'Resume timer' : 'Start timer';
   const controlsShowing = size === 'compact' || controlsVisible;
   const timerControlsReady = timerLoaded && preferencesLoaded;
   const buttonClass = size === 'stage'
@@ -475,10 +531,10 @@ export default function IntervalTimerBoard({
         type="button"
         disabled={!timerControlsReady}
         onClick={toggleTimer}
-        aria-label={running ? 'Pause interval timer' : timerState.done ? 'Restart interval timer' : elapsed > 0 ? 'Resume interval timer' : 'Start interval timer'}
+        aria-label={timeButtonLabel}
         className={`${buttonClass} bg-lime text-ink`}
       >
-        {running ? 'Ⅱ Pause' : timerState.done ? '↻ Restart' : elapsed > 0 ? '▶ Resume' : '▶ Start'}
+        {startLabel}
       </button>
       <button
         type="button"
@@ -497,9 +553,9 @@ export default function IntervalTimerBoard({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-display text-[15px] font-black uppercase leading-none text-white">Intervals</p>
+            <p className="font-display text-[15px] font-black uppercase leading-none text-white">{modeTitle}</p>
             <p className="mt-1 truncate text-[11px] font-bold uppercase tracking-[.08em] text-[#8A8D84]">
-              {partTitle} · {timer.rounds} × {formatTime(timer.work)} / {formatTime(timer.rest)}{timer.sets > 1 ? ` · ${timer.sets} sets` : ''}
+              {part.title} · {partSummary}
             </p>
           </div>
           {soundControls}
@@ -509,50 +565,70 @@ export default function IntervalTimerBoard({
           type="button"
           disabled={!timerControlsReady}
           onClick={toggleTimer}
-          aria-label={running ? 'Pause interval timer' : timerState.done ? 'Restart interval timer' : 'Start interval timer'}
+          aria-label={timeButtonLabel}
           className="flex min-h-[150px] flex-col items-center justify-center rounded-lg border border-white/10 bg-[#0B0C0A] px-3 py-4 text-center focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
         >
-          <span className={`font-display text-[34px] font-black uppercase leading-[.9] ${phaseWordClass}`}>{phaseLabel}</span>
+          {mode === 'emom' && (
+            <span className="font-display text-[28px] font-black uppercase leading-[.9] text-[#8A8D84]">
+              {String(emomMinute).padStart(2, '0')} / {Math.max(1, Math.ceil((duration || 0) / 60))}
+            </span>
+          )}
+          <span className={`font-display text-[34px] font-black uppercase leading-[.9] ${phaseWordClass}`} aria-live="polite" aria-atomic="true">{phaseLabel}</span>
           <span className={`font-display text-[88px] font-black leading-[.86] tabular-nums ${phaseWordClass}`} style={{ color: phaseColor }}>
-            {formatTime(timerState.segLeft, true)}
+            {displayTime}
           </span>
         </button>
 
-        <div className="flex gap-1" role="progressbar" aria-label="Round progress" aria-valuenow={Math.round(timerState.roundProgress[timerState.round - 1] * 100)} aria-valuemin={0} aria-valuemax={100}>
-          {timerState.roundProgress.map((progress, index) => {
-            const roundNumber = index + 1;
-            const completed = timerState.done || phase === 'setrest' || (timerState.seg && roundNumber < timerState.round);
-            const current = !completed && phase !== 'prep' && roundNumber === timerState.round;
-            return (
-              <div
-                key={roundNumber}
-                className="h-2 min-w-0 flex-1 overflow-hidden rounded-sm"
-                style={{
-                  background: completed
-                    ? '#8A8D84'
-                    : current
-                      ? `linear-gradient(to right, ${phaseColor} ${Math.round(progress * 100)}%, #2A2C27 ${Math.round(progress * 100)}%)`
-                      : '#2A2C27',
-                }}
-              />
-            );
-          })}
-        </div>
+        {timerState ? (
+          <div className="flex gap-1" role="progressbar" aria-label="Round progress" aria-valuenow={Math.round(roundProgress[currentRound - 1] * 100)} aria-valuemin={0} aria-valuemax={100}>
+            {roundProgress.map((progress, index) => {
+              const roundNumber = index + 1;
+              const completed = timerState.done || phase === 'setrest' || (timerState.seg && roundNumber < currentRound);
+              const current = !completed && phase !== 'prep' && roundNumber === currentRound;
+              return (
+                <div
+                  key={roundNumber}
+                  className="h-2 min-w-0 flex-1 overflow-hidden rounded-sm"
+                  style={{
+                    background: completed
+                      ? '#8A8D84'
+                      : current
+                        ? `linear-gradient(to right, ${phaseColor} ${Math.round(progress * 100)}%, #2A2C27 ${Math.round(progress * 100)}%)`
+                        : '#2A2C27',
+                  }}
+                />
+              );
+            })}
+          </div>
+        ) : duration !== undefined && (
+          <div className="h-2 overflow-hidden rounded-sm bg-[#2A2C27]" role="progressbar" aria-label="Timer progress" aria-valuenow={Math.round(partProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full bg-lime" style={{ width: `${partProgress * 100}%` }} />
+          </div>
+        )}
 
-        <div className="grid grid-cols-2 gap-3 border-t border-[#2A2C27] pt-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Round</p>
+        {timerState ? (
+          <div className="grid grid-cols-2 gap-3 border-t border-[#2A2C27] pt-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Round</p>
+              <p className="font-display text-[40px] font-black leading-none tabular-nums text-white">
+                {String(currentRound).padStart(2, '0')}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {timer?.rounds}</span>
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Set</p>
+              <p className="font-display text-[40px] font-black leading-none tabular-nums text-white">
+                {currentSet}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {timer?.sets}</span>
+              </p>
+            </div>
+          </div>
+        ) : mode === 'emom' ? (
+          <div className="border-t border-[#2A2C27] pt-3">
+            <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Minute</p>
             <p className="font-display text-[40px] font-black leading-none tabular-nums text-white">
-              {String(timerState.round).padStart(2, '0')}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {timer.rounds}</span>
+              {String(emomMinute).padStart(2, '0')}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {Math.max(1, Math.ceil((duration || 0) / 60))}</span>
             </p>
           </div>
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Set</p>
-            <p className="font-display text-[40px] font-black leading-none tabular-nums text-white">
-              {timerState.set}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {timer.sets}</span>
-            </p>
-          </div>
-        </div>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3 border-t border-[#2A2C27] pt-3">
           <div>
@@ -587,58 +663,78 @@ export default function IntervalTimerBoard({
       </div>
 
       <p className="truncate text-[20px] font-bold uppercase tracking-[.12em] text-[#8A8D84]">
-        {partTitle} · {timer.rounds} × {formatTime(timer.work)} / {formatTime(timer.rest)}{timer.sets > 1 ? ` · ${timer.sets} sets` : ''}
+        {part.title} · {modeTitle} · {partSummary}
       </p>
 
       <div className="min-w-0">
-        <p className={`font-display text-[88px] font-black uppercase leading-[.88] ${phaseWordClass}`}>{phaseLabel}</p>
+        {mode === 'emom' && (
+          <p className="mb-2 font-display text-[38px] font-black uppercase leading-none text-[#8A8D84]">
+            {String(emomMinute).padStart(2, '0')} / {Math.max(1, Math.ceil((duration || 0) / 60))}
+          </p>
+        )}
+        <p className={`font-display text-[88px] font-black uppercase leading-[.88] ${phaseWordClass}`} aria-live="polite" aria-atomic="true">{phaseLabel}</p>
         <button
           type="button"
           disabled={!timerControlsReady}
           onClick={toggleTimer}
-          aria-label={running ? 'Pause interval timer' : timerState.done ? 'Restart interval timer' : 'Start interval timer'}
+          aria-label={timeButtonLabel}
           className={`block w-full overflow-hidden text-left font-display text-[clamp(92px,9.15vw,176px)] font-black leading-[.82] tracking-[-.03em] tabular-nums focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40 ${phaseWordClass}`}
           style={{ color: phaseColor }}
         >
-          {formatTime(timerState.segLeft, true)}
+          {displayTime}
         </button>
       </div>
 
-      <div className="flex h-[14px] gap-1" role="progressbar" aria-label="Round progress" aria-valuenow={Math.round(timerState.roundProgress[timerState.round - 1] * 100)} aria-valuemin={0} aria-valuemax={100}>
-        {timerState.roundProgress.map((progress, index) => {
-          const roundNumber = index + 1;
-          const completed = timerState.done || phase === 'setrest' || (timerState.seg && roundNumber < timerState.round);
-          const current = !completed && phase !== 'prep' && roundNumber === timerState.round;
-          return (
-            <div
-              key={roundNumber}
-              className="min-w-0 flex-1 overflow-hidden rounded-sm"
-              style={{
-                background: completed
-                  ? '#8A8D84'
-                  : current
-                    ? `linear-gradient(to right, ${phaseColor} ${Math.round(progress * 100)}%, #2A2C27 ${Math.round(progress * 100)}%)`
-                    : '#2A2C27',
-              }}
-            />
-          );
-        })}
-      </div>
+      {timerState ? (
+        <div className="flex h-[14px] gap-1" role="progressbar" aria-label="Round progress" aria-valuenow={Math.round(roundProgress[currentRound - 1] * 100)} aria-valuemin={0} aria-valuemax={100}>
+          {roundProgress.map((progress, index) => {
+            const roundNumber = index + 1;
+            const completed = timerState.done || phase === 'setrest' || (timerState.seg && roundNumber < currentRound);
+            const current = !completed && phase !== 'prep' && roundNumber === currentRound;
+            return (
+              <div
+                key={roundNumber}
+                className="min-w-0 flex-1 overflow-hidden rounded-sm"
+                style={{
+                  background: completed
+                    ? '#8A8D84'
+                    : current
+                      ? `linear-gradient(to right, ${phaseColor} ${Math.round(progress * 100)}%, #2A2C27 ${Math.round(progress * 100)}%)`
+                      : '#2A2C27',
+                }}
+              />
+            );
+          })}
+        </div>
+      ) : duration !== undefined && (
+        <div className="h-[14px] overflow-hidden rounded-sm bg-[#2A2C27]" role="progressbar" aria-label="Timer progress" aria-valuenow={Math.round(partProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full bg-lime" style={{ width: `${partProgress * 100}%` }} />
+        </div>
+      )}
 
-      <div className="grid grid-cols-2 gap-4 border-t-2 border-[#2A2C27] pt-5">
-        <div>
-          <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Round</p>
+      {timerState ? (
+        <div className="grid grid-cols-2 gap-4 border-t-2 border-[#2A2C27] pt-5">
+          <div>
+            <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Round</p>
+            <p className="font-display text-[72px] font-black leading-none tabular-nums text-white">
+              {String(currentRound).padStart(2, '0')}<span className="ml-2 text-[40px] text-[#8A8D84]">/ {timer?.rounds}</span>
+            </p>
+          </div>
+          <div>
+            <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Set</p>
+            <p className="font-display text-[72px] font-black leading-none tabular-nums text-white">
+              {currentSet}<span className="ml-2 text-[40px] text-[#8A8D84]">/ {timer?.sets}</span>
+            </p>
+          </div>
+        </div>
+      ) : mode === 'emom' && (
+        <div className="border-t-2 border-[#2A2C27] pt-5">
+          <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Minute</p>
           <p className="font-display text-[72px] font-black leading-none tabular-nums text-white">
-            {String(timerState.round).padStart(2, '0')}<span className="ml-2 text-[40px] text-[#8A8D84]">/ {timer.rounds}</span>
+            {String(emomMinute).padStart(2, '0')}<span className="ml-2 text-[40px] text-[#8A8D84]">/ {Math.max(1, Math.ceil((duration || 0) / 60))}</span>
           </p>
         </div>
-        <div>
-          <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Set</p>
-          <p className="font-display text-[72px] font-black leading-none tabular-nums text-white">
-            {timerState.set}<span className="ml-2 text-[40px] text-[#8A8D84]">/ {timer.sets}</span>
-          </p>
-        </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>

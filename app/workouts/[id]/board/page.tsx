@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { Avatar, Loading } from '@/components/ui';
-import IntervalTimerBoard from '@/components/IntervalTimerBoard';
+import TimerPanel from '@/components/TimerPanel';
 import WorkoutPartContent from '@/components/WorkoutPartContent';
 import WorkoutTvBoard from '@/components/WorkoutTvBoard';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
 import { pauseStoredIntervalTimer } from '@/lib/intervalTimerPersistence';
-import { parseWorkout } from '@/lib/workoutNotation';
+import { parseWorkout, type WorkoutPart } from '@/lib/workoutNotation';
 
 type BoardWorkout = WorkoutWithDetails & { guests: Guest[] };
 type TextScale = 1.5 | 1.75 | 2;
@@ -40,13 +40,8 @@ export default function WorkoutBoardPage() {
   const [activePart, setActivePart] = useState(0);
   const [textScale, setTextScale] = useState<TextScale>(1.5);
   const [textScaleLoaded, setTextScaleLoaded] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [round, setRound] = useState(1);
   const tvMode = searchParams.get('tv') === '1';
-  const elapsedSecondsRef = useRef(0);
   const touchStartX = useRef<number | null>(null);
-  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -89,57 +84,7 @@ export default function WorkoutBoardPage() {
     [workout]
   );
   const part = parts[activePart] || parts[0];
-  const durationSeconds = (part?.minutes || 0) * 60;
-
-  useEffect(() => {
-    if (!timerRunning || part?.timer) return;
-    const intervalId = window.setInterval(() => {
-      const nextElapsedSeconds = elapsedSecondsRef.current + 1;
-      elapsedSecondsRef.current = nextElapsedSeconds;
-      setElapsedSeconds(nextElapsedSeconds);
-    }, 1000);
-    return () => window.clearInterval(intervalId);
-  }, [activePart, durationSeconds, part?.timer, parts.length, timerRunning]);
-
-  useEffect(() => {
-    if (part?.timer) return;
-    let active = true;
-    const requestWakeLock = async () => {
-      if (!('wakeLock' in navigator) || !navigator.wakeLock) return;
-      if (wakeLockRef.current && !wakeLockRef.current.released) return;
-      try {
-        const wakeLock = await navigator.wakeLock.request('screen');
-        if (!active) {
-          await wakeLock.release();
-          return;
-        }
-        wakeLockRef.current = wakeLock;
-      } catch (wakeError) {
-        if (active) console.warn('Screen Wake Lock is unavailable:', wakeError);
-      }
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') void requestWakeLock();
-    };
-
-    void requestWakeLock();
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      active = false;
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      if (wakeLockRef.current) {
-        void wakeLockRef.current.release().catch((wakeError) => {
-          console.warn('Could not release Screen Wake Lock:', wakeError);
-        });
-        wakeLockRef.current = null;
-      }
-    };
-  }, [part?.timer]);
-
-  const timerSeconds = durationSeconds > 0
-    ? Math.max(0, durationSeconds - elapsedSeconds)
-    : elapsedSeconds;
-  const timerLabel = `${String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:${String(timerSeconds % 60).padStart(2, '0')}`;
+  const displayPart: WorkoutPart = part || { title: 'Workout', meta: [], blocks: [] };
   const teamNames = [
     ...(workout?.participants || []).map((participant) => participant.user_name),
     ...(workout?.guests || []).map((guest) => guest.name),
@@ -147,12 +92,9 @@ export default function WorkoutBoardPage() {
 
   const changePart = useCallback((index: number) => {
     if (index < 0 || index >= parts.length) return;
-    if (parts[activePart]?.timer) pauseStoredIntervalTimer(workoutId, activePart);
+    pauseStoredIntervalTimer(workoutId, activePart);
     setActivePart(index);
-    elapsedSecondsRef.current = 0;
-    setElapsedSeconds(0);
-    setTimerRunning(false);
-  }, [activePart, parts, workoutId]);
+  }, [activePart, parts.length, workoutId]);
   const advanceIntervalPart = useCallback(() => changePart(activePart + 1), [activePart, changePart]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
@@ -229,39 +171,15 @@ export default function WorkoutBoardPage() {
         </div>
 
         <aside className="flex flex-col gap-5 rounded-xl bg-ink p-5 text-white md:p-6">
-          {part?.timer ? (
-            <IntervalTimerBoard
-              key={`${workout.id}-${activePart}`}
-              size="compact"
-              workoutId={workout.id}
-              partIndex={activePart}
-              partTitle={part.title}
-              timer={part.timer}
-              upcomingPartTitle={parts[activePart + 1]?.title}
-              onAutoAdvance={parts[activePart + 1] ? advanceIntervalPart : undefined}
-            />
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setTimerRunning((running) => !running)}
-                aria-label={timerRunning ? 'Pause timer' : durationSeconds > 0 ? 'Start countdown timer' : 'Start stopwatch'}
-                className="flex min-h-40 flex-col items-center justify-center rounded-lg text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
-              >
-                <span className="font-display text-[7.5em] font-extrabold leading-none tabular-nums">{timerLabel}</span>
-                <span className="mt-2 font-bold uppercase tracking-[.14em] text-white">{timerRunning ? 'Tap to pause' : 'Tap to start'}</span>
-              </button>
-
-              <div>
-                <p className="mb-2 text-center font-bold uppercase tracking-[.14em] text-white">Round</p>
-                <div className="flex items-center justify-center gap-4">
-                  <button type="button" onClick={() => setRound((value) => Math.max(0, value - 1))} aria-label="Decrease round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm border border-white/30 text-[2em] font-bold text-white hover:bg-white/10">−</button>
-                  <span className="min-w-14 text-center font-display text-[4em] font-extrabold leading-none tabular-nums text-white">{round}</span>
-                  <button type="button" onClick={() => setRound((value) => value + 1)} aria-label="Increase round" className="inline-flex h-16 w-16 items-center justify-center rounded-sm bg-lime text-[2em] font-bold text-ink hover:brightness-95">+</button>
-                </div>
-              </div>
-            </>
-          )}
+          <TimerPanel
+            key={`${workout.id}-${activePart}`}
+            size="compact"
+            workoutId={workout.id}
+            partIndex={activePart}
+            part={displayPart}
+            upcomingPartTitle={parts[activePart + 1]?.title}
+            onAutoAdvance={parts[activePart + 1] ? advanceIntervalPart : undefined}
+          />
 
           <div className="min-h-0 border-t border-white/20 pt-4">
             <p className="mb-3 font-bold uppercase tracking-[.14em] text-white">Team · {teamNames.length || workout.max_participants}</p>
