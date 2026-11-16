@@ -13,6 +13,7 @@ import BoardTimerSetup from '@/components/BoardTimerSetup';
 import {
   boardTimerConfigurationsEqual,
   getBoardTimerConfigurationDuration,
+  getBoardTimerCue,
   getBoardTimerOverrideStorageKey,
   getDefaultBoardTimerConfiguration,
   isBoardTimerConfiguration,
@@ -326,12 +327,18 @@ export default function TimerPanel({
   }, [ensureAudioContext, preferencesLoaded, soundEnabled, volume]);
 
   useEffect(() => {
-    if (!timer || !timerLoaded || !preferencesLoaded || !running) return;
-    const cue = cueAt(timer, elapsed);
+    if (!timerLoaded || !preferencesLoaded || !running) return;
+    let cue: { cue: TimerCue; secondsLeft: number } | null = null;
+    if (mode === 'intervals' && timer) {
+      const intervalCue = cueAt(timer, elapsed);
+      if (intervalCue) cue = { cue: intervalCue, secondsLeft: timerState?.segLeft || 0 };
+    } else {
+      cue = getBoardTimerCue(configuration, elapsed);
+    }
     if (!cue || lastCueElapsedRef.current === elapsed) return;
     lastCueElapsedRef.current = elapsed;
-    playCue(cue, timerState?.segLeft || 0);
-  }, [elapsed, playCue, preferencesLoaded, running, timer, timerLoaded, timerState?.segLeft]);
+    playCue(cue.cue, cue.secondsLeft);
+  }, [configuration, elapsed, mode, playCue, preferencesLoaded, running, timer, timerLoaded, timerState?.segLeft]);
 
   useEffect(() => {
     if (!running) return;

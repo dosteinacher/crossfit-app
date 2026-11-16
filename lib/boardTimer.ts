@@ -1,5 +1,5 @@
 import type { IntervalTimer, WorkoutPart } from './workoutNotation';
-import { buildTimeline } from './intervalTimer';
+import { buildTimeline, type TimerCue } from './intervalTimer';
 
 export type BoardTimerMode = 'countup' | 'countdown' | 'emom' | 'intervals';
 
@@ -45,6 +45,32 @@ export function getBoardTimerConfigurationDuration(configuration: BoardTimerConf
     case 'intervals':
       return configuration.timer ? buildTimeline(configuration.timer).end : undefined;
   }
+}
+
+export function getBoardTimerCue(
+  configuration: BoardTimerConfiguration,
+  elapsed: number,
+): { cue: TimerCue; secondsLeft: number } | null {
+  const time = Math.max(0, Math.floor(elapsed));
+  const duration = getBoardTimerConfigurationDuration(configuration);
+
+  if (configuration.mode === 'intervals') return null;
+  if (duration !== undefined && time >= duration) return { cue: 'finish', secondsLeft: 0 };
+  if (configuration.mode === 'countup') return null;
+
+  if (configuration.mode === 'countdown') {
+    const secondsLeft = (duration || 0) - time;
+    return secondsLeft > 0 && secondsLeft <= 3
+      ? { cue: 'tick', secondsLeft }
+      : null;
+  }
+
+  if (duration === undefined || !configuration.everyMinutes) return null;
+  const interval = configuration.everyMinutes * 60;
+  const secondsIntoInterval = time % interval;
+  if (secondsIntoInterval === 0) return { cue: 'phaseStart-work', secondsLeft: interval };
+  const secondsLeft = interval - secondsIntoInterval;
+  return secondsLeft <= 3 ? { cue: 'tick', secondsLeft } : null;
 }
 
 export function isBoardTimerConfiguration(value: unknown): value is BoardTimerConfiguration {

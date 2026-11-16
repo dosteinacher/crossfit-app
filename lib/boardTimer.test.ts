@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   boardTimerConfigurationsEqual,
   getBoardTimerConfigurationDuration,
+  getBoardTimerCue,
   getBoardTimerDuration,
   getDefaultBoardTimerConfiguration,
   getDefaultBoardTimerMode,
@@ -89,5 +90,37 @@ describe('board timer defaults', () => {
       boardTimerConfigurationsEqual({ mode: 'countup', minutes: 0 }, { mode: 'countup' }),
       true,
     );
+  });
+});
+
+describe('board timer sound cues', () => {
+  it('ticks down for the final three seconds and finishes countdowns', () => {
+    const configuration = { mode: 'countdown', minutes: 1 } as const;
+    assert.equal(getBoardTimerCue(configuration, 56), null);
+    assert.deepEqual(getBoardTimerCue(configuration, 57), { cue: 'tick', secondsLeft: 3 });
+    assert.deepEqual(getBoardTimerCue(configuration, 58), { cue: 'tick', secondsLeft: 2 });
+    assert.deepEqual(getBoardTimerCue(configuration, 59), { cue: 'tick', secondsLeft: 1 });
+    assert.deepEqual(getBoardTimerCue(configuration, 60), { cue: 'finish', secondsLeft: 0 });
+  });
+
+  it('finishes capped count-ups but stays silent without a cap', () => {
+    assert.equal(getBoardTimerCue({ mode: 'countup', minutes: 1 }, 59), null);
+    assert.deepEqual(getBoardTimerCue({ mode: 'countup', minutes: 1 }, 60), {
+      cue: 'finish',
+      secondsLeft: 0,
+    });
+    assert.equal(getBoardTimerCue({ mode: 'countup' }, 3600), null);
+  });
+
+  it('starts each EMOM interval with a high cue after the preceding 3-2-1 ticks', () => {
+    const configuration = { mode: 'emom', minutes: 2, everyMinutes: 2 } as const;
+    assert.deepEqual(getBoardTimerCue(configuration, 0), { cue: 'phaseStart-work', secondsLeft: 120 });
+    assert.deepEqual(getBoardTimerCue(configuration, 117), { cue: 'tick', secondsLeft: 3 });
+    assert.deepEqual(getBoardTimerCue(configuration, 118), { cue: 'tick', secondsLeft: 2 });
+    assert.deepEqual(getBoardTimerCue(configuration, 119), { cue: 'tick', secondsLeft: 1 });
+    assert.deepEqual(getBoardTimerCue(configuration, 120), { cue: 'phaseStart-work', secondsLeft: 120 });
+    assert.deepEqual(getBoardTimerCue(configuration, 237), { cue: 'tick', secondsLeft: 3 });
+    assert.deepEqual(getBoardTimerCue(configuration, 239), { cue: 'tick', secondsLeft: 1 });
+    assert.deepEqual(getBoardTimerCue(configuration, 240), { cue: 'finish', secondsLeft: 0 });
   });
 });
