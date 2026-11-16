@@ -19,8 +19,6 @@ type PersistedTimerState = {
   activePart: number;
 };
 
-const STAGE_WIDTH = 1920;
-const STAGE_HEIGHT = 1080;
 const TIMER_STORAGE_PREFIX = 'pure-tv-timer:';
 const TEXT_SCALE_STORAGE_KEY = 'pure-tv-text-scale';
 const TEXT_SCALES = [1, 1.1, 1.2] as const;
@@ -238,13 +236,11 @@ function WorkoutTvBlock({
 }
 
 export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const parts = useMemo(() => parseWorkout(workout.description || '').parts, [workout.description]);
   const [activePart, setActivePart] = useState(0);
   const [activeLoaded, setActiveLoaded] = useState(false);
   const [textScale, setTextScale] = useState(1.1);
   const [dark, setDark] = useState(false);
-  const [stageScale, setStageScale] = useState(1);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [now, setNow] = useState(() => new Date());
   const revealTimerRef = useRef<number | null>(null);
@@ -264,18 +260,6 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     setControlsVisible(true);
     if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current);
     revealTimerRef.current = window.setTimeout(() => setControlsVisible(false), 3000);
-  }, []);
-
-  useLayoutEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return;
-    const resize = () => {
-      setStageScale(Math.min(wrapper.clientWidth / STAGE_WIDTH, wrapper.clientHeight / STAGE_HEIGHT));
-    };
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(wrapper);
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -392,16 +376,12 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   const mainBackground = dark ? 'bg-ink' : 'bg-paper';
 
   return (
-    <div ref={wrapperRef} className={`fixed inset-0 overflow-hidden ${dark ? 'bg-ink' : 'bg-ink'} ${controlsVisible ? '' : 'cursor-none'}`}>
+    <div className={`fixed inset-0 overflow-hidden bg-ink ${controlsVisible ? '' : 'cursor-none'}`}>
       <main
-        className={`absolute left-1/2 top-1/2 grid overflow-hidden border-[16px] border-[#141512] ${mainBackground}`}
+        className={`absolute inset-0 grid overflow-hidden border-[16px] border-[#141512] ${mainBackground}`}
         style={{
-          width: STAGE_WIDTH,
-          height: STAGE_HEIGHT,
           boxSizing: 'border-box',
-          gridTemplateColumns: `minmax(0, 1fr) 540px`,
-          transform: `translate(-50%, -50%) scale(${stageScale})`,
-          transformOrigin: 'center center',
+          gridTemplateColumns: 'minmax(0, 1fr) clamp(300px, 28.125vw, 540px)',
         }}
         onMouseMove={revealControls}
         onTouchStart={revealControls}
@@ -442,7 +422,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
           <WorkoutTvContent part={part} dark={dark} textScale={textScale} />
         </div>
 
-        <aside className="flex min-h-0 flex-col overflow-hidden bg-[#141512] text-white">
+        <aside className="flex min-h-0 flex-col overflow-hidden bg-[#141512] text-white" style={{ containerType: 'inline-size' }}>
           <TimerPanel
             key={`${workout.id}-${activePart}`}
             size="stage"

@@ -84,6 +84,7 @@ export default function TimerPanel({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState<Volume>('medium');
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioWarningRef = useRef(false);
@@ -548,8 +549,7 @@ export default function TimerPanel({
     </div>
   );
 
-  if (size === 'compact') {
-    return (
+  const compactContent = () => (
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
@@ -573,8 +573,8 @@ export default function TimerPanel({
               {String(emomMinute).padStart(2, '0')} / {Math.max(1, Math.ceil((duration || 0) / 60))}
             </span>
           )}
-          <span className={`font-display text-[34px] font-black uppercase leading-[.9] ${phaseWordClass}`} aria-live="polite" aria-atomic="true">{phaseLabel}</span>
-          <span className={`font-display text-[88px] font-black leading-[.86] tabular-nums ${phaseWordClass}`} style={{ color: phaseColor }}>
+          <span className={`font-display text-[clamp(1.75rem,9cqw,2.125rem)] font-black uppercase leading-[.9] ${phaseWordClass}`} aria-live="polite" aria-atomic="true">{phaseLabel}</span>
+          <span className={`font-display text-[clamp(3.25rem,22cqw,5.5rem)] font-black leading-[.86] tabular-nums ${phaseWordClass}`} style={{ color: phaseColor }}>
             {displayTime}
           </span>
         </button>
@@ -610,13 +610,13 @@ export default function TimerPanel({
           <div className="grid grid-cols-2 gap-3 border-t border-[#2A2C27] pt-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Round</p>
-              <p className="font-display text-[40px] font-black leading-none tabular-nums text-white">
+              <p className="font-display text-[clamp(1.875rem,10cqw,2.5rem)] font-black leading-none tabular-nums text-white">
                 {String(currentRound).padStart(2, '0')}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {timer?.rounds}</span>
               </p>
             </div>
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Set</p>
-              <p className="font-display text-[40px] font-black leading-none tabular-nums text-white">
+              <p className="font-display text-[clamp(1.875rem,10cqw,2.5rem)] font-black leading-none tabular-nums text-white">
                 {currentSet}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {timer?.sets}</span>
               </p>
             </div>
@@ -624,7 +624,7 @@ export default function TimerPanel({
         ) : mode === 'emom' ? (
           <div className="border-t border-[#2A2C27] pt-3">
             <p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#8A8D84]">Minute</p>
-            <p className="font-display text-[40px] font-black leading-none tabular-nums text-white">
+            <p className="font-display text-[clamp(1.875rem,10cqw,2.5rem)] font-black leading-none tabular-nums text-white">
               {String(emomMinute).padStart(2, '0')}<span className="ml-1 text-[20px] text-[#8A8D84]">/ {Math.max(1, Math.ceil((duration || 0) / 60))}</span>
             </p>
           </div>
@@ -648,6 +648,64 @@ export default function TimerPanel({
         )}
         {controls}
       </div>
+  );
+
+  if (size === 'compact') {
+    return (
+      <>
+        <div className="board-compact-desktop">{compactContent()}</div>
+        <div className="board-timer-mobile-bar">
+          <button
+            type="button"
+            className="board-timer-mobile-summary"
+            onClick={() => setMobileExpanded(true)}
+            aria-label="Expand timer panel"
+            aria-expanded={mobileExpanded}
+          >
+            <span className="block truncate text-[11px] font-extrabold uppercase tracking-[.12em] text-[#C9CBC4]">
+              {mode === 'intervals' ? phaseLabel : modeTitle}
+            </span>
+            <span className="block font-display text-[32px] font-black leading-none tabular-nums text-white">{displayTime}</span>
+            {mode === 'intervals' && timer ? (
+              <span className="text-[11px] font-bold tabular-nums text-[#C9CBC4]">R {String(currentRound).padStart(2, '0')}/{timer.rounds}</span>
+            ) : mode === 'emom' ? (
+              <span className="text-[11px] font-bold tabular-nums text-[#C9CBC4]">{String(emomMinute).padStart(2, '0')}/{Math.max(1, Math.ceil((duration || 0) / 60))}</span>
+            ) : null}
+          </button>
+          <button
+            type="button"
+            disabled={!timerControlsReady}
+            onClick={toggleTimer}
+            aria-label={timeButtonLabel}
+            className="board-timer-mobile-start"
+          >
+            {running ? 'Ⅱ' : '▶'}
+          </button>
+        </div>
+        {mobileExpanded && (
+          <div className="board-timer-sheet-overlay">
+            <button
+              type="button"
+              className="board-timer-sheet-backdrop"
+              onClick={() => setMobileExpanded(false)}
+              aria-label="Close timer panel"
+            />
+            <section className="board-timer-sheet" role="dialog" aria-modal="true" aria-label="Timer panel">
+              <div className="mb-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setMobileExpanded(false)}
+                  aria-label="Close timer panel"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 text-2xl font-bold text-white"
+                >
+                  ×
+                </button>
+              </div>
+              {compactContent()}
+            </section>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -678,7 +736,7 @@ export default function TimerPanel({
           disabled={!timerControlsReady}
           onClick={toggleTimer}
           aria-label={timeButtonLabel}
-          className={`block w-full overflow-hidden text-left font-display text-[clamp(92px,9.15vw,176px)] font-black leading-[.82] tracking-[-.03em] tabular-nums focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40 ${phaseWordClass}`}
+          className={`block w-full overflow-hidden text-left font-display text-[clamp(52px,32.6cqw,176px)] font-black leading-[.82] tracking-[-.03em] tabular-nums focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40 ${phaseWordClass}`}
           style={{ color: phaseColor }}
         >
           {displayTime}

@@ -131,35 +131,32 @@ export default function WorkoutBoardPage() {
   const displayScale = textScale;
 
   return (
-    <main
-      className="flex min-h-screen flex-col bg-paper text-ink"
-      style={{ fontSize: '16px' }}
-    >
-      <div className="h-2 shrink-0 bg-lime" />
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink px-4 py-3 md:px-7">
-        <Link href="/dashboard" className="font-display text-[1.5em] font-extrabold uppercase text-ink" aria-label="PURE Dashboard">PURE</Link>
-        <div className="flex flex-1 items-center justify-center text-center font-bold uppercase tabular-nums text-ink">
-          {format(date, 'EEE dd MMM')} · {format(date, 'HH:mm')} · Team of {workout.max_participants}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setTextScale(nextScale)}
-            aria-label={`Change text size from ${textScale}x to ${nextScale}x`}
-            className="inline-flex min-h-11 items-center justify-center rounded-sm border border-line px-3 font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
-          >
-            A <span className="ml-1 text-[1.2em]">A+</span>
-          </button>
-          <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-11 items-center justify-center rounded-sm bg-ink px-4 font-bold text-white hover:bg-ink-2">Exit</Link>
-        </div>
-      </header>
-
-      <section
-        className="grid flex-1 grid-cols-1 gap-4 p-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6 lg:p-6"
+    <main className="board-regular-layout text-ink" style={{ fontSize: '16px' }}>
+      <div
+        className="board-regular-content"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="min-w-0 overflow-y-auto px-1 py-2 lg:px-3 lg:py-4">
+        <div className="h-2 bg-lime" />
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink px-4 py-3 md:px-7">
+          <Link href="/dashboard" className="font-display text-[1.5em] font-extrabold uppercase text-ink" aria-label="PURE Dashboard">PURE</Link>
+          <div className="flex flex-1 items-center justify-center text-center font-bold uppercase tabular-nums text-ink">
+            {format(date, 'EEE dd MMM')} · {format(date, 'HH:mm')} · Team of {workout.max_participants}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTextScale(nextScale)}
+              aria-label={`Change text size from ${textScale}x to ${nextScale}x`}
+              className="inline-flex min-h-11 items-center justify-center rounded-sm border border-line px-3 font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
+            >
+              A <span className="ml-1 text-[1.2em]">A+</span>
+            </button>
+            <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-11 items-center justify-center rounded-sm bg-ink px-4 font-bold text-white hover:bg-ink-2">Exit</Link>
+          </div>
+        </header>
+
+        <section className="min-w-0 px-4 py-4 md:px-6 md:py-6">
           <WorkoutPartContent
             title={part?.title || 'Workout'}
             minutes={part?.minutes}
@@ -168,56 +165,56 @@ export default function WorkoutBoardPage() {
             totalParts={parts.length}
             displayScale={displayScale}
           />
-        </div>
 
-        <aside className="flex flex-col gap-5 rounded-xl bg-ink p-5 text-white md:p-6">
-          <TimerPanel
-            key={`${workout.id}-${activePart}`}
-            size="compact"
-            workoutId={workout.id}
-            partIndex={activePart}
-            part={displayPart}
-            upcomingPartTitle={parts[activePart + 1]?.title}
-            onAutoAdvance={parts[activePart + 1] ? advanceIntervalPart : undefined}
-          />
-
-          <div className="min-h-0 border-t border-white/20 pt-4">
-            <p className="mb-3 font-bold uppercase tracking-[.14em] text-white">Team · {teamNames.length || workout.max_participants}</p>
-            <div className="max-h-48 space-y-2 overflow-y-auto">
+          <div className="mt-8 rounded-xl bg-ink p-5 text-white">
+            <p className="mb-3 font-bold uppercase tracking-[.14em]">Team · {teamNames.length || workout.max_participants}</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {teamNames.length ? teamNames.map((name, index) => (
                 <div key={`${name}-${index}`} className="flex items-center gap-3">
                   <Avatar initials={name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()} className="h-9 w-9 bg-white text-ink" />
-                  <span className="font-semibold text-white">{name}</span>
+                  <span className="font-semibold">{name}</span>
                 </div>
               )) : (
-                <p className="text-[.9em] text-white">No team members registered yet.</p>
+                <p className="text-[.9em]">No team members registered yet.</p>
               )}
             </div>
           </div>
-        </aside>
-      </section>
+        </section>
 
-      <nav className="grid shrink-0 grid-cols-3 gap-2 border-t border-line bg-paper p-3 md:gap-3 md:px-6 md:py-4" aria-label="Workout parts">
-        {DEFAULT_PART_TITLES.map((defaultTitle, index) => {
-          const selected = activePart === index;
-          const title = parts[index]?.title || defaultTitle;
-          return (
-            <button
-              key={`${defaultTitle}-${index}`}
-              type="button"
-              disabled={!parts[index]}
-              onClick={() => changePart(index)}
-              aria-current={selected ? 'step' : undefined}
-              className={`flex min-h-14 flex-col items-center justify-center rounded-sm px-2 py-2 text-center font-bold uppercase disabled:cursor-default disabled:opacity-50 ${
-                selected ? 'bg-lime text-ink' : 'border border-line text-ink-2 hover:bg-canvas'
-              }`}
-            >
-              <span className="text-[.85em] tabular-nums">{String(index + 1).padStart(2, '0')}</span>
-              <span className="truncate">{title}</span>
-            </button>
-          );
-        })}
-      </nav>
+        <nav className="grid grid-cols-3 gap-2 border-t border-line bg-paper p-3 md:gap-3 md:px-6 md:py-4" aria-label="Workout parts">
+          {DEFAULT_PART_TITLES.map((defaultTitle, index) => {
+            const selected = activePart === index;
+            const title = parts[index]?.title || defaultTitle;
+            return (
+              <button
+                key={`${defaultTitle}-${index}`}
+                type="button"
+                disabled={!parts[index]}
+                onClick={() => changePart(index)}
+                aria-current={selected ? 'step' : undefined}
+                className={`flex min-h-14 flex-col items-center justify-center rounded-sm px-2 py-2 text-center font-bold uppercase disabled:cursor-default disabled:opacity-50 ${
+                  selected ? 'bg-lime text-ink' : 'border border-line text-ink-2 hover:bg-canvas'
+                }`}
+              >
+                <span className="text-[.85em] tabular-nums">{String(index + 1).padStart(2, '0')}</span>
+                <span className="truncate">{title}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      <aside className="board-regular-timer">
+        <TimerPanel
+          key={`${workout.id}-${activePart}`}
+          size="compact"
+          workoutId={workout.id}
+          partIndex={activePart}
+          part={displayPart}
+          upcomingPartTitle={parts[activePart + 1]?.title}
+          onAutoAdvance={parts[activePart + 1] ? advanceIntervalPart : undefined}
+        />
+      </aside>
     </main>
   );
 }
