@@ -4,7 +4,10 @@ import { useMemo, useRef, useState } from 'react';
 import {
   convertLegacyWorkoutToNotation,
   parseWorkout,
+  serializeTimer,
 } from '@/lib/workoutNotation';
+import { removeTimerLine, hasTimerLine, writeTimerLine } from '@/lib/workoutTimerNotation';
+import IntervalTimerSetup from '@/components/IntervalTimerSetup';
 import WorkoutPartContent from '@/components/WorkoutPartContent';
 
 type EditorTab = 'write' | 'preview';
@@ -53,6 +56,7 @@ export default function WorkoutDescriptionEditor({
   const [mobileTab, setMobileTab] = useState<EditorTab>('write');
   const [previousDescription, setPreviousDescription] = useState<string | null>(null);
   const [cursorLine, setCursorLine] = useState(1);
+  const [timerPanelPartIndex, setTimerPanelPartIndex] = useState<number | null>(null);
   const parsed = useMemo(() => parseWorkout(description), [description]);
   const isPureNotation = /^\s*#(?!#)\s/m.test(description);
   const lines = description.split('\n');
@@ -62,6 +66,23 @@ export default function WorkoutDescriptionEditor({
     : 0;
   const previewPart = parsed.parts[selectedPreviewPartIndex];
 
+  const saveTimer = (partIndex: number, timerLine: string) => {
+    const updated = writeTimerLine(description, partIndex, timerLine);
+    setPreviousDescription(null);
+    onChange(updated.description);
+    setCursorLine(updated.partLine);
+    setTimerPanelPartIndex(null);
+  };
+
+  const deleteTimer = (partIndex: number) => {
+    const updated = removeTimerLine(description, partIndex);
+    if (updated.removed) {
+      setPreviousDescription(null);
+      onChange(updated.description);
+    }
+    setTimerPanelPartIndex(null);
+  };
+
   const syncPreviewToCursor = (textarea: HTMLTextAreaElement) => {
     setCursorLine(getCursorLine(textarea));
   };
@@ -70,6 +91,7 @@ export default function WorkoutDescriptionEditor({
     const textarea = textareaRef.current;
     if (!textarea) return;
     if (mobileTab === 'preview') setMobileTab('write');
+    setTimerPanelPartIndex(null);
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const isLineMarker = /^(?:#|!)/.test(snippet);
@@ -112,11 +134,13 @@ export default function WorkoutDescriptionEditor({
 
   const convertDescription = () => {
     setPreviousDescription(description);
+    setTimerPanelPartIndex(null);
     onChange(convertLegacyWorkoutToNotation(description));
   };
 
   const handleDescriptionChange = (value: string) => {
     setPreviousDescription(null);
+    setTimerPanelPartIndex(null);
     onChange(value);
   };
 
@@ -246,25 +270,57 @@ export default function WorkoutDescriptionEditor({
         </div>
 
         <div className={`min-w-0 ${mobileTab === 'preview' ? '' : 'hidden md:block'}`}>
-          <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="relative z-20 mb-2 flex items-center justify-between gap-2">
             <p className="text-sm font-bold text-ink">Live board preview</p>
-            {parsed.parts.length > 1 && (
-              <div className="flex items-center gap-1" aria-label="Preview workout part">
-                {parsed.parts.map((part, index) => (
-                  <button
-                    key={`${part.title}-${index}`}
-                    type="button"
-                    aria-label={`Preview part ${index + 1}: ${part.title}`}
-                    aria-pressed={selectedPreviewPartIndex === index}
-                    onClick={() => {
-                      setCursorLine(partStarts[index] || 1);
-                    }}
-                    className={`min-h-8 min-w-8 rounded-sm px-2 text-[13px] font-bold ${selectedPreviewPartIndex === index ? 'bg-lime text-ink' : 'border border-line bg-paper text-ink-2'}`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-2">
+              {parsed.parts.length > 1 && (
+                <div className="flex items-center gap-1" aria-label="Preview workout part">
+                  {parsed.parts.map((part, index) => (
+                    <button
+                      key={`${part.title}-${index}`}
+                      type="button"
+                      aria-label={`Preview part ${index + 1}: ${part.title}`}
+                      aria-pressed={selectedPreviewPartIndex === index}
+                      onClick={() => {
+                        setCursorLine(partStarts[index] || 1);
+                        setTimerPanelPartIndex(null);
+                      }}
+                      className={`min-h-8 min-w-8 rounded-sm px-2 text-[13px] font-bold ${selectedPreviewPartIndex === index ? 'bg-lime text-ink' : 'border border-line bg-paper text-ink-2'}`}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {previewPart && (
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={timerPanelPartIndex === selectedPreviewPartIndex}
+                  onClick={() => setTimerPanelPartIndex((current) =>
+                    current === selectedPreviewPartIndex ? null : selectedPreviewPartIndex
+                  )}
+                  className={`min-h-9 rounded-sm border px-3 text-[13px] font-bold focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15 ${
+                    previewPart.timer
+                      ? 'border-ink bg-ink text-white'
+                      : 'border-line bg-paper text-ink hover:bg-canvas'
+                  }`}
+                >
+                  ⏱ Timer
+                </button>
+              )}
+            </div>
+            {timerPanelPartIndex !== null && parsed.parts[timerPanelPartIndex] && (
+              <IntervalTimerSetup
+                key={`${timerPanelPartIndex}-${parsed.parts[timerPanelPartIndex].timer ? serializeTimer(parsed.parts[timerPanelPartIndex].timer!) : 'none'}`}
+                partIndex={timerPanelPartIndex}
+                partTitle={parsed.parts[timerPanelPartIndex].title}
+                timer={parsed.parts[timerPanelPartIndex].timer}
+                hasTimerLine={hasTimerLine(description, timerPanelPartIndex)}
+                onClose={() => setTimerPanelPartIndex(null)}
+                onSave={(line) => saveTimer(timerPanelPartIndex, line)}
+                onRemove={() => deleteTimer(timerPanelPartIndex)}
+              />
             )}
           </div>
           <div className="aspect-video max-h-[34rem] overflow-auto rounded-sm border-[6px] border-ink bg-paper">
