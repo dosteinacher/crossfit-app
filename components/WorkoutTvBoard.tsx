@@ -241,9 +241,12 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   const [activeLoaded, setActiveLoaded] = useState(false);
   const [textScale, setTextScale] = useState(1.1);
   const [dark, setDark] = useState(false);
-  const [controlsVisible, setControlsVisible] = useState(true);
+  const [auxiliaryControlsVisible, setAuxiliaryControlsVisible] = useState(true);
+  const [coreControlsHidden, setCoreControlsHidden] = useState(false);
+  const [coreControlsDimmed, setCoreControlsDimmed] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const revealTimerRef = useRef<number | null>(null);
+  const dimTimerRef = useRef<number | null>(null);
   const teamNames = [
     ...(workout.participants || []).map((participant) => participant.user_name),
     ...(workout.guests || []).map((guest) => guest.name),
@@ -256,11 +259,18 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   const endDate = addMinutes(startDate, totalMinutes);
   const upcomingPart = parts[activePart + 1];
 
-  const revealControls = useCallback(() => {
-    setControlsVisible(true);
-    if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current);
-    revealTimerRef.current = window.setTimeout(() => setControlsVisible(false), 3000);
+  const scheduleControlsDim = useCallback(() => {
+    setCoreControlsDimmed(false);
+    if (dimTimerRef.current !== null) window.clearTimeout(dimTimerRef.current);
+    dimTimerRef.current = window.setTimeout(() => setCoreControlsDimmed(true), 5000);
   }, []);
+
+  const handleActivity = useCallback(() => {
+    setAuxiliaryControlsVisible(true);
+    if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current);
+    revealTimerRef.current = window.setTimeout(() => setAuxiliaryControlsVisible(false), 3000);
+    if (!coreControlsHidden) scheduleControlsDim();
+  }, [coreControlsHidden, scheduleControlsDim]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -307,22 +317,23 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   }, []);
 
   useEffect(() => {
-    const frameId = window.requestAnimationFrame(revealControls);
+    const frameId = window.requestAnimationFrame(handleActivity);
     return () => {
       window.cancelAnimationFrame(frameId);
       if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current);
+      if (dimTimerRef.current !== null) window.clearTimeout(dimTimerRef.current);
     };
-  }, [revealControls]);
+  }, [handleActivity]);
 
   useEffect(() => {
-    const reveal = () => revealControls();
+    const reveal = () => handleActivity();
     window.addEventListener('mousemove', reveal);
     window.addEventListener('touchstart', reveal);
     return () => {
       window.removeEventListener('mousemove', reveal);
       window.removeEventListener('touchstart', reveal);
     };
-  }, [revealControls]);
+  }, [handleActivity]);
 
   const changePart = useCallback((index: number) => {
     if (index < 0 || index >= parts.length) return;
@@ -342,8 +353,19 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      revealControls();
-      if (event.key === 'ArrowLeft') {
+      handleActivity();
+      if (event.key.toLowerCase() === 'h') {
+        event.preventDefault();
+        if (coreControlsHidden) {
+          setCoreControlsHidden(false);
+          scheduleControlsDim();
+        } else {
+          setCoreControlsHidden(true);
+          setCoreControlsDimmed(false);
+          if (dimTimerRef.current !== null) window.clearTimeout(dimTimerRef.current);
+          dimTimerRef.current = null;
+        }
+      } else if (event.key === 'ArrowLeft') {
         event.preventDefault();
         changePart(activePart - 1);
       } else if (event.key === 'ArrowRight') {
@@ -359,7 +381,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activePart, changePart, revealControls, toggleFullscreen, workout.id]);
+  }, [activePart, changePart, coreControlsHidden, handleActivity, scheduleControlsDim, toggleFullscreen, workout.id]);
 
   const changeTextScale = () => {
     const currentIndex = TEXT_SCALES.indexOf(textScale as (typeof TEXT_SCALES)[number]);
@@ -376,15 +398,15 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   const mainBackground = dark ? 'bg-ink' : 'bg-paper';
 
   return (
-    <div className={`fixed inset-0 overflow-hidden bg-ink ${controlsVisible ? '' : 'cursor-none'}`}>
+    <div className={`fixed inset-0 overflow-hidden bg-ink ${auxiliaryControlsVisible ? '' : 'cursor-none'}`}>
       <main
         className={`absolute inset-0 grid overflow-hidden border-[16px] border-[#141512] ${mainBackground}`}
         style={{
           boxSizing: 'border-box',
           gridTemplateColumns: 'minmax(0, 1fr) clamp(300px, 28.125vw, 540px)',
         }}
-        onMouseMove={revealControls}
-        onTouchStart={revealControls}
+        onMouseMove={handleActivity}
+        onTouchStart={handleActivity}
       >
         <div className="grid min-h-0 min-w-0" style={{ gridTemplateRows: '96px minmax(0, 1fr)' }}>
           <nav
@@ -431,8 +453,9 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
             part={displayPart}
             upcomingPartTitle={upcomingPart?.title}
             currentTime={now}
-            controlsVisible={controlsVisible}
-            onActivity={revealControls}
+            controlsDimmed={coreControlsDimmed}
+            coreControlsVisible={!coreControlsHidden}
+            onActivity={handleActivity}
             onAutoAdvance={upcomingPart ? advanceIntervalPart : undefined}
             stageFooter={({ elapsedSeconds: panelElapsed, partProgress: panelProgress }) => {
               const classDoneMinutes = Math.floor((minutesBeforePart * 60 + panelElapsed) / 60);
@@ -466,17 +489,17 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
         </aside>
 
         <div
-          className={`absolute bottom-5 left-5 z-20 max-w-[calc(100%-580px)] rounded-sm border border-white/30 bg-[#141512]/95 px-5 py-4 text-white shadow-xl transition-opacity ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+          className={`absolute bottom-5 left-5 z-20 max-w-[calc(100%-580px)] rounded-sm border border-white/30 bg-[#141512]/95 px-5 py-4 text-white shadow-xl transition-opacity ${auxiliaryControlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
           role="group"
           aria-label="TV board controls"
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-11 items-center rounded-sm bg-white px-3 text-[20px] font-bold text-ink">Exit</Link>
-            <button type="button" onClick={changeTextScale} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">A A+</button>
-            <button type="button" onClick={() => setDark((value) => !value)} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">{dark ? 'Light' : 'Dark'}</button>
+            <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-12 items-center rounded-sm bg-white px-3 text-[20px] font-bold text-ink">Exit</Link>
+            <button type="button" onClick={changeTextScale} className="min-h-12 rounded-sm border border-white/40 px-3 text-[20px] font-bold">A A+</button>
+            <button type="button" onClick={() => setDark((value) => !value)} className="min-h-12 rounded-sm border border-white/40 px-3 text-[20px] font-bold">{dark ? 'Light' : 'Dark'}</button>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[20px] font-semibold text-[#C9CBC4]">
-            <span>← → part</span><span>Space / Enter start</span><span>R reset</span><span>F fullscreen</span><span>D dark / light</span><span>Esc exit</span>
+            <span>← → part</span><span>Space / Enter / OK start</span><span>[ ] interval / ±1 min</span><span>T setup</span><span>M sound</span><span>H hide controls</span><span>R stop</span><span>F fullscreen</span><span>D dark / light</span><span>Esc exit</span>
           </div>
         </div>
       </main>

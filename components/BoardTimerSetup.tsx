@@ -196,7 +196,7 @@ export default function BoardTimerSetup({
                     key={preset.label}
                     type="button"
                     onClick={() => setConfiguration({ mode: 'intervals', timer: { ...preset.timer } })}
-                    className="min-h-9 rounded-full border border-[#3A3C36] px-2.5 font-display text-[12px] font-extrabold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime"
+                    className="min-h-12 rounded-full border border-[#3A3C36] px-2.5 font-display text-[12px] font-extrabold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime"
                   >
                     {preset.label}
                   </button>

@@ -59,7 +59,8 @@ export default function TimerPanel({
   part,
   upcomingPartTitle,
   currentTime,
-  controlsVisible = true,
+  controlsDimmed = false,
+  coreControlsVisible = true,
   onActivity,
   onAutoAdvance,
   stageFooter,
@@ -70,7 +71,8 @@ export default function TimerPanel({
   part: WorkoutPart;
   upcomingPartTitle?: string;
   currentTime?: Date;
-  controlsVisible?: boolean;
+  controlsDimmed?: boolean;
+  coreControlsVisible?: boolean;
   onActivity?: () => void;
   onAutoAdvance?: () => void;
   stageFooter?: (state: { elapsedSeconds: number; partProgress: number }) => ReactNode;
@@ -520,20 +522,24 @@ export default function TimerPanel({
   }, [overrideStorageKey]);
 
   const timerControlsReady = timerLoaded && preferencesLoaded && overrideLoaded;
+  const showSetup = setupOpen && (size !== 'stage' || coreControlsVisible);
+  const stageControlVisibility = size === 'stage'
+    ? `${coreControlsVisible ? '' : 'hidden'} transition-opacity ${controlsDimmed ? 'opacity-[.35]' : 'opacity-100'}`
+    : '';
   const setupControls = (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className={`flex min-w-0 items-center gap-2 ${stageControlVisibility}`}>
       {timerOverride && (
         <div className="flex min-w-0 items-center gap-1 rounded-full border border-lime/50 px-2 py-1 text-[9px] font-bold uppercase tracking-[.08em] text-lime">
           <span className="truncate">EDITED ON BOARD ·</span>
-          <button type="button" disabled={!timerControlsReady} onClick={resetOverride} className="shrink-0 underline underline-offset-2 disabled:opacity-50">RESET</button>
+          <button type="button" disabled={!timerControlsReady} onClick={() => { onActivity?.(); resetOverride(); }} className="min-h-12 shrink-0 underline underline-offset-2 disabled:opacity-50">RESET</button>
         </div>
       )}
       <button
         type="button"
         disabled={!timerControlsReady}
-        onClick={() => setSetupOpen(true)}
+        onClick={() => { onActivity?.(); setSetupOpen(true); }}
         aria-label={timerOverride ? 'Edit timer setup' : 'Set timer'}
-        className="min-h-9 shrink-0 rounded-lg border border-[#3A3C36] px-2 font-display text-[12px] font-extrabold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime disabled:opacity-50"
+        className="min-h-12 shrink-0 rounded-lg border border-[#3A3C36] px-2 font-display text-[12px] font-extrabold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime disabled:opacity-50"
       >
         {timerOverride ? 'TIMER ✎' : '⏱ SET TIMER'}
       </button>
@@ -551,10 +557,15 @@ export default function TimerPanel({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target;
-      if (!timerLoaded || !preferencesLoaded || (target instanceof HTMLElement && target.closest('button, input, select, textarea, [contenteditable="true"]'))) return;
-      if (event.key === ' ' || event.key === 'Enter' || event.key === 'OK') {
+      const targetElement = target instanceof HTMLElement ? target : null;
+      if (!timerLoaded || !preferencesLoaded || targetElement?.closest('input, textarea, [contenteditable="true"]')) return;
+      if (event.key.toLowerCase() === 't') {
         event.preventDefault();
-        toggleTimer();
+        onActivity?.();
+        setSetupOpen((open) => !open);
+      } else if (event.key.toLowerCase() === 'm') {
+        event.preventDefault();
+        toggleSound();
       } else if (event.key === '[') {
         event.preventDefault();
         previousInterval();
@@ -564,13 +575,14 @@ export default function TimerPanel({
       } else if (event.key.toLowerCase() === 'r') {
         event.preventDefault();
         stopTimer();
-      } else if (event.key.toLowerCase() === 'm') {
-        toggleSound();
+      } else if (event.key === 'OK' || ((event.key === ' ' || event.key === 'Enter') && !targetElement?.closest('button, select, a'))) {
+        event.preventDefault();
+        toggleTimer();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [nextInterval, preferencesLoaded, previousInterval, stopTimer, timerLoaded, toggleSound, toggleTimer]);
+  }, [nextInterval, onActivity, preferencesLoaded, previousInterval, stopTimer, timerLoaded, toggleSound, toggleTimer]);
 
   const phaseWordClass = phaseStyle?.className || 'text-white';
   const remainingLabel = duration === undefined && mode !== 'intervals' ? '—' : formatTime(totalLeft);
@@ -597,19 +609,18 @@ export default function TimerPanel({
           : part.format || 'Stopwatch';
   const startLabel = running ? 'Ⅱ Pause' : done ? '↻ Restart' : elapsed > 0 ? '▶ Resume' : '▶ Start';
   const timeButtonLabel = running ? 'Pause timer' : done ? 'Restart timer' : elapsed > 0 ? 'Resume timer' : 'Start timer';
-  const controlsShowing = size === 'compact' || controlsVisible;
   const buttonClass = size === 'stage'
     ? 'h-[68px] rounded-xl bg-[#1E1F1B] font-display text-[22px] font-black uppercase'
     : 'h-12 rounded-lg bg-[#1E1F1B] font-display text-[15px] font-black uppercase';
   const soundControls = (
-    <div className="flex items-center gap-2">
+    <div className={`flex items-center gap-2 ${stageControlVisibility}`}>
       <button
         type="button"
         onClick={toggleSound}
         disabled={!preferencesLoaded}
         aria-label={soundEnabled ? 'Turn sound off' : 'Turn sound on'}
         aria-pressed={soundEnabled}
-        className={`shrink-0 rounded-lg border px-3 py-2 font-display text-[15px] font-extrabold uppercase leading-none ${
+        className={`min-h-12 shrink-0 rounded-lg border px-3 py-2 font-display text-[15px] font-extrabold uppercase leading-none ${
           soundEnabled ? 'border-lime text-lime' : 'border-[#3A3C36] text-[#8A8D84]'
         }`}
       >
@@ -624,7 +635,7 @@ export default function TimerPanel({
           if (value === 'low' || value === 'medium' || value === 'high') setVolume(value);
           onActivity?.();
         }}
-        className="min-h-9 rounded-lg border border-[#3A3C36] bg-[#1E1F1B] px-2 text-[12px] font-bold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime"
+        className="min-h-12 rounded-lg border border-[#3A3C36] bg-[#1E1F1B] px-2 text-[12px] font-bold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime"
       >
         <option value="low">Low</option>
         <option value="medium">Medium</option>
@@ -846,7 +857,7 @@ export default function TimerPanel({
   const clock = currentTime || new Date();
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 bg-ink px-10 py-[34px] text-white">
-      {setupOpen ? renderSetup() : (
+      {showSetup ? renderSetup() : (
         <>
           <div className="flex items-center justify-between gap-2">
             <span className="font-display text-[30px] font-black uppercase leading-none">PURE</span>
@@ -951,7 +962,7 @@ export default function TimerPanel({
       )}
 
           <div className="mt-auto flex flex-col gap-5">
-            <div className={`transition-opacity ${controlsShowing ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+            <div className={`${coreControlsVisible ? '' : 'hidden'} transition-opacity ${controlsDimmed ? 'opacity-[.35]' : 'opacity-100'}`}>
               {controls}
             </div>
             {stageFooter?.({ elapsedSeconds: elapsed, partProgress })}
