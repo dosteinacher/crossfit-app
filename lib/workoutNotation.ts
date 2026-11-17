@@ -1,7 +1,24 @@
-export type WorkoutBlockType = 'section' | 'sub' | 'note' | 'scheme' | 'movement' | 'text';
+export type WorkoutFormat =
+  | 'AMRAP'
+  | 'EMOM'
+  | 'FOR TIME'
+  | 'CHIPPER'
+  | 'INTERVALS'
+  | 'TABATA'
+  | 'SKILL'
+  | 'STRENGTH';
 
-export interface WorkoutBlock {
-  type: WorkoutBlockType;
+export interface WorkoutSectionBlock {
+  type: 'section';
+  label?: string;
+  title: string;
+  format?: WorkoutFormat;
+  meta: string[];
+  line: number;
+}
+
+export interface WorkoutMovementBlock {
+  type: 'movement';
   reps?: string;
   name: string;
   load?: string;
@@ -9,10 +26,25 @@ export interface WorkoutBlock {
   line: number;
 }
 
+export type WorkoutNamedBlock =
+  | { type: 'sub'; name: string; line: number }
+  | { type: 'note'; name: string; line: number }
+  | { type: 'scheme'; name: string; line: number }
+  | { type: 'text'; name: string; line: number };
+
+export type WorkoutBlock = WorkoutSectionBlock | WorkoutMovementBlock | WorkoutNamedBlock;
+export type WorkoutBlockType = WorkoutBlock['type'];
+
+export function getWorkoutBlockText(block: WorkoutBlock) {
+  return block.type === 'section'
+    ? [block.label, block.title, block.format, ...block.meta].filter(Boolean).join(' · ')
+    : block.name;
+}
+
 export interface WorkoutPart {
   title: string;
   minutes?: number;
-  format?: 'AMRAP' | 'EMOM' | 'FOR TIME' | 'CHIPPER' | 'INTERVALS' | 'TABATA' | 'SKILL' | 'STRENGTH';
+  format?: WorkoutFormat;
   team?: string;
   timer?: IntervalTimer;
   meta: string[];
@@ -244,7 +276,8 @@ function parseHeaderSegments(title: string, segments: string[]): WorkoutPart {
 
 function splitAlternative(value: string) {
   let depth = 0;
-  let separator = -1;
+  let start = 0;
+  const alternatives: string[] = [];
   for (let index = 0; index < value.length; index += 1) {
     const character = value[index];
     if (character === '(') depth += 1;
@@ -252,20 +285,81 @@ function splitAlternative(value: string) {
     else if (
       character === '/' &&
       depth === 0 &&
-      !(/\d/.test(value[index - 1] || '') && /\d/.test(value[index + 1] || ''))
+      /\s/.test(value[index - 1] || '') &&
+      /\s/.test(value[index + 1] || '')
     ) {
-      separator = index;
+      alternatives.push(value.slice(start, index).trim());
+      start = index + 1;
     }
   }
-  return separator < 0
-    ? { movement: value.trim(), alt: undefined }
-    : {
-        movement: value.slice(0, separator).trim(),
-        alt: value.slice(separator + 1).trim() || undefined,
-      };
+  alternatives.push(value.slice(start).trim());
+  const [movement, ...otherMovements] = alternatives;
+  return {
+    movement: movement || '',
+    alt: otherMovements.length ? otherMovements.join(' · ') : undefined,
+  };
 }
 
-function parseMovement(value: string, line: number): WorkoutBlock | null {
+const SECTION_LABEL = /^(?:(?:station|part|teil|block|round|runde)\s+(?:\d+[a-z]?|[a-z])|[a-z]|\d+)$/i;
+
+function getSectionFormat(value: string): WorkoutFormat | undefined {
+  const normalized = value.trim().replace(/\s+/g, ' ').toUpperCase();
+  return FORMAT_PATTERNS.find(([format]) => format === normalized)?.[0];
+}
+
+function parseSection(value: string, line: number): WorkoutSectionBlock {
+  const text = value.replace(/^##\s+/, '').replace(/:\s*$/, '').trim();
+  const segments = text
+    .split(/\s+(?:·|\||–)\s+/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  let label: string | undefined;
+  if (
+    segments[0] &&
+    segments[0].split(/\s+/).length <= 3 &&
+    SECTION_LABEL.test(segments[0])
+  ) {
+    label = segments.shift();
+  }
+
+  let title: string | undefined;
+  let format: WorkoutFormat | undefined;
+  const meta: string[] = [];
+  for (const segment of segments) {
+    const sectionFormat = getSectionFormat(segment);
+    if (sectionFormat && !format) {
+      format = sectionFormat;
+    } else if (!title) {
+      title = segment;
+    } else {
+      meta.push(segment);
+    }
+  }
+
+  if (!title) {
+    if (label) {
+      title = label;
+      label = undefined;
+    } else if (format) {
+      title = format;
+      format = undefined;
+    } else {
+      title = meta.shift() || 'Section';
+    }
+  }
+
+  return {
+    type: 'section',
+    ...(label ? { label } : {}),
+    title,
+    ...(format ? { format } : {}),
+    meta,
+    line,
+  };
+}
+
+function parseMovement(value: string, line: number): WorkoutMovementBlock | null {
   const match = value.match(REP_PREFIX);
   if (!match) return null;
 
@@ -307,7 +401,7 @@ function parseContentLine(source: SourceLine, warnings: WorkoutWarning[], legacy
     .replace(/\s+of\s*$/i, '')
     .trim();
   if (/^##\s+/.test(value)) {
-    return { type: 'section', name: value.replace(/^##\s+/, '').trim(), line: source.line };
+    return parseSection(value, source.line);
   }
   if (/^>\s*/.test(value)) {
     return { type: 'sub', name: value.replace(/^>\s*/, '').trim(), line: source.line };
@@ -322,7 +416,7 @@ function parseContentLine(source: SourceLine, warnings: WorkoutWarning[], legacy
     return { type: 'scheme', name: value, line: source.line };
   }
   if (/^(?:BUY-IN|THEN|BUY-OUT)$/i.test(value) || /:\s*$/.test(value)) {
-    return { type: 'section', name: value.replace(/:\s*$/, '').trim(), line: source.line };
+    return parseSection(value, source.line);
   }
   const movement = parseMovement(value, source.line);
   if (movement) return movement;
@@ -557,7 +651,7 @@ export function getMainWorkoutFormat(text: string) {
   return mainPart.format || detectWorkoutFormat([
     mainPart.title,
     ...mainPart.meta,
-    ...mainPart.blocks.map((block) => block.name),
+    ...mainPart.blocks.map(getWorkoutBlockText),
   ].join('\n'));
 }
 
@@ -574,7 +668,7 @@ export function convertLegacyWorkoutToNotation(text: string) {
     const body = part.blocks.map((block) => {
       switch (block.type) {
         case 'section':
-          return `## ${block.name}`;
+          return `## ${getWorkoutBlockText(block)}`;
         case 'sub':
           return `> ${block.name}`;
         case 'note':

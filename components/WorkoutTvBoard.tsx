@@ -7,7 +7,7 @@ import type { Guest, WorkoutWithDetails } from '@/lib/types';
 import TimerPanel from '@/components/TimerPanel';
 import { pauseStoredIntervalTimer } from '@/lib/intervalTimerPersistence';
 import type { WorkoutBlock, WorkoutPart } from '@/lib/workoutNotation';
-import { parseWorkout } from '@/lib/workoutNotation';
+import { getWorkoutBlockText, parseWorkout } from '@/lib/workoutNotation';
 import {
   getFitScaleCandidates,
   getTotalMovementCount,
@@ -25,15 +25,15 @@ const TEXT_SCALES = [1, 1.1, 1.2] as const;
 
 function getPartGroups(part: WorkoutPart | undefined) {
   const groups: Array<{ title?: string; blocks: WorkoutBlock[] }> = [{ blocks: [] }];
-  const notes: WorkoutBlock[] = [];
-  const schemes: WorkoutBlock[] = [];
+  const notes: Extract<WorkoutBlock, { type: 'note' }>[] = [];
+  const schemes: Extract<WorkoutBlock, { type: 'scheme' }>[] = [];
 
   for (const block of part?.blocks || []) {
     if (block.type === 'section' || block.type === 'sub') {
       if (groups[groups.length - 1].title || groups[groups.length - 1].blocks.length) {
-        groups.push({ title: block.name, blocks: [] });
+        groups.push({ title: getWorkoutBlockText(block), blocks: [] });
       } else {
-        groups[groups.length - 1].title = block.name;
+        groups[groups.length - 1].title = getWorkoutBlockText(block);
       }
     } else if (block.type === 'note') {
       notes.push(block);
@@ -164,7 +164,7 @@ function WorkoutTvContent({
                   <div className={twoColumns ? 'grid grid-cols-2 gap-x-12' : ''}>
                     {group.blocks.map((block, index) => (
                       <WorkoutTvBlock
-                        key={`${block.line}-${block.name}-${index}`}
+                        key={`${block.line}-${getWorkoutBlockText(block)}-${index}`}
                         block={block}
                         divider={divider}
                         text={text}
@@ -230,7 +230,7 @@ function WorkoutTvBlock({
 
   return (
     <p className={`border-b-2 py-[.55em] text-[1.25em] font-semibold ${divider} ${block.type === 'text' ? secondary : text}`}>
-      {block.name}
+      {getWorkoutBlockText(block)}
     </p>
   );
 }

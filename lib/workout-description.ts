@@ -1,4 +1,11 @@
-import { detectWorkoutFormat, parseWorkout, type WorkoutPart } from '@/lib/workoutNotation';
+import {
+  detectWorkoutFormat,
+  getWorkoutBlockText,
+  parseWorkout,
+  type WorkoutBlock,
+  type WorkoutMovementBlock,
+  type WorkoutPart,
+} from '@/lib/workoutNotation';
 
 export type WorkoutFormat = NonNullable<WorkoutPart['format']>;
 export type WorkoutFormatStamp = { label: string; variant: 'format' | 'meta' | 'benchmark' };
@@ -17,7 +24,7 @@ function partText(part: WorkoutPart) {
     part.format || '',
     part.team || '',
     ...part.meta,
-    ...part.blocks.map((block) => block.name),
+    ...part.blocks.map(getWorkoutBlockText),
   ].join('\n');
 }
 
@@ -99,16 +106,16 @@ export function getWorkoutScoreboard(workout: WorkoutFormatInput) {
   const { parts } = parseWorkout(workout?.description || '');
   const part = findWorkoutPart(parts);
   if (!part) return null;
-  const schemeBlock = part.blocks.find((block) =>
+  const schemeBlock = part.blocks.find((block): block is Extract<WorkoutBlock, { type: 'scheme' }> =>
     block.type === 'scheme' && isRepScheme(block.name)
   );
-  const movementScheme = part.blocks.find((block) =>
-    block.type === 'movement' && block.reps && isRepScheme(block.reps)
+  const movementScheme = part.blocks.find((block): block is WorkoutMovementBlock =>
+    block.type === 'movement' && !!block.reps && isRepScheme(block.reps)
   );
   const schemeValue = schemeBlock?.name || movementScheme?.reps;
   const scheme = schemeValue?.replace(/\s+/g, '').replace(/[×–—]/g, (value) => value === '×' ? 'x' : '-');
   const movements = part.blocks
-    .filter((block) => block.type === 'movement')
+    .filter((block): block is WorkoutMovementBlock => block.type === 'movement')
     .map((block) => block.name)
     .filter(Boolean)
     .slice(0, 4);

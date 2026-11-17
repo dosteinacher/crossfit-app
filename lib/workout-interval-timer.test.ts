@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildTimeline } from './intervalTimer';
-import { parseWorkout, serializeTimer, type IntervalTimer } from './workoutNotation';
+import {
+  getWorkoutBlockText,
+  parseWorkout,
+  serializeTimer,
+  type IntervalTimer,
+} from './workoutNotation';
 
 const TEST_INTERVAL_WORKOUT = `# Short Intervals | 10 | Intervals
 ~ 3 x 5/5 | prep 0:05
@@ -40,8 +45,8 @@ describe('interval timer workout notation', () => {
       expectedTimer,
       undefined,
     ]);
-    assert.equal(parts[0].blocks.some((block) => block.name.startsWith('~')), false);
-    assert.equal(parts[4].blocks[0].name, 'Easy walk');
+    assert.equal(parts[0].blocks.some((block) => getWorkoutBlockText(block).startsWith('~')), false);
+    assert.equal(getWorkoutBlockText(parts[4].blocks[0]), 'Easy walk');
     assert.deepEqual(warnings, []);
   });
 

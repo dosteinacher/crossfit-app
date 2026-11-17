@@ -10,7 +10,7 @@ import { addDays, format, startOfWeek } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { Announcement, WorkoutWithDetails } from '@/lib/types';
 import { getDashboardStats } from '@/lib/dashboard-stats';
-import { parseWorkout } from '@/lib/workoutNotation';
+import { getWorkoutBlockText, parseWorkout } from '@/lib/workoutNotation';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                               </p>
                             ))}
                             {!part.blocks.some((block) => block.type === 'movement') && part.blocks.slice(0, 3).map((block, blockIndex) => (
-                              <p key={`${block.name}-${blockIndex}`} className="line-clamp-1">{block.name}</p>
+                              <p key={`${getWorkoutBlockText(block)}-${blockIndex}`} className="line-clamp-1">{getWorkoutBlockText(block)}</p>
                             ))}
                           </div>
                         </div>

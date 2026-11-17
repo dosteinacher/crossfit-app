@@ -1,4 +1,4 @@
-import type { WorkoutBlock } from '@/lib/workoutNotation';
+import { getWorkoutBlockText, type WorkoutBlock } from '@/lib/workoutNotation';
 
 export default function WorkoutPartContent({
   title,
@@ -69,7 +69,7 @@ export default function WorkoutPartContent({
             );
           }
           if (block.type === 'section' || block.type === 'sub') {
-            return <p key={`${block.name}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className={`border-b border-current/20 py-3 font-bold uppercase tracking-[.14em] ${secondaryText}`}>{block.name}</p>;
+            return <p key={`${getWorkoutBlockText(block)}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className={`border-b border-current/20 py-3 font-bold uppercase tracking-[.14em] ${secondaryText}`}>{getWorkoutBlockText(block)}</p>;
           }
           if (block.type === 'note') {
             return <p key={`${block.name}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className="border-l-4 border-lime bg-lime/15 px-4 py-3 font-semibold">{block.name}</p>;

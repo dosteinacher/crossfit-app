@@ -7,8 +7,11 @@ import {
 } from './workout-description';
 import {
   convertLegacyWorkoutToNotation,
+  getWorkoutBlockText,
   getMainWorkoutFormat,
   parseWorkout,
+  type WorkoutBlock,
+  type WorkoutMovementBlock,
 } from './workoutNotation';
 
 const PURE_EXAMPLE = `# Warm-up | 15
@@ -34,8 +37,12 @@ const PURE_EXAMPLE = `# Warm-up | 15
 60 Cal Row / Seated SkiErg
 ! Wenn ihr den Buy-out beendet, beginnt ihr wieder beim Buy-in.`;
 
+function getMovementBlocks(blocks: WorkoutBlock[]): WorkoutMovementBlock[] {
+  return blocks.filter((block): block is WorkoutMovementBlock => block.type === 'movement');
+}
+
 describe('parseWorkout', () => {
-  it('parses all three PURE parts, their metadata, and typed blocks', () => {
+  it('parses all three PURE parts and the v3 Buy-in / Then / Buy-out workout without warnings', () => {
     const { parts, warnings } = parseWorkout(PURE_EXAMPLE);
     assert.equal(parts.length, 3);
     assert.deepEqual(parts.map(({ title, minutes, format }) => ({ title, minutes, format })), [
@@ -60,7 +67,7 @@ describe('parseWorkout', () => {
       alt: 'DB Curls',
       line: 10,
     });
-    assert.deepEqual(parts[2].blocks.filter((block) => block.type === 'section').map((block) => block.name), [
+    assert.deepEqual(parts[2].blocks.filter((block) => block.type === 'section').map(getWorkoutBlockText), [
       'Buy-in',
       'Then',
       'Buy-out',
@@ -69,21 +76,86 @@ describe('parseWorkout', () => {
     assert.deepEqual(warnings, []);
   });
 
-  it('keeps ratio slashes in loads and treats the final movement slash as an alternative', () => {
+  it('splits all spaced movement alternatives while preserving ratio slashes', () => {
     const { parts } = parseWorkout(`# WOD | 20 | For Time
 5 Strict Press @ 40/30 kg
 5 DB Thrusters @ 2×17.5/12.5 kg
+5 Thrusters (24/16 kg)
+30 Double Unders  /   50 Single Unders / 20 Air Squats
+5 Sit-Ups (left / right) / V-Ups / Toes-to-Bar
 21-15-9 Thrusters / Pull-ups`);
     const movements = parts[0].blocks.filter((block) => block.type === 'movement');
     assert.equal(movements[0].load, '40/30 kg');
     assert.equal(movements[1].load, '2×17.5/12.5 kg');
-    assert.deepEqual(movements[2], {
+    assert.equal(movements[2].load, '24/16 kg');
+    assert.deepEqual(movements[3], {
+      type: 'movement',
+      reps: '30',
+      name: 'Double Unders',
+      alt: '50 Single Unders · 20 Air Squats',
+      line: 5,
+    });
+    assert.deepEqual(movements[4], {
+      type: 'movement',
+      reps: '5',
+      name: 'Sit-Ups (left / right)',
+      alt: 'V-Ups · Toes-to-Bar',
+      line: 6,
+    });
+    assert.deepEqual(movements[5], {
       type: 'movement',
       reps: '21-15-9',
       name: 'Thrusters',
       alt: 'Pull-ups',
-      line: 4,
+      line: 7,
     });
+  });
+
+  it('parses section labels, titles, formats, and metadata across all supported separators', () => {
+    const { parts, warnings } = parseWorkout(`# WOD | 20
+## Station 1 · Swing & Lunge · AMRAP
+## Part A | Strength
+## 3 – Rope & Core
+## Engine · AMRAP · Cap 8′
+## Buy-in`);
+    assert.deepEqual(parts[0].blocks, [
+      {
+        type: 'section',
+        label: 'Station 1',
+        title: 'Swing & Lunge',
+        format: 'AMRAP',
+        meta: [],
+        line: 2,
+      },
+      {
+        type: 'section',
+        title: 'Part A',
+        format: 'STRENGTH',
+        meta: [],
+        line: 3,
+      },
+      {
+        type: 'section',
+        label: '3',
+        title: 'Rope & Core',
+        meta: [],
+        line: 4,
+      },
+      {
+        type: 'section',
+        title: 'Engine',
+        format: 'AMRAP',
+        meta: ['Cap 8′'],
+        line: 5,
+      },
+      {
+        type: 'section',
+        title: 'Buy-in',
+        meta: [],
+        line: 6,
+      },
+    ]);
+    assert.deepEqual(warnings, []);
   });
 
   it('accepts header metadata segments in any order', () => {
@@ -96,7 +168,7 @@ describe('parseWorkout', () => {
   });
 
   it('recognizes the supported rep and time-prefix forms', () => {
-    const movements = parseWorkout('# Strength\n5x3 Back Squat\n400m Run\n1:00 Row').parts[0].blocks;
+    const movements = getMovementBlocks(parseWorkout('# Strength\n5x3 Back Squat\n400m Run\n1:00 Row').parts[0].blocks);
     assert.deepEqual(movements.map(({ reps, name }) => ({ reps, name })), [
       { reps: '5x3', name: 'Back Squat' },
       { reps: '400m', name: 'Run' },
@@ -106,7 +178,12 @@ describe('parseWorkout', () => {
 
   it('parses legacy bullet-prefixed movement lines', () => {
     const result = parseWorkout('# WOD | 20\n* 12 Strict Pull-Ups / Seated Band Lat Pulldowns\n- 18 DB Push Press\n• 24 Box Jumps');
-    assert.deepEqual(result.parts[0].blocks.map(({ type, reps, name, alt }) => ({ type, reps, name, alt })), [
+    assert.deepEqual(result.parts[0].blocks.map((block) => ({
+      type: block.type,
+      reps: block.type === 'movement' ? block.reps : undefined,
+      name: getWorkoutBlockText(block),
+      alt: block.type === 'movement' ? block.alt : undefined,
+    })), [
       { type: 'movement', reps: '12', name: 'Strict Pull-Ups', alt: 'Seated Band Lat Pulldowns' },
       { type: 'movement', reps: '18', name: 'DB Push Press', alt: undefined },
       { type: 'movement', reps: '24', name: 'Box Jumps', alt: undefined },
@@ -119,8 +196,8 @@ describe('parseWorkout', () => {
       '# WARM U# NAME | | 15\n3 Rounds of ##\n10 Air Squats\n# STRENGTH# NAME | | 20\n5 Back Squats'
     );
     assert.deepEqual(result.parts.map(({ title }) => title), ['Warm-up', 'STRENGTH']);
-    assert.equal(result.parts[0].blocks[0].name, '3 Rounds');
-    assert.equal(result.parts[0].blocks.some((block) => /#|\|/.test(block.name)), false);
+    assert.equal(getWorkoutBlockText(result.parts[0].blocks[0]), '3 Rounds');
+    assert.equal(result.parts[0].blocks.some((block) => /#|\|/.test(getWorkoutBlockText(block))), false);
   });
 
   // These legacy samples come from the import template because this worktree has no live database connection.
@@ -142,7 +219,7 @@ describe('parseWorkout', () => {
 
     const second = parseWorkout(legacyDescriptions[1]).parts[0];
     assert.deepEqual(second.blocks[0], { type: 'scheme', name: '5 Rounds:', line: 1 });
-    assert.deepEqual(second.blocks.slice(1, 3).map(({ reps, name, load }) => ({ reps, name, load })), [
+    assert.deepEqual(getMovementBlocks(second.blocks.slice(1, 3)).map(({ reps, name, load }) => ({ reps, name, load })), [
       { reps: '5', name: 'Back Squats (Heavy)', load: undefined },
       { reps: '10', name: 'Strict Pull-ups', load: undefined },
     ]);
@@ -166,7 +243,7 @@ describe('parseWorkout', () => {
     assert.equal(parts.length, 3);
     assert.deepEqual(parts.map((part) => part.minutes), [15, 20, 30]);
     assert.equal(parts[0].blocks[0].type, 'scheme');
-    assert.deepEqual(parts[0].blocks.slice(1).map(({ reps, name }) => ({ reps, name })), [
+    assert.deepEqual(getMovementBlocks(parts[0].blocks.slice(1)).map(({ reps, name }) => ({ reps, name })), [
       { reps: '10', name: 'Air Squats' },
       { reps: '8', name: 'Push-Ups' },
     ]);
@@ -183,7 +260,7 @@ describe('parseWorkout', () => {
       { title: 'WOD', minutes: 30, format: 'AMRAP' },
     ]);
     assert.equal(parts[0].blocks[0].type, 'scheme');
-    assert.equal(parts[1].blocks[0].reps, '10');
+    assert.equal(getMovementBlocks(parts[1].blocks)[0].reps, '10');
   });
 
   it('derives format, duration, team, and scoreboard from the shared parse', () => {
@@ -242,7 +319,7 @@ describe('parseWorkout', () => {
     const legacy = 'AMRAP 20 minutes:\n10 Wall Balls\n15 Kettlebell Swings';
     const converted = convertLegacyWorkoutToNotation(legacy);
     assert.match(converted, /^# AMRAP 20 minutes \| 20 \| AMRAP/m);
-    assert.deepEqual(parseWorkout(converted).parts[0].blocks.map(({ reps, name }) => ({ reps, name })), [
+    assert.deepEqual(getMovementBlocks(parseWorkout(converted).parts[0].blocks).map(({ reps, name }) => ({ reps, name })), [
       { reps: '10', name: 'Wall Balls' },
       { reps: '15', name: 'Kettlebell Swings' },
     ]);
