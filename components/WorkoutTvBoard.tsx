@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { addMinutes, format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
-import IntervalTimerBoard from '@/components/IntervalTimerBoard';
+import TimerPanel from '@/components/TimerPanel';
 import { pauseStoredIntervalTimer } from '@/lib/intervalTimerPersistence';
 import type { WorkoutBlock, WorkoutPart } from '@/lib/workoutNotation';
 import { parseWorkout } from '@/lib/workoutNotation';
@@ -17,21 +17,11 @@ import {
 type BoardWorkout = WorkoutWithDetails & { guests: Guest[] };
 type PersistedTimerState = {
   activePart: number;
-  elapsedSeconds: number;
-  timerRunning: boolean;
-  savedAt: number;
 };
 
-const STAGE_WIDTH = 1920;
-const STAGE_HEIGHT = 1080;
 const TIMER_STORAGE_PREFIX = 'pure-tv-timer:';
 const TEXT_SCALE_STORAGE_KEY = 'pure-tv-text-scale';
 const TEXT_SCALES = [1, 1.1, 1.2] as const;
-
-function formatTime(seconds: number) {
-  const safeSeconds = Math.max(0, Math.floor(seconds));
-  return `${String(Math.floor(safeSeconds / 60)).padStart(2, '0')}:${String(safeSeconds % 60).padStart(2, '0')}`;
-}
 
 function getPartGroups(part: WorkoutPart | undefined) {
   const groups: Array<{ title?: string; blocks: WorkoutBlock[] }> = [{ blocks: [] }];
@@ -68,26 +58,6 @@ function getStoredTextScale(): number {
   } catch (storageError) {
     console.warn('Could not read TV board text size preference:', storageError);
     return 1.1;
-  }
-}
-
-function playTone(frequency = 880, duration = 0.16) {
-  try {
-    const audio = new AudioContext();
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    oscillator.type = 'sine';
-    oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.0001, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.2, audio.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + duration);
-    oscillator.connect(gain);
-    gain.connect(audio.destination);
-    oscillator.start();
-    oscillator.stop(audio.currentTime + duration);
-    oscillator.onended = () => { void audio.close(); };
-  } catch (audioError) {
-    console.warn('Workout timer audio is unavailable:', audioError);
   }
 }
 
@@ -266,69 +236,41 @@ function WorkoutTvBlock({
 }
 
 export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const nextTimerRef = useRef<number | null>(null);
-  const countInTimerRef = useRef<number | null>(null);
-  const completionTimerRef = useRef<number | null>(null);
   const parts = useMemo(() => parseWorkout(workout.description || '').parts, [workout.description]);
   const [activePart, setActivePart] = useState(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
   const [activeLoaded, setActiveLoaded] = useState(false);
   const [textScale, setTextScale] = useState(1.1);
   const [dark, setDark] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [stageScale, setStageScale] = useState(1);
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const [countIn, setCountIn] = useState<number | null>(null);
-  const [nextAnnouncement, setNextAnnouncement] = useState('');
+  const [auxiliaryControlsVisible, setAuxiliaryControlsVisible] = useState(true);
+  const [coreControlsHidden, setCoreControlsHidden] = useState(false);
+  const [coreControlsDimmed, setCoreControlsDimmed] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const revealTimerRef = useRef<number | null>(null);
+  const dimTimerRef = useRef<number | null>(null);
   const teamNames = [
     ...(workout.participants || []).map((participant) => participant.user_name),
     ...(workout.guests || []).map((guest) => guest.name),
   ];
   const part = parts[activePart];
-  const partMinutes = part?.minutes || 0;
-  const durationSeconds = partMinutes * 60;
+  const displayPart: WorkoutPart = part || { title: 'Workout', meta: [], blocks: [] };
   const totalMinutes = parts.reduce((total, item) => total + (item.minutes || 0), 0);
   const minutesBeforePart = parts.slice(0, activePart).reduce((total, item) => total + (item.minutes || 0), 0);
-  const classElapsedSeconds = minutesBeforePart * 60 + elapsedSeconds;
   const startDate = parseISO(workout.date);
   const endDate = addMinutes(startDate, totalMinutes);
   const upcomingPart = parts[activePart + 1];
-  const partStartDate = addMinutes(startDate, minutesBeforePart + partMinutes);
-  const formatLabel = part?.format === 'AMRAP'
-    ? `AMRAP · ${partMinutes}′`
-    : part?.format === 'EMOM'
-      ? `EMOM · ${partMinutes}′`
-      : partMinutes
-        ? `TIME CAP · ${partMinutes}′`
-        : 'COUNT UP';
-  const timerValue = part?.format === 'AMRAP'
-    ? formatTime(durationSeconds - elapsedSeconds)
-    : part?.format === 'EMOM'
-      ? `${String(Math.min(partMinutes || 1, Math.floor(elapsedSeconds / 60) + 1)).padStart(2, '0')}:${String((60 - (elapsedSeconds % 60)) % 60).padStart(2, '0')}`
-      : formatTime(elapsedSeconds);
-  const partProgress = durationSeconds ? Math.min(1, elapsedSeconds / durationSeconds) : 0;
 
-  const revealControls = useCallback(() => {
-    setControlsVisible(true);
+  const scheduleControlsDim = useCallback(() => {
+    setCoreControlsDimmed(false);
+    if (dimTimerRef.current !== null) window.clearTimeout(dimTimerRef.current);
+    dimTimerRef.current = window.setTimeout(() => setCoreControlsDimmed(true), 5000);
+  }, []);
+
+  const handleActivity = useCallback(() => {
+    setAuxiliaryControlsVisible(true);
     if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current);
-    revealTimerRef.current = window.setTimeout(() => setControlsVisible(false), 3000);
-  }, []);
-
-  useLayoutEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return;
-    const resize = () => {
-      setStageScale(Math.min(wrapper.clientWidth / STAGE_WIDTH, wrapper.clientHeight / STAGE_HEIGHT));
-    };
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(wrapper);
-    return () => observer.disconnect();
-  }, []);
+    revealTimerRef.current = window.setTimeout(() => setAuxiliaryControlsVisible(false), 3000);
+    if (!coreControlsHidden) scheduleControlsDim();
+  }, [coreControlsHidden, scheduleControlsDim]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -347,18 +289,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
           const savedPart = Number.isInteger(saved.activePart) && saved.activePart >= 0 && saved.activePart < parts.length
             ? saved.activePart
             : 0;
-          const idleSeconds = saved.timerRunning
-            ? Math.max(0, Math.floor((Date.now() - saved.savedAt) / 1000))
-            : 0;
-          const restoredElapsed = Math.max(0, saved.elapsedSeconds + idleSeconds);
-          const restoredDuration = (parts[savedPart]?.minutes || 0) * 60;
           setActivePart(savedPart);
-          setElapsedSeconds(restoredDuration ? Math.min(restoredElapsed, restoredDuration) : restoredElapsed);
-          setTimerRunning(Boolean(
-            !parts[savedPart]?.timer &&
-            saved.timerRunning &&
-            (!restoredDuration || restoredElapsed < restoredDuration)
-          ));
         }
       } catch (storageError) {
         console.warn('Could not restore TV workout timer state:', storageError);
@@ -373,15 +304,12 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     try {
       const state: PersistedTimerState = {
         activePart,
-        elapsedSeconds,
-        timerRunning,
-        savedAt: Date.now(),
       };
       localStorage.setItem(`${TIMER_STORAGE_PREFIX}${workout.id}`, JSON.stringify(state));
     } catch (storageError) {
       console.warn('Could not persist TV workout timer state:', storageError);
     }
-  }, [activeLoaded, activePart, elapsedSeconds, timerRunning, workout.id]);
+  }, [activeLoaded, activePart, workout.id]);
 
   useEffect(() => {
     const clockId = window.setInterval(() => setNow(new Date()), 30_000);
@@ -389,117 +317,30 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
   }, []);
 
   useEffect(() => {
-    if (!timerRunning || part?.timer) return;
-    const intervalId = window.setInterval(() => setElapsedSeconds((seconds) => seconds + 1), 1000);
-    return () => window.clearInterval(intervalId);
-  }, [timerRunning, activePart, part?.timer]);
-
-  useEffect(() => {
-    if (part?.timer || !timerRunning || !durationSeconds || elapsedSeconds < durationSeconds) return;
-    completionTimerRef.current = window.setTimeout(() => {
-      setTimerRunning(false);
-      if (soundEnabled) playTone(1046, 0.5);
-      if (activePart + 1 >= parts.length) return;
-
-      const nextIndex = activePart + 1;
-      setNextAnnouncement(`NEXT: ${String(nextIndex + 1).padStart(2, '0')} ${parts[nextIndex].title}`);
-      nextTimerRef.current = window.setTimeout(() => {
-        setActivePart(nextIndex);
-        setElapsedSeconds(0);
-        setNextAnnouncement('');
-        nextTimerRef.current = null;
-      }, 10_000);
-    }, 0);
-    return () => {
-      if (completionTimerRef.current !== null) window.clearTimeout(completionTimerRef.current);
-    };
-  }, [activePart, durationSeconds, elapsedSeconds, part?.timer, parts, soundEnabled, timerRunning]);
-
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(revealControls);
+    const frameId = window.requestAnimationFrame(handleActivity);
     return () => {
       window.cancelAnimationFrame(frameId);
       if (revealTimerRef.current !== null) window.clearTimeout(revealTimerRef.current);
-      if (nextTimerRef.current !== null) window.clearTimeout(nextTimerRef.current);
-      if (countInTimerRef.current !== null) window.clearTimeout(countInTimerRef.current);
-      if (completionTimerRef.current !== null) window.clearTimeout(completionTimerRef.current);
+      if (dimTimerRef.current !== null) window.clearTimeout(dimTimerRef.current);
     };
-  }, [revealControls]);
+  }, [handleActivity]);
 
   useEffect(() => {
-    const reveal = () => revealControls();
+    const reveal = () => handleActivity();
     window.addEventListener('mousemove', reveal);
     window.addEventListener('touchstart', reveal);
     return () => {
       window.removeEventListener('mousemove', reveal);
       window.removeEventListener('touchstart', reveal);
     };
-  }, [revealControls]);
+  }, [handleActivity]);
 
   const changePart = useCallback((index: number) => {
     if (index < 0 || index >= parts.length) return;
-    if (parts[activePart]?.timer) pauseStoredIntervalTimer(workout.id, activePart);
-    if (nextTimerRef.current !== null) window.clearTimeout(nextTimerRef.current);
-    if (countInTimerRef.current !== null) window.clearTimeout(countInTimerRef.current);
-    if (completionTimerRef.current !== null) window.clearTimeout(completionTimerRef.current);
-    nextTimerRef.current = null;
-    countInTimerRef.current = null;
-    completionTimerRef.current = null;
-    setNextAnnouncement('');
-    setCountIn(null);
+    pauseStoredIntervalTimer(workout.id, activePart);
     setActivePart(index);
-    setElapsedSeconds(0);
-    setTimerRunning(false);
-  }, [activePart, parts, workout.id]);
+  }, [activePart, parts.length, workout.id]);
   const advanceIntervalPart = useCallback(() => changePart(activePart + 1), [activePart, changePart]);
-
-  const startTimer = useCallback(() => {
-    if (timerRunning) {
-      setTimerRunning(false);
-      return;
-    }
-    if (countInTimerRef.current !== null) {
-      window.clearTimeout(countInTimerRef.current);
-      countInTimerRef.current = null;
-      setCountIn(null);
-      return;
-    }
-    if (!soundEnabled) {
-      setTimerRunning(true);
-      return;
-    }
-
-    let remaining = 3;
-    setCountIn(remaining);
-    playTone(660);
-    const tick = () => {
-      remaining -= 1;
-      if (remaining === 0) {
-        playTone(1046);
-        setCountIn(null);
-        setTimerRunning(true);
-        countInTimerRef.current = null;
-        return;
-      }
-      setCountIn(remaining);
-      playTone(660);
-      countInTimerRef.current = window.setTimeout(tick, 1000);
-    };
-    countInTimerRef.current = window.setTimeout(tick, 1000);
-  }, [soundEnabled, timerRunning]);
-
-  const resetPart = useCallback(() => {
-    if (nextTimerRef.current !== null) window.clearTimeout(nextTimerRef.current);
-    if (countInTimerRef.current !== null) window.clearTimeout(countInTimerRef.current);
-    if (completionTimerRef.current !== null) window.clearTimeout(completionTimerRef.current);
-    nextTimerRef.current = null;
-    countInTimerRef.current = null;
-    completionTimerRef.current = null;
-    setNextAnnouncement('');
-    setCountIn(null);
-    setElapsedSeconds(0);
-    setTimerRunning(false);
-  }, []);
 
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -512,20 +353,24 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      revealControls();
-      if (event.key === 'ArrowLeft') {
+      handleActivity();
+      if (event.key.toLowerCase() === 'h') {
+        event.preventDefault();
+        if (coreControlsHidden) {
+          setCoreControlsHidden(false);
+          scheduleControlsDim();
+        } else {
+          setCoreControlsHidden(true);
+          setCoreControlsDimmed(false);
+          if (dimTimerRef.current !== null) window.clearTimeout(dimTimerRef.current);
+          dimTimerRef.current = null;
+        }
+      } else if (event.key === 'ArrowLeft') {
         event.preventDefault();
         changePart(activePart - 1);
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
         changePart(activePart + 1);
-      } else if (event.key === ' ' || event.key === 'Enter') {
-        event.preventDefault();
-        if (part?.timer) return;
-        startTimer();
-      } else if (event.key.toLowerCase() === 'r') {
-        if (part?.timer) return;
-        resetPart();
       } else if (event.key.toLowerCase() === 'f') {
         void toggleFullscreen();
       } else if (event.key.toLowerCase() === 'd') {
@@ -536,7 +381,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activePart, changePart, part?.timer, resetPart, revealControls, startTimer, toggleFullscreen, workout.id]);
+  }, [activePart, changePart, coreControlsHidden, handleActivity, scheduleControlsDim, toggleFullscreen, workout.id]);
 
   const changeTextScale = () => {
     const currentIndex = TEXT_SCALES.indexOf(textScale as (typeof TEXT_SCALES)[number]);
@@ -549,24 +394,19 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
     }
   };
 
-  const classDoneMinutes = Math.floor(classElapsedSeconds / 60);
   const teamLabel = teamNames.length ? teamNames.join(' · ') : `${workout.max_participants} spots`;
   const mainBackground = dark ? 'bg-ink' : 'bg-paper';
 
   return (
-    <div ref={wrapperRef} className={`fixed inset-0 overflow-hidden ${dark ? 'bg-ink' : 'bg-ink'} ${controlsVisible ? '' : 'cursor-none'}`}>
+    <div className={`fixed inset-0 overflow-hidden bg-ink ${auxiliaryControlsVisible ? '' : 'cursor-none'}`}>
       <main
-        className={`absolute left-1/2 top-1/2 grid overflow-hidden border-[16px] border-[#141512] ${mainBackground}`}
+        className={`absolute inset-0 grid overflow-hidden border-[16px] border-[#141512] ${mainBackground}`}
         style={{
-          width: STAGE_WIDTH,
-          height: STAGE_HEIGHT,
           boxSizing: 'border-box',
-          gridTemplateColumns: `minmax(0, 1fr) 540px`,
-          transform: `translate(-50%, -50%) scale(${stageScale})`,
-          transformOrigin: 'center center',
+          gridTemplateColumns: 'minmax(0, 1fr) clamp(300px, 28.125vw, 540px)',
         }}
-        onMouseMove={revealControls}
-        onTouchStart={revealControls}
+        onMouseMove={handleActivity}
+        onTouchStart={handleActivity}
       >
         <div className="grid min-h-0 min-w-0" style={{ gridTemplateRows: '96px minmax(0, 1fr)' }}>
           <nav
@@ -604,143 +444,62 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
           <WorkoutTvContent part={part} dark={dark} textScale={textScale} />
         </div>
 
-        {part?.timer ? (
-          <aside className="flex min-h-0 flex-col overflow-hidden bg-[#141512] text-white">
-            <IntervalTimerBoard
-              key={`${workout.id}-${activePart}`}
-              size="stage"
-              workoutId={workout.id}
-              partIndex={activePart}
-              partTitle={part.title}
-              timer={part.timer}
-              upcomingPartTitle={upcomingPart?.title}
-              currentTime={now}
-              controlsVisible={controlsVisible}
-              onActivity={revealControls}
-              onAutoAdvance={upcomingPart ? advanceIntervalPart : undefined}
-              stageFooter={({ elapsedSeconds: intervalElapsed, partProgress: intervalProgress }) => {
-                const classMinutes = Math.floor((minutesBeforePart * 60 + intervalElapsed) / 60);
-                return (
-                  <>
-                    <section className="border-t border-[#2A2C27] pt-5">
-                      <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">Team</p>
-                      <p className="text-[30px] font-bold leading-snug text-white">{teamLabel}</p>
-                    </section>
-                    <section className="border-t border-[#2A2C27] pt-5">
-                      <div className="mb-2 flex items-baseline justify-between gap-3 text-[24px] font-bold uppercase tracking-[.1em] text-[#C9CBC4]">
-                        <span>Class</span>
-                        <span>{classMinutes} / {totalMinutes} min · Ends {format(endDate, 'HH:mm')}</span>
-                      </div>
-                      <div className="flex h-[10px] gap-1" aria-label={`Class progress: ${classMinutes} of ${totalMinutes} minutes`}>
-                        {parts.map((item, index) => {
-                          const width = `${((item.minutes || 1) / (parts.reduce((sum, entry) => sum + (entry.minutes || 1), 0))) * 100}%`;
-                          const fill = index < activePart ? 1 : index === activePart ? intervalProgress : 0;
-                          return (
-                            <div key={`${item.title}-${index}`} className="min-w-[4px] flex-1 overflow-hidden rounded-sm bg-[#2A2C27]" style={{ flexBasis: width }}>
-                              <div className={`h-full ${index < activePart ? 'bg-[#C9CBC4]' : 'bg-lime'}`} style={{ width: `${fill * 100}%` }} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </section>
-                  </>
-                );
-              }}
-            />
-          </aside>
-        ) : (
-        <aside className="flex min-h-0 flex-col overflow-hidden bg-[#141512] px-10 py-[34px] text-white">
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-display text-[30px] font-black uppercase leading-none">PURE</span>
-            <time className="font-sans text-[24px] font-bold tabular-nums" dateTime={now.toISOString()}>
-              {format(now, 'HH:mm')}
-            </time>
-          </div>
-          <p className="mt-2 text-[24px] font-semibold uppercase tracking-[.08em] text-[#C9CBC4]">
-            {format(startDate, 'EEE dd MMM')} · CLASS START {format(startDate, 'HH:mm')}
-          </p>
-
-          <div className="mt-7">
-            <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-lime">{formatLabel}</p>
-            <button
-              type="button"
-              onClick={startTimer}
-              aria-label={timerRunning ? 'Pause timer' : countIn ? 'Cancel timer countdown' : 'Start timer'}
-              className="block w-full overflow-hidden text-left font-display font-black leading-[.95] tabular-nums text-lime focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-lime/40"
-            >
-              <span
-                className="block origin-left"
-                style={{ width: '125%', transform: 'scaleX(.8)', fontSize: '220px', letterSpacing: 'normal' }}
-              >
-                {countIn || timerValue}
-              </span>
-            </button>
-            <div className="mt-1 h-3 overflow-hidden rounded-full bg-[#2A2C27]" role="progressbar" aria-label="Part timer progress" aria-valuenow={Math.round(partProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
-              <div className="h-full bg-lime transition-[width] duration-300" style={{ width: `${partProgress * 100}%` }} />
-            </div>
-            <div className="mt-2 flex items-center justify-between gap-2 text-[24px] font-semibold text-[#C9CBC4]">
-              <span>{formatTime(elapsedSeconds)} done</span>
-              <span>{timerRunning ? 'RUNNING' : 'PAUSED'}</span>
-            </div>
-            {nextAnnouncement && (
-              <p className="mt-3 rounded-sm bg-lime px-3 py-2 font-display text-[24px] font-extrabold uppercase leading-tight text-ink">
-                {nextAnnouncement}
-              </p>
-            )}
-          </div>
-
-          <section className="mt-6 border-t border-[#2A2C27] pt-5">
-            <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">After this</p>
-            {upcomingPart ? (
-              <>
-                <p className="truncate font-display text-[44px] font-extrabold uppercase leading-[.95] text-white">{upcomingPart.title}</p>
-                <p className="mt-2 text-[24px] font-semibold text-[#C9CBC4]">
-                  Starts {format(partStartDate, 'HH:mm')} · {upcomingPart.minutes ? `${upcomingPart.minutes}′` : 'COUNT UP'}
-                </p>
-              </>
-            ) : (
-              <p className="font-display text-[32px] font-extrabold uppercase text-white">Class ends {format(endDate, 'HH:mm')}</p>
-            )}
-          </section>
-
-          <section className="mt-6 border-t border-[#2A2C27] pt-5">
-            <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">Team</p>
-            <p className="text-[30px] font-bold leading-snug text-white">{teamLabel}</p>
-          </section>
-
-          <section className="mt-auto border-t border-[#2A2C27] pt-5">
-            <div className="mb-2 flex items-baseline justify-between gap-3 text-[24px] font-bold uppercase tracking-[.1em] text-[#C9CBC4]">
-              <span>Class</span>
-              <span>{classDoneMinutes} / {totalMinutes} min · Ends {format(endDate, 'HH:mm')}</span>
-            </div>
-            <div className="flex h-[10px] gap-1" aria-label={`Class progress: ${classDoneMinutes} of ${totalMinutes} minutes`}>
-              {parts.map((item, index) => {
-                const width = `${((item.minutes || 1) / (parts.reduce((sum, entry) => sum + (entry.minutes || 1), 0))) * 100}%`;
-                const fill = index < activePart ? 1 : index === activePart ? partProgress : 0;
-                return (
-                  <div key={`${item.title}-${index}`} className="min-w-[4px] flex-1 overflow-hidden rounded-sm bg-[#2A2C27]" style={{ flexBasis: width }}>
-                    <div className={`h-full ${index < activePart ? 'bg-[#C9CBC4]' : 'bg-lime'}`} style={{ width: `${fill * 100}%` }} />
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+        <aside className="flex min-h-0 flex-col overflow-hidden bg-[#141512] text-white" style={{ containerType: 'inline-size' }}>
+          <TimerPanel
+            key={`${workout.id}-${activePart}`}
+            size="stage"
+            workoutId={workout.id}
+            partIndex={activePart}
+            part={displayPart}
+            upcomingPartTitle={upcomingPart?.title}
+            currentTime={now}
+            controlsDimmed={coreControlsDimmed}
+            coreControlsVisible={!coreControlsHidden}
+            onActivity={handleActivity}
+            onAutoAdvance={upcomingPart ? advanceIntervalPart : undefined}
+            stageFooter={({ elapsedSeconds: panelElapsed, partProgress: panelProgress }) => {
+              const classDoneMinutes = Math.floor((minutesBeforePart * 60 + panelElapsed) / 60);
+              return (
+                <>
+                  <section className="border-t border-[#2A2C27] pt-5">
+                    <p className="mb-2 text-[24px] font-bold uppercase tracking-[.16em] text-[#C9CBC4]">Team</p>
+                    <p className="text-[30px] font-bold leading-snug text-white">{teamLabel}</p>
+                  </section>
+                  <section className="border-t border-[#2A2C27] pt-5">
+                    <div className="mb-2 flex items-baseline justify-between gap-3 text-[24px] font-bold uppercase tracking-[.1em] text-[#C9CBC4]">
+                      <span>Class</span>
+                      <span>{classDoneMinutes} / {totalMinutes} min · Ends {format(endDate, 'HH:mm')}</span>
+                    </div>
+                    <div className="flex h-[10px] gap-1" aria-label={`Class progress: ${classDoneMinutes} of ${totalMinutes} minutes`}>
+                      {parts.map((item, index) => {
+                        const width = `${((item.minutes || 1) / (parts.reduce((sum, entry) => sum + (entry.minutes || 1), 0))) * 100}%`;
+                        const fill = index < activePart ? 1 : index === activePart ? panelProgress : 0;
+                        return (
+                          <div key={`${item.title}-${index}`} className="min-w-[4px] flex-1 overflow-hidden rounded-sm bg-[#2A2C27]" style={{ flexBasis: width }}>
+                            <div className={`h-full ${index < activePart ? 'bg-[#C9CBC4]' : 'bg-lime'}`} style={{ width: `${fill * 100}%` }} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </>
+              );
+            }}
+          />
         </aside>
-        )}
 
         <div
-          className={`absolute bottom-5 left-5 z-20 max-w-[calc(100%-580px)] rounded-sm border border-white/30 bg-[#141512]/95 px-5 py-4 text-white shadow-xl transition-opacity ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+          className={`absolute bottom-5 left-5 z-20 max-w-[calc(100%-580px)] rounded-sm border border-white/30 bg-[#141512]/95 px-5 py-4 text-white shadow-xl transition-opacity ${auxiliaryControlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
           role="group"
           aria-label="TV board controls"
         >
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-11 items-center rounded-sm bg-white px-3 text-[20px] font-bold text-ink">Exit</Link>
-            <button type="button" onClick={changeTextScale} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">A A+</button>
-            <button type="button" onClick={() => setDark((value) => !value)} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">{dark ? 'Light' : 'Dark'}</button>
-            {!part?.timer && <button type="button" onClick={() => setSoundEnabled((value) => !value)} aria-pressed={soundEnabled} className="min-h-11 rounded-sm border border-white/40 px-3 text-[20px] font-bold">Sound {soundEnabled ? 'On' : 'Off'}</button>}
+            <Link href={`/workouts/${workout.id}`} className="inline-flex min-h-12 items-center rounded-sm bg-white px-3 text-[20px] font-bold text-ink">Exit</Link>
+            <button type="button" onClick={changeTextScale} className="min-h-12 rounded-sm border border-white/40 px-3 text-[20px] font-bold">A A+</button>
+            <button type="button" onClick={() => setDark((value) => !value)} className="min-h-12 rounded-sm border border-white/40 px-3 text-[20px] font-bold">{dark ? 'Light' : 'Dark'}</button>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[20px] font-semibold text-[#C9CBC4]">
-            <span>← → part</span><span>Space / Enter start</span><span>R reset</span><span>F fullscreen</span><span>D dark / light</span><span>Esc exit</span>
+            <span>← → part</span><span>Space / Enter / OK start</span><span>[ ] interval / ±1 min</span><span>T setup</span><span>M sound</span><span>H hide controls</span><span>R stop</span><span>F fullscreen</span><span>D dark / light</span><span>Esc exit</span>
           </div>
         </div>
       </main>

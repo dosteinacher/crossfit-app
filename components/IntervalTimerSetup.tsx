@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { buildTimeline } from '@/lib/intervalTimer';
 import { serializeTimer, type IntervalTimer } from '@/lib/workoutNotation';
 
-const DEFAULT_TIMER: IntervalTimer = {
+export const DEFAULT_INTERVAL_TIMER: IntervalTimer = {
   rounds: 10,
   work: 40,
   rest: 20,
@@ -13,11 +13,11 @@ const DEFAULT_TIMER: IntervalTimer = {
   prep: 10,
 };
 
-const PRESETS: Array<{ label: string; timer: IntervalTimer }> = [
-  { label: 'HIIT 40/20', timer: DEFAULT_TIMER },
-  { label: 'HIIT 30/30', timer: { ...DEFAULT_TIMER, work: 30, rest: 30 } },
-  { label: 'Tabata', timer: { ...DEFAULT_TIMER, rounds: 8, work: 20, rest: 10 } },
-  { label: 'EMOM 12', timer: { ...DEFAULT_TIMER, rounds: 12, work: 60, rest: 0 } },
+export const INTERVAL_TIMER_PRESETS: Array<{ label: string; timer: IntervalTimer }> = [
+  { label: 'HIIT 40/20', timer: DEFAULT_INTERVAL_TIMER },
+  { label: 'HIIT 30/30', timer: { ...DEFAULT_INTERVAL_TIMER, work: 30, rest: 30 } },
+  { label: 'Tabata', timer: { ...DEFAULT_INTERVAL_TIMER, rounds: 8, work: 20, rest: 10 } },
+  { label: 'EMOM 12', timer: { ...DEFAULT_INTERVAL_TIMER, rounds: 12, work: 60, rest: 0 } },
 ];
 
 function formatTime(seconds: number, padMinutes = false) {
@@ -34,8 +34,9 @@ function matchesTimer(left: IntervalTimer, right: IntervalTimer) {
     left.prep === right.prep;
 }
 
-function TimerStepper({
+export function TimerStepper({
   label,
+  helperText,
   value,
   displayValue,
   step,
@@ -44,6 +45,7 @@ function TimerStepper({
   onStep,
 }: {
   label: string;
+  helperText?: string;
   value: number;
   displayValue: string;
   step: number;
@@ -119,12 +121,16 @@ function TimerStepper({
       <div className="min-w-0">
         <p className="text-[20px] font-bold text-white">{label}</p>
         <p className="text-[14px] leading-tight text-[#8A8D84]">
-          {label === 'Rounds' && 'Work + rest = one round'}
-          {label === 'Work' && 'Seconds per work interval'}
-          {label === 'Rest' && 'Between rounds · none after the last'}
-          {label === 'Sets' && 'Repeat the whole block'}
-          {label === 'Rest between sets' && 'Shown as SET BREAK'}
-          {label === 'Get ready' && 'Countdown before round 1'}
+          {helperText ?? (
+            <>
+              {label === 'Rounds' && 'Work + rest = one round'}
+              {label === 'Work' && 'Seconds per work interval'}
+              {label === 'Rest' && 'Between rounds · none after the last'}
+              {label === 'Sets' && 'Repeat the whole block'}
+              {label === 'Rest between sets' && 'Shown as SET BREAK'}
+              {label === 'Get ready' && 'Countdown before round 1'}
+            </>
+          )}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
@@ -155,7 +161,7 @@ export default function IntervalTimerSetup({
   onSave: (line: string) => void;
   onRemove: () => void;
 }) {
-  const [timer, setTimer] = useState<IntervalTimer>(() => ({ ...(initialTimer || DEFAULT_TIMER) }));
+  const [timer, setTimer] = useState<IntervalTimer>(() => ({ ...(initialTimer || DEFAULT_INTERVAL_TIMER) }));
   const totalTime = Math.max(0, buildTimeline(timer).end - timer.prep);
   const setTimerValue = (key: keyof IntervalTimer, amount: number, minimum: number, maximum: number) => {
     setTimer((current) => ({
@@ -201,7 +207,7 @@ export default function IntervalTimerSetup({
         </div>
 
         <div className="mb-5 flex flex-wrap gap-2">
-          {PRESETS.map((preset) => {
+          {INTERVAL_TIMER_PRESETS.map((preset) => {
             const selected = matchesTimer(timer, preset.timer);
             return (
               <button
