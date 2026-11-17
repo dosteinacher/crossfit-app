@@ -264,6 +264,7 @@ export default function WorkoutDescriptionEditor({
             <div className="border-t border-line-2 p-3 text-[13px] leading-relaxed text-ink-2">
               <p><code># Name | 15 | AMRAP | Team of 3</code> starts a part and sets optional minutes, format, and team.</p>
               <p className="mt-1"><code>## Then</code> adds a section; <code>&gt; instruction</code> adds a sub-header; <code>! repeat</code> adds a note.</p>
+              <p className="mt-1"><code>## 01 · Strength · EMOM · Cap 8′</code> adds a numbered section with a title, format, and metadata.</p>
               <p className="mt-1"><code>3 Rounds</code> is a scheme. <code>12 Wall Balls @ 20/14 kg / 10 Wall Balls</code> is reps, movement, load, and an alternative.</p>
             </div>
           </details>

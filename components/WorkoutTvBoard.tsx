@@ -4,9 +4,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { addMinutes, format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import type { Guest, WorkoutWithDetails } from '@/lib/types';
+import SectionHeader from '@/components/SectionHeader';
 import TimerPanel from '@/components/TimerPanel';
 import { pauseStoredIntervalTimer } from '@/lib/intervalTimerPersistence';
-import type { WorkoutBlock, WorkoutPart } from '@/lib/workoutNotation';
+import type { WorkoutBlock, WorkoutPart, WorkoutSectionBlock } from '@/lib/workoutNotation';
 import { getWorkoutBlockText, parseWorkout } from '@/lib/workoutNotation';
 import {
   getFitScaleCandidates,
@@ -18,22 +19,26 @@ type BoardWorkout = WorkoutWithDetails & { guests: Guest[] };
 type PersistedTimerState = {
   activePart: number;
 };
+type WorkoutTvGroup = {
+  heading?: WorkoutSectionBlock | Extract<WorkoutBlock, { type: 'sub' }>;
+  blocks: WorkoutBlock[];
+};
 
 const TIMER_STORAGE_PREFIX = 'pure-tv-timer:';
 const TEXT_SCALE_STORAGE_KEY = 'pure-tv-text-scale';
 const TEXT_SCALES = [1, 1.1, 1.2] as const;
 
 function getPartGroups(part: WorkoutPart | undefined) {
-  const groups: Array<{ title?: string; blocks: WorkoutBlock[] }> = [{ blocks: [] }];
+  const groups: WorkoutTvGroup[] = [{ blocks: [] }];
   const notes: Extract<WorkoutBlock, { type: 'note' }>[] = [];
   const schemes: Extract<WorkoutBlock, { type: 'scheme' }>[] = [];
 
   for (const block of part?.blocks || []) {
     if (block.type === 'section' || block.type === 'sub') {
-      if (groups[groups.length - 1].title || groups[groups.length - 1].blocks.length) {
-        groups.push({ title: getWorkoutBlockText(block), blocks: [] });
+      if (groups[groups.length - 1].heading || groups[groups.length - 1].blocks.length) {
+        groups.push({ heading: block, blocks: [] });
       } else {
-        groups[groups.length - 1].title = getWorkoutBlockText(block);
+        groups[groups.length - 1].heading = block;
       }
     } else if (block.type === 'note') {
       notes.push(block);
@@ -45,7 +50,7 @@ function getPartGroups(part: WorkoutPart | undefined) {
   }
 
   return {
-    groups: groups.filter((group) => group.title || group.blocks.length),
+    groups: groups.filter((group) => group.heading || group.blocks.length),
     notes,
     schemes,
   };
@@ -154,13 +159,15 @@ function WorkoutTvContent({
           <div className="space-y-[.7em]">
             {groups.map((group, groupIndex) => {
               return (
-                <section key={`${group.title || 'main'}-${groupIndex}`} className="min-w-0">
-                  {group.title && (
+                <section key={`${group.heading ? getWorkoutBlockText(group.heading) : 'main'}-${groupIndex}`} className="min-w-0">
+                  {group.heading?.type === 'section' ? (
+                    <SectionHeader section={group.heading} variant="stage" dark={dark} />
+                  ) : group.heading?.type === 'sub' ? (
                     <div className={`mb-[.25em] flex items-center gap-[.7em] text-[1.25em] font-bold uppercase tracking-[.16em] ${secondary}`}>
-                      <span className="shrink-0">{group.title}</span>
+                      <span className="shrink-0">{group.heading.name}</span>
                       <span className={`h-[2px] flex-1 ${dark ? 'bg-[#2A2C27]' : 'bg-ink'}`} />
                     </div>
-                  )}
+                  ) : null}
                   <div className={twoColumns ? 'grid grid-cols-2 gap-x-12' : ''}>
                     {group.blocks.map((block, index) => (
                       <WorkoutTvBlock
@@ -185,10 +192,10 @@ function WorkoutTvContent({
             {notes.map((note) => (
               <p
                 key={`${note.line}-${note.name}`}
-                className={`flex items-center gap-[.45em] truncate border-b-2 py-[.22em] text-[1.25em] font-medium ${dark ? 'border-[#2A2C27]' : 'border-line-2'} ${secondary}`}
+                className={`flex items-center gap-[.45em] border-b-2 py-[.22em] text-[1.5em] font-medium ${dark ? 'border-[#2A2C27]' : 'border-line-2'} ${secondary}`}
               >
                 <span className="shrink-0 font-bold text-lime">↻</span>
-                <span className="truncate">{note.name}</span>
+                <span>{note.name}</span>
               </p>
             ))}
           </div>
@@ -221,7 +228,7 @@ function WorkoutTvBlock({
             {block.load && <span className={`ml-[.35em] text-[.6875em] font-bold ${secondary}`}>{block.load}</span>}
           </p>
           {block.alt && (
-            <p className={`mt-[.08em] truncate text-[1.25em] font-medium ${secondary}`}>↳ {block.alt}</p>
+            <p className={`mt-[.08em] text-[1.5em] font-medium ${secondary}`}>↳ {block.alt}</p>
           )}
         </div>
       </div>

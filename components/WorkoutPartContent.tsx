@@ -1,4 +1,5 @@
 import { getWorkoutBlockText, type WorkoutBlock } from '@/lib/workoutNotation';
+import SectionHeader from '@/components/SectionHeader';
 
 export default function WorkoutPartContent({
   title,
@@ -62,17 +63,33 @@ export default function WorkoutPartContent({
                     {block.load && <span className={`ml-2 text-[.62em] ${secondaryText}`}>{block.load}</span>}
                   </p>
                   {block.alt && (
-                    <p className={`mt-1 text-[.85em] ${secondaryText}`}>↳ {block.alt}</p>
+                    <p
+                      className={`mt-1 ${secondaryText}`}
+                      style={{ fontSize: compact ? '24px' : `${20 * displayScale}px` }}
+                    >
+                      ↳ {block.alt}
+                    </p>
                   )}
                 </div>
               </div>
             );
           }
-          if (block.type === 'section' || block.type === 'sub') {
-            return <p key={`${getWorkoutBlockText(block)}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className={`border-b border-current/20 py-3 font-bold uppercase tracking-[.14em] ${secondaryText}`}>{getWorkoutBlockText(block)}</p>;
+          if (block.type === 'section') {
+            return (
+              <SectionHeader
+                key={`${getWorkoutBlockText(block)}-${index}`}
+                section={block}
+                compact={compact}
+                dark={dark}
+                displayScale={displayScale}
+              />
+            );
+          }
+          if (block.type === 'sub') {
+            return <p key={`${block.name}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className={`border-b border-current/20 py-3 font-bold uppercase tracking-[.14em] ${secondaryText}`}>{block.name}</p>;
           }
           if (block.type === 'note') {
-            return <p key={`${block.name}-${index}`} style={{ fontSize: `${16 * displayScale}px` }} className="border-l-4 border-lime bg-lime/15 px-4 py-3 font-semibold">{block.name}</p>;
+            return <p key={`${block.name}-${index}`} style={{ fontSize: compact ? '24px' : `${20 * displayScale}px` }} className="border-l-4 border-lime bg-lime/15 px-4 py-3 font-semibold">{block.name}</p>;
           }
           if (block.type === 'scheme') {
             return (
