@@ -59,6 +59,9 @@ export default function TimerPanel({
   partIndex,
   part,
   upcomingPartTitle,
+  upcomingPartMinutes,
+  upcomingPartIndex,
+  classEndsAt,
   currentTime,
   controlsDimmed = false,
   coreControlsVisible = true,
@@ -71,6 +74,9 @@ export default function TimerPanel({
   partIndex: number;
   part: WorkoutPart;
   upcomingPartTitle?: string;
+  upcomingPartMinutes?: number;
+  upcomingPartIndex?: number;
+  classEndsAt?: string;
   currentTime?: Date;
   controlsDimmed?: boolean;
   coreControlsVisible?: boolean;
@@ -120,11 +126,16 @@ export default function TimerPanel({
     done ? 'DONE' : mode === 'countup' ? 'COUNT UP' : mode === 'countdown' ? 'COUNTDOWN' : mode === 'emom' ? 'EMOM' : 'INTERVALS'
   );
   const phaseColor = phaseStyle?.color || '#FFFFFF';
-  const nextLabel = done
-    ? 'NEXT PART'
-    : timerState?.next
-      ? `${PHASE_STYLE[timerState.next.phase].label} ${formatTime(timerState.next.dur)}`
-      : mode === 'emom' ? `NEXT ${configuration.everyMinutes === 1 ? 'MINUTE' : 'ROUND'}` : duration === undefined ? 'NO CAP' : 'FINISH';
+  const nextPartLabel = upcomingPartTitle
+    ? `${String((upcomingPartIndex ?? partIndex + 1) + 1).padStart(2, '0')} · ${upcomingPartTitle.toUpperCase()}${upcomingPartMinutes ? ` · ${upcomingPartMinutes}′` : ''}`
+    : classEndsAt
+      ? `CLASS ENDS ${classEndsAt}`
+      : '';
+  const nextLabel = timerState?.next
+    ? `${PHASE_STYLE[timerState.next.phase].label} ${formatTime(timerState.next.dur)}`
+    : mode === 'emom'
+      ? `NEXT ${configuration.everyMinutes === 1 ? 'MINUTE' : 'ROUND'}`
+      : nextPartLabel;
   const totalLeft = timerState?.totalLeft ?? (
     duration === undefined ? 0 : Math.max(0, duration - elapsed)
   );
@@ -627,7 +638,7 @@ export default function TimerPanel({
         disabled={!preferencesLoaded}
         aria-label={soundEnabled ? 'Turn sound off' : 'Turn sound on'}
         aria-pressed={soundEnabled}
-        className={`min-h-12 shrink-0 rounded-lg border px-3 py-2 font-display text-[15px] font-extrabold uppercase leading-none ${
+        className={`min-h-[44px] shrink-0 rounded-lg border px-3 py-2 font-sans text-[18px] font-extrabold uppercase leading-none ${
           soundEnabled ? 'border-lime text-lime' : 'border-[#3A3C36] text-[#8A8D84]'
         }`}
       >
@@ -642,7 +653,7 @@ export default function TimerPanel({
           if (value === 'low' || value === 'medium' || value === 'high') setVolume(value);
           onActivity?.();
         }}
-        className="min-h-12 rounded-lg border border-[#3A3C36] bg-[#1E1F1B] px-2 text-[12px] font-bold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime"
+        className="min-h-[44px] rounded-lg border border-[#3A3C36] bg-[#1E1F1B] px-3 text-[18px] font-bold uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime"
       >
         <option value="low">Low</option>
         <option value="medium">Medium</option>
@@ -878,7 +889,6 @@ export default function TimerPanel({
             <p className="truncate text-[20px] font-bold uppercase tracking-[.12em] text-[#8A8D84]">
               {part.title} · {modeTitle} · {partSummary}
             </p>
-            {setupControls}
           </div>
 
           <div className="min-w-0">
@@ -951,16 +961,18 @@ export default function TimerPanel({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Next</p>
-          <p className="truncate font-display text-[40px] font-extrabold uppercase leading-tight text-white">{nextLabel}</p>
+      {!(mode === 'countup' && duration === undefined) && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Next</p>
+            <p className="truncate font-display text-[40px] font-extrabold uppercase leading-tight text-white">{nextLabel}</p>
+          </div>
+          <div>
+            <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Total left</p>
+            <p className="font-display text-[40px] font-extrabold leading-tight tabular-nums text-white">{remainingLabel}</p>
+          </div>
         </div>
-        <div>
-          <p className="text-[20px] font-bold uppercase tracking-[.16em] text-[#8A8D84]">Total left</p>
-          <p className="font-display text-[40px] font-extrabold leading-tight tabular-nums text-white">{remainingLabel}</p>
-        </div>
-      </div>
+      )}
 
       {advanceAnnouncement && (
         <p className="rounded-lg bg-lime px-3 py-2 font-display text-[20px] font-extrabold uppercase text-ink">
@@ -969,9 +981,30 @@ export default function TimerPanel({
       )}
 
           <div className="mt-auto flex flex-col gap-5">
-            <div className={`${coreControlsVisible ? '' : 'hidden'} transition-opacity ${controlsDimmed ? 'opacity-[.35]' : 'opacity-100'}`}>
-              {controls}
-            </div>
+            {mode === 'countup' && duration === undefined ? (
+              <button
+                type="button"
+                disabled={!timerControlsReady}
+                onClick={() => { onActivity?.(); setSetupOpen(true); }}
+                className={`${stageControlVisibility} h-[80px] w-full rounded-xl bg-lime font-display text-[32px] font-black uppercase text-ink`}
+              >
+                ⏱ SET TIMER
+              </button>
+            ) : (
+              <>
+                <div className={`${coreControlsVisible ? '' : 'hidden'} transition-opacity ${controlsDimmed ? 'opacity-[.35]' : 'opacity-100'}`}>
+                  {controls}
+                </div>
+                <button
+                  type="button"
+                  disabled={!timerControlsReady}
+                  onClick={() => { onActivity?.(); setSetupOpen(true); }}
+                  className={`${stageControlVisibility} h-[64px] w-full rounded-xl border-2 border-lime font-display text-[26px] font-black uppercase tracking-[.06em] text-lime`}
+                >
+                  ⏱ {timerOverride ? 'EDIT TIMER' : 'SET TIMER'}
+                </button>
+              </>
+            )}
             {stageFooter?.({ elapsedSeconds: elapsed, partProgress })}
           </div>
         </>

@@ -244,7 +244,7 @@ function WorkoutTvBlock({
   }
 
   return (
-    <p className={`border-b-2 py-[.55em] text-[1.25em] font-semibold ${divider} ${block.type === 'text' ? secondary : text}`}>
+    <p className={`border-b-2 py-[.55em] text-[1.25em] font-semibold ${divider} ${text}`}>
       {block.name}
     </p>
   );
@@ -467,6 +467,9 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
             partIndex={activePart}
             part={displayPart}
             upcomingPartTitle={upcomingPart?.title}
+            upcomingPartMinutes={upcomingPart?.minutes}
+            upcomingPartIndex={activePart + 1}
+            classEndsAt={format(endDate, 'HH:mm')}
             currentTime={now}
             controlsDimmed={coreControlsDimmed}
             coreControlsVisible={!coreControlsHidden}
@@ -514,7 +517,7 @@ export default function WorkoutTvBoard({ workout }: { workout: BoardWorkout }) {
             <button type="button" onClick={() => setDark((value) => !value)} className="min-h-12 rounded-sm border border-white/40 px-3 text-[20px] font-bold">{dark ? 'Light' : 'Dark'}</button>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-[20px] font-semibold text-[#C9CBC4]">
-            <span>← → part</span><span>Space / Enter / OK start</span><span>[ ] interval / ±1 min</span><span>T setup</span><span>M sound</span><span>H hide controls</span><span>R stop</span><span>F fullscreen</span><span>D dark / light</span><span>Esc exit</span>
+            <span>← → part</span><span>Space / Enter / OK start</span><span>[ ] interval / ±1 min</span><span>⏱ T SET TIMER</span><span>M sound</span><span>H hide controls</span><span>R stop</span><span>F fullscreen</span><span>D dark / light</span><span>Esc exit</span>
           </div>
         </div>
       </main>

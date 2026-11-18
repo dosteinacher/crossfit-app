@@ -28,7 +28,7 @@ export function getDefaultBoardTimerConfiguration(part: WorkoutPart): BoardTimer
   if (mode === 'emom') return { mode, minutes: part.minutes || 12, everyMinutes: 1 };
   return {
     mode,
-    minutes: (part.format === 'FOR TIME' || part.format === 'CHIPPER') ? part.minutes : undefined,
+    minutes: part.minutes,
   };
 }
 
@@ -123,9 +123,7 @@ export function getBoardTimerOverrideStorageKey(workoutId: number | string, part
 export function getBoardTimerDuration(part: WorkoutPart, mode: BoardTimerMode) {
   if (mode === 'intervals') return undefined;
   if (mode === 'countup') {
-    return (part.format === 'FOR TIME' || part.format === 'CHIPPER') && part.minutes
-      ? part.minutes * 60
-      : undefined;
+    return part.minutes ? part.minutes * 60 : undefined;
   }
   return part.minutes ? part.minutes * 60 : undefined;
 }

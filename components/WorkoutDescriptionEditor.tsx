@@ -244,16 +244,26 @@ export default function WorkoutDescriptionEditor({
 
           <div className="mt-3 space-y-1.5" aria-live="polite">
             {parsed.warnings.map((warning, index) => (
-              <button
-                key={`${warning.line}-${warning.message}-${index}`}
-                type="button"
-                onClick={() => jumpToLine(warning.line)}
-                className="block text-left text-[13px] leading-snug text-ink-2 underline decoration-ink-2/40 underline-offset-2 hover:text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
-              >
-                {warning.message.startsWith('Part ')
-                  ? warning.message
-                  : `Line ${warning.line}: ${warning.message}`}
-              </button>
+              <div key={`${warning.line}-${warning.message}-${index}`} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => jumpToLine(warning.line)}
+                  className="text-left text-[13px] leading-snug text-ink-2 underline decoration-ink-2/40 underline-offset-2 hover:text-ink focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
+                >
+                  {warning.message.startsWith('Part ')
+                    ? warning.message
+                    : `Line ${warning.line}: ${warning.message}`}
+                </button>
+                {/is 'Intervals' but has no timer line/.test(warning.message) && previewPart && (
+                  <button
+                    type="button"
+                    onClick={() => setTimerPanelPartIndex(selectedPreviewPartIndex)}
+                    className="min-h-9 shrink-0 rounded-sm border-2 border-ink px-2.5 text-[13px] font-bold text-ink"
+                  >
+                    Add timer
+                  </button>
+                )}
+              </div>
             ))}
           </div>
 

@@ -31,10 +31,10 @@ describe('board timer defaults', () => {
     assert.equal(getDefaultBoardTimerMode(part()), 'countup');
   });
 
-  it('applies a cap only to For Time and Chipper count-up parts', () => {
+  it('applies a count-up cap only when the part has minutes', () => {
     assert.equal(getBoardTimerDuration(part({ format: 'FOR TIME', minutes: 20 }), 'countup'), 1200);
     assert.equal(getBoardTimerDuration(part({ format: 'CHIPPER', minutes: 15 }), 'countup'), 900);
-    assert.equal(getBoardTimerDuration(part({ format: 'SKILL', minutes: 10 }), 'countup'), undefined);
+    assert.equal(getBoardTimerDuration(part({ format: 'SKILL', minutes: 10 }), 'countup'), 600);
   });
 
   it('uses the part duration for countdown and EMOM modes', () => {
@@ -63,7 +63,7 @@ describe('board timer defaults', () => {
     });
     assert.deepEqual(getDefaultBoardTimerConfiguration(part({ format: 'SKILL', minutes: 10 })), {
       mode: 'countup',
-      minutes: undefined,
+      minutes: 10,
     });
     assert.equal(getBoardTimerConfigurationDuration({ mode: 'countup', minutes: 20 }), 1200);
     assert.equal(getBoardTimerConfigurationDuration({ mode: 'countup', minutes: 0 }), undefined);
