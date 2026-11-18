@@ -35,13 +35,20 @@ const PURE_EXAMPLE = `# Warm-up | 15
 ! Wenn ihr den Buy-out beendet, beginnt ihr wieder beim Buy-in.`;
 
 describe('parseWorkout', () => {
+  it('preserves guillemets and typographic quotes in every title', () => {
+    assert.deepEqual(
+      parseWorkout('# WOD «Better Together» | 25\n# «Power Couple» | 18\n# „Quoted title“').parts.map((part) => part.title),
+      ['WOD «Better Together»', '«Power Couple»', '„Quoted title“']
+    );
+  });
+
   it('parses all three PURE parts, their metadata, and typed blocks', () => {
     const { parts, warnings } = parseWorkout(PURE_EXAMPLE);
     assert.equal(parts.length, 3);
     assert.deepEqual(parts.map(({ title, minutes, format }) => ({ title, minutes, format })), [
       { title: 'Warm-up', minutes: 15, format: undefined },
-      { title: 'Strict Business', minutes: 20, format: 'AMRAP' },
-      { title: 'The Final Countdown', minutes: 23, format: 'CHIPPER' },
+      { title: '«Strict Business»', minutes: 20, format: 'AMRAP' },
+      { title: '«The Final Countdown»', minutes: 23, format: 'CHIPPER' },
     ]);
     assert.equal(parts[1].team, 'Team of 3 · All shared');
     assert.deepEqual(parts[0].blocks[0], { type: 'scheme', name: '2 Rounds', line: 2 });

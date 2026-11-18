@@ -203,7 +203,6 @@ function cleanTitle(value: string) {
     .replace(/#\s*NAME\b/gi, '')
     .replace(/\s*\|+\s*$/, '')
     .replace(/^warm\s+u\b/i, 'Warm-up')
-    .replace(/^[«„“"]|[»“”"]$/g, '')
     .trim() || 'Workout';
 }
 

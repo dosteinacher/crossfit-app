@@ -84,7 +84,7 @@ function WorkoutTvContent({
     if (!viewport || !content) return;
 
     const measure = () => {
-      const candidates = getFitScaleCandidates(textScale);
+      const candidates = getFitScaleCandidates(1.6);
       let nextScale = candidates[candidates.length - 1];
       for (const candidate of candidates) {
         content.style.fontSize = `${16 * candidate}px`;
@@ -146,7 +146,7 @@ function WorkoutTvContent({
           </div>
         )}
 
-        <h1 className={`mb-[.18em] truncate font-display text-[6em] font-black uppercase leading-[.9] ${text}`}>
+        <h1 className={`mb-[.18em] font-display text-[6em] font-black uppercase leading-[.9] ${text}`}>
           {part?.title || 'Workout'}
         </h1>
 
@@ -169,6 +169,7 @@ function WorkoutTvContent({
                         divider={divider}
                         text={text}
                         secondary={secondary}
+                        dark={dark}
                       />
                     ))}
                   </div>
@@ -203,11 +204,13 @@ function WorkoutTvBlock({
   divider,
   text,
   secondary,
+  dark,
 }: {
   block: WorkoutBlock;
   divider: string;
   text: string;
   secondary: string;
+  dark: boolean;
 }) {
   if (block.type === 'movement') {
     return (
@@ -225,6 +228,18 @@ function WorkoutTvBlock({
           )}
         </div>
       </div>
+    );
+  }
+
+  if (block.type === 'text') {
+    const description = block.name
+      .replace(/\s*[—–-]\s*$/, '')
+      .replace(/^\s*[—–-]\s*/, '')
+      .trim();
+    return (
+      <p className={`line-clamp-2 border-b-2 py-[.55em] text-[26px] font-semibold leading-[1.25] normal-case tracking-normal ${dark ? 'text-white' : 'text-ink'} ${divider}`}>
+        {description}
+      </p>
     );
   }
 

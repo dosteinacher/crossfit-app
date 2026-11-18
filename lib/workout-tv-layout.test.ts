@@ -25,6 +25,13 @@ describe('TV board layout helpers', () => {
     assert.deepEqual(getFitScaleCandidates(1.1), [1.1, 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]);
   });
 
+  it('allows TV content to fit by scaling up to 1.6x', () => {
+    assert.deepEqual(
+      getFitScaleCandidates(1.6),
+      [1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+    );
+  });
+
   it('deduplicates stamps without changing the first display value', () => {
     assert.deepEqual(
       getUniqueWorkoutStamps(['2 Rounds', '2  ROUNDS', undefined, 'Team of 3']),
