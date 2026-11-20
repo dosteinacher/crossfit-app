@@ -193,3 +193,48 @@ describe('setting timer fields directly (not via a raw line)', () => {
     assert.match(text, /^# Warm-up \| 15 \| Intervals\n~ Tabata\n10 Burpees$/);
   });
 });
+
+describe('blank lines within a part body (found via the production round-trip check)', () => {
+  it('preserves a blank line between two movements', () => {
+    const text = '# WOD | 20 | AMRAP\n10 Burpees\n\n10 Box Jumps';
+    assert.equal(roundTrip(text), text);
+  });
+
+  it('preserves a blank line between two station groups', () => {
+    const text = '# WOD | 20 | Intervals\n## Station 1\n10 Burpees\n\n## Station 2\n10 Box Jumps';
+    assert.equal(roundTrip(text), text);
+  });
+
+  it('preserves a blank line between instructions and the first rounds-scheme line', () => {
+    const text = '# WOD | 20 | Rounds\n> Explain the setup here.\n\n5 Rounds\n10 Burpees';
+    assert.equal(roundTrip(text), text);
+  });
+
+  it('preserves a blank line right before a timer line', () => {
+    const text = '# WOD | 10\n10 Burpees\n\n~ Tabata\n10 Box Jumps';
+    assert.equal(roundTrip(text), text);
+  });
+
+  it('preserves a blank line between a note and the next movement', () => {
+    const text = '# WOD | 20\n! Score = total reps\n\n10 Burpees';
+    assert.equal(roundTrip(text), text);
+  });
+});
+
+describe('instructions never jump ahead of an earlier rounds/timer line', () => {
+  it('keeps a rounds-scheme line before a later instruction line (found via production round trip)', () => {
+    const text = '# WOD | 18 | Intervals | Team of 2\n6 Rounds (each 3)\n> First athlete full round, then second, then wait.\n6 Hang Power Cleans';
+    assert.equal(roundTrip(text), text);
+  });
+
+  it('keeps a timer line before a later instruction line', () => {
+    const text = '# WOD | 10\n~ Tabata\n> Explain the rotation here.\n10 Burpees';
+    assert.equal(roundTrip(text), text);
+  });
+
+  it('still treats a leading instruction line before any rounds/timer line as an instruction', () => {
+    const { parts } = toModel('# WOD | 20 | Rounds\n> Explain the setup first.\n5 Rounds\n10 Burpees');
+    assert.deepEqual(parts[0].instructions, ['> Explain the setup first.']);
+    assert.equal(parts[0].rounds, '5');
+  });
+});
