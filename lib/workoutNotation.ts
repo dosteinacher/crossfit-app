@@ -95,7 +95,7 @@ function clampTimerValue(
   return clamped;
 }
 
-function parseTimerLine(value: string, line: number, warnings: WorkoutWarning[]): IntervalTimer | undefined {
+export function parseTimerLine(value: string, line: number, warnings: WorkoutWarning[]): IntervalTimer | undefined {
   const segments = value.replace(/^~\s*/, '').split('|').map((segment) => segment.trim());
   const expression = segments.shift() || '';
   let rounds: number | undefined;
