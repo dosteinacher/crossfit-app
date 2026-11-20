@@ -131,7 +131,7 @@ export default function WorkoutsPage() {
     <>
       <Navbar />
       <main className="min-h-screen bg-canvas pb-6 md:pb-10">
-        <PhotoHero image="/images/gym-storage.jpg" imageAlt="PURE gym rig and equipment storage" objectPosition="center 48%" className="h-[240px]">
+        <PhotoHero image="/images/gym-floor.jpg" imageAlt="PURE gym training floor with rig, rings and timer" objectPosition="center 60%" className="h-[240px]">
           <header className="mx-auto flex h-full max-w-[1120px] flex-wrap items-end justify-between gap-4 px-4 pb-7 pt-8">
             <div>
               <p className="text-[13px] font-bold uppercase tracking-[.14em] text-lime">Box mode · Training schedule</p>

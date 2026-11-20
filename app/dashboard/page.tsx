@@ -168,11 +168,9 @@ export default function DashboardPage() {
       <Navbar photoHero />
       <main className="min-h-screen bg-canvas pb-6 md:pb-10">
         <PhotoHero
-          image="/images/gym-hero.jpg"
-          mobileImage="/images/gym-rig.jpg"
-          imageAlt="PURE gym training rig and kettlebells"
-          objectPosition="center 52%"
-          mobileObjectPosition="center 48%"
+          image="/images/gym-floor.jpg"
+          imageAlt="PURE gym training floor with rig, rings and timer"
+          objectPosition="center 55%"
           className="h-[330px] md:h-[440px]"
         >
           <header className="mx-auto flex h-full max-w-[1120px] flex-col justify-between px-4 pb-14 pt-[68px] md:pb-[108px] md:pt-10">
