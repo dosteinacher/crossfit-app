@@ -53,6 +53,7 @@ export default function GuidedPartCard({
   onRemove,
   onMove,
   onPreview,
+  warnings,
 }: {
   part: Part;
   index: number;
@@ -62,6 +63,8 @@ export default function GuidedPartCard({
   onRemove: () => void;
   onMove: (direction: -1 | 1) => void;
   onPreview: () => void;
+  /** Notation-parser warnings for this workout, keyed by the exact raw line text (Phase 3). */
+  warnings?: Map<string, string>;
 }) {
   const newRowFocusRef = useRef<HTMLInputElement | null>(null);
 
@@ -295,6 +298,7 @@ export default function GuidedPartCard({
             onMoveDown={itemIndex < part.items.length - 1 ? () => moveItem(itemIndex, 1) : undefined}
             onEnter={() => addItem(newMovement(), true)}
             focusRef={itemIndex === part.items.length - 1 ? newRowFocusRef : undefined}
+            warning={item.raw ? warnings?.get(item.raw) : undefined}
           />
         ))}
       </div>
@@ -322,6 +326,7 @@ function GuidedRow({
   onMoveDown,
   onEnter,
   focusRef,
+  warning,
 }: {
   item: Item;
   onChange: (next: Item) => void;
@@ -330,6 +335,8 @@ function GuidedRow({
   onMoveDown?: () => void;
   onEnter: () => void;
   focusRef?: React.RefObject<HTMLInputElement | null>;
+  /** The notation parser's warning for this line, if any (Phase 3). */
+  warning?: string;
 }) {
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
@@ -346,6 +353,16 @@ function GuidedRow({
   const removeButton = (
     <button type="button" aria-label="Remove row" onClick={onRemove} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-line bg-paper text-ink-2 hover:text-danger">✕</button>
   );
+  const warningBadge = warning ? (
+    <span
+      role="img"
+      aria-label={`Warning: ${warning}`}
+      title={warning}
+      className="flex h-9 w-9 shrink-0 cursor-help items-center justify-center text-base"
+    >
+      ⚠️
+    </span>
+  ) : null;
 
   if (item.kind === 'movement') {
     return (
@@ -423,6 +440,7 @@ function GuidedRow({
         placeholder="Anything else, shown as typed — e.g. Then: 2:00 easy row"
         className="min-h-9 flex-1 bg-transparent px-1 text-sm text-ink focus:outline-none"
       />
+      {warningBadge}
       {removeButton}
     </div>
   );

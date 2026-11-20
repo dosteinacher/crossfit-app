@@ -6,6 +6,22 @@ import WorkoutDescriptionEditor from '@/components/WorkoutDescriptionEditor';
 import GuidedPartCard from '@/components/GuidedPartCard';
 import GuidedLivePreview from '@/components/GuidedLivePreview';
 import { toModel, toText, type Part, type WorkoutModel } from '@/lib/workoutModel';
+import { parseWorkout } from '@/lib/workoutNotation';
+
+/**
+ * Maps a raw line's exact text to the notation parser's warning for that line,
+ * so a row Simple mode couldn't fully understand can show why (Phase 3).
+ */
+function warningsByLine(text: string): Map<string, string> {
+  const lines = text.split(/\r?\n/);
+  const { warnings } = parseWorkout(text);
+  const byLine = new Map<string, string>();
+  for (const warning of warnings) {
+    const line = lines[warning.line - 1]?.trim();
+    if (line) byLine.set(line, warning.message);
+  }
+  return byLine;
+}
 
 const MODE_STORAGE_KEY = 'pure.workoutEditor.mode';
 type Mode = 'simple' | 'text';
@@ -102,6 +118,7 @@ export default function GuidedWorkoutEditor({
   }
 
   const previewText = toText(model);
+  const warnings = warningsByLine(previewText);
 
   return (
     <div>
@@ -176,6 +193,7 @@ export default function GuidedWorkoutEditor({
                   onRemove={() => removePart(index)}
                   onMove={(direction) => movePart(index, direction)}
                   onPreview={() => setActivePartIndex(index)}
+                  warnings={warnings}
                 />
               ))}
               <button
