@@ -32,10 +32,10 @@ import {
 export type Timer = IntervalTimer;
 
 export type Item =
-  | { kind: 'movement'; reps: string; name: string; load: string; alts: string[]; raw?: string; blankBefore?: boolean }
-  | { kind: 'section'; text: string; raw?: string; blankBefore?: boolean }
-  | { kind: 'note'; text: string; raw?: string; blankBefore?: boolean }
-  | { kind: 'text'; text: string; raw?: string; blankBefore?: boolean };
+  | { kind: 'movement'; reps: string; name: string; load: string; alts: string[]; raw?: string; blankLinesBefore?: number }
+  | { kind: 'section'; text: string; raw?: string; blankLinesBefore?: number }
+  | { kind: 'note'; text: string; raw?: string; blankLinesBefore?: number }
+  | { kind: 'text'; text: string; raw?: string; blankLinesBefore?: number };
 
 export type PartFormat =
   | 'AMRAP'
@@ -56,8 +56,8 @@ interface Extra {
   raw?: string;
   /** How many real items (in `items`) came before this line in the source. */
   index: number;
-  /** Whether a blank line preceded this one in the source. */
-  blankBefore?: boolean;
+  /** How many blank lines preceded this one in the source. */
+  blankLinesBefore?: number;
 }
 
 export interface Part {
@@ -82,6 +82,8 @@ export interface Part {
   meta?: string[];
   /** Internal: timer / rounds lines pulled out of `items`, with their original position. */
   extras?: Extra[];
+  /** Blank lines between the previous part and this one's header (default 1, the canonical gap, when unset — e.g. a part added in Simple mode). Unused for the first part. */
+  blankLinesBefore?: number;
 }
 
 export interface WorkoutModel {
@@ -217,9 +219,9 @@ function parseHeaderLine(line: string): Omit<Part, 'items' | 'instructions' | 'e
   return part;
 }
 
-function classifyLine(line: string, blankBefore: boolean): Item {
+function classifyLine(line: string, blankLinesBefore: number): Item {
   const value = line.trim();
-  const flag = blankBefore ? { blankBefore: true as const } : {};
+  const flag = blankLinesBefore ? { blankLinesBefore } : {};
   if (/^##\s+/.test(value)) {
     return { kind: 'section', text: value.replace(/^##\s+/, '').trim(), raw: stripTrailing(line), ...flag };
   }
@@ -248,25 +250,26 @@ export function toModel(text: string): WorkoutModel {
     const parts: Part[] = [];
     let current: Part | undefined;
     let instructionsOpen = false;
-    // Set for one blank source line, consumed (and reset) by whatever real content
-    // follows it, so that content can record "a blank line preceded me".
-    let pendingBlank = false;
+    // Counts consecutive blank source lines, consumed (and reset) by whatever real
+    // content follows them, so that content can record "N blank lines preceded me".
+    let pendingBlankLines = 0;
 
     for (const raw of lines) {
       const value = raw.trim();
       if (!value) {
-        pendingBlank = true;
+        pendingBlankLines += 1;
         continue;
       }
 
       if (/^#(?!#)\s*/.test(value)) {
         const header = parseHeaderLine(raw.trim());
-        current = { ...header, instructions: [], items: [], extras: [] };
+        // Blank lines right before a new part are this part's own gap from the
+        // previous one (toText defaults to one when unset, for a part added in
+        // Simple mode); real workouts sometimes use two, not always one.
+        current = { ...header, instructions: [], items: [], extras: [], blankLinesBefore: pendingBlankLines };
         parts.push(current);
         instructionsOpen = true;
-        // A blank line right before a new part is the between-parts gap, already
-        // reproduced unconditionally by toText; it isn't this part's concern.
-        pendingBlank = false;
+        pendingBlankLines = 0;
         continue;
       }
 
@@ -278,15 +281,15 @@ export function toModel(text: string): WorkoutModel {
       const timerWord = value.replace(/^~\s*/, '').trim().toLowerCase();
       if (/^~/.test(value) && timerWord === 'countdown') {
         current.timerMode = 'countdown';
-        (current.extras ||= []).push({ kind: 'timer', raw: stripTrailing(raw), index: current.items.length, blankBefore: pendingBlank });
-        pendingBlank = false;
+        (current.extras ||= []).push({ kind: 'timer', raw: stripTrailing(raw), index: current.items.length, blankLinesBefore: pendingBlankLines });
+        pendingBlankLines = 0;
         instructionsOpen = false;
         continue;
       }
       if (/^~/.test(value) && timerWord === 'count up') {
         current.timerMode = 'countup';
-        (current.extras ||= []).push({ kind: 'timer', raw: stripTrailing(raw), index: current.items.length, blankBefore: pendingBlank });
-        pendingBlank = false;
+        (current.extras ||= []).push({ kind: 'timer', raw: stripTrailing(raw), index: current.items.length, blankLinesBefore: pendingBlankLines });
+        pendingBlankLines = 0;
         instructionsOpen = false;
         continue;
       }
@@ -297,8 +300,8 @@ export function toModel(text: string): WorkoutModel {
           current.timer = timer;
           current.timerMode = 'intervals';
         }
-        (current.extras ||= []).push({ kind: 'timer', raw: stripTrailing(raw), index: current.items.length, blankBefore: pendingBlank });
-        pendingBlank = false;
+        (current.extras ||= []).push({ kind: 'timer', raw: stripTrailing(raw), index: current.items.length, blankLinesBefore: pendingBlankLines });
+        pendingBlankLines = 0;
         instructionsOpen = false;
         continue;
       }
@@ -306,8 +309,8 @@ export function toModel(text: string): WorkoutModel {
       const roundsMatch = value.match(ROUNDS_SCHEME);
       if (roundsMatch) {
         current.rounds = roundsMatch[1];
-        (current.extras ||= []).push({ kind: 'rounds', raw: stripTrailing(raw), index: current.items.length, blankBefore: pendingBlank });
-        pendingBlank = false;
+        (current.extras ||= []).push({ kind: 'rounds', raw: stripTrailing(raw), index: current.items.length, blankLinesBefore: pendingBlankLines });
+        pendingBlankLines = 0;
         // A rounds/timer line is real content, like an item: anything after it is no
         // longer "the leading instructions paragraph", even if nothing has gone into
         // `instructions` yet - otherwise a later instruction-like line would render
@@ -325,13 +328,13 @@ export function toModel(text: string): WorkoutModel {
         const movement = parseMovementLine(value);
         if (!movement.reps) {
           current.instructions.push(value);
-          pendingBlank = false;
+          pendingBlankLines = 0;
           continue;
         }
       }
       instructionsOpen = false;
-      current.items.push(classifyLine(raw, pendingBlank));
-      pendingBlank = false;
+      current.items.push(classifyLine(raw, pendingBlankLines));
+      pendingBlankLines = 0;
     }
 
     return { parts, preamble };
@@ -379,11 +382,11 @@ function renderHeaderLine(part: Part): string {
 
 interface RenderedLine {
   text: string;
-  blankBefore?: boolean;
+  blankLinesBefore?: number;
 }
 
 function renderPart(part: Part): string {
-  const lines: RenderedLine[] = part.items.map((item) => ({ text: itemToLine(item), blankBefore: item.blankBefore }));
+  const lines: RenderedLine[] = part.items.map((item) => ({ text: itemToLine(item), blankLinesBefore: item.blankLinesBefore }));
   // Descending by index, so each splice lands at its recorded position without
   // shifting extras not yet processed. Extras that share an index (two "~"
   // lines back to back, say) must splice in reverse of their original order,
@@ -395,15 +398,25 @@ function renderPart(part: Part): string {
   for (const extra of extras) {
     const text = extra.raw !== undefined ? extra.raw : deriveExtraLine(extra, part);
     const position = Math.max(0, Math.min(extra.index, lines.length));
-    lines.splice(position, 0, { text, blankBefore: extra.blankBefore });
+    lines.splice(position, 0, { text, blankLinesBefore: extra.blankLinesBefore });
   }
-  const bodyLines = lines.flatMap((line) => (line.blankBefore ? ['', line.text] : [line.text]));
+  const bodyLines = lines.flatMap((line) =>
+    line.blankLinesBefore ? [...Array(line.blankLinesBefore).fill(''), line.text] : [line.text]
+  );
   return [renderHeaderLine(part), ...part.instructions, ...bodyLines].join('\n');
 }
 
 export function toText(model: WorkoutModel): string {
   if (!model || typeof model !== 'object') return '';
-  const body = (model.parts || []).map(renderPart).join('\n\n');
+  const parts = model.parts || [];
+  const body = parts
+    .map((part, index) => {
+      const rendered = renderPart(part);
+      if (index === 0) return rendered;
+      const blankLines = part.blankLinesBefore ?? 1;
+      return '\n'.repeat(blankLines + 1) + rendered;
+    })
+    .join('');
   const preamble = model.preamble || [];
   if (!preamble.length) return body;
   return body ? [preamble.join('\n'), body].join('\n\n') : preamble.join('\n');

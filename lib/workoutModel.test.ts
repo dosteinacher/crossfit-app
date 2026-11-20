@@ -238,3 +238,16 @@ describe('instructions never jump ahead of an earlier rounds/timer line', () => 
     assert.equal(parts[0].rounds, '5');
   });
 });
+
+describe('blank lines between parts (found via production round trip)', () => {
+  it('preserves two blank lines between parts, not just the canonical one', () => {
+    const text = '# First | 10\n10 Burpees\n\n\n# Second | 10\n10 Box Jumps';
+    assert.equal(roundTrip(text), text);
+  });
+
+  it('still defaults to one blank line between a newly added part and its neighbor', () => {
+    const model = toModel('# First | 10\n10 Burpees');
+    model.parts.push({ title: 'Second', minutes: '10', format: 'Other', team: '', instructions: [], items: [{ kind: 'movement', reps: '10', name: 'Box Jumps', load: '', alts: [] }] });
+    assert.equal(toText(model), '# First | 10\n10 Burpees\n\n# Second | 10\n10 Box Jumps');
+  });
+});
