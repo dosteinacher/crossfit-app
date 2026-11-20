@@ -310,3 +310,98 @@ export async function notifyPollOptionAdded(
   );
   return results;
 }
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * The coach who receives sign-up and unregister notices.
+ * COACH_EMAIL wins; ADMIN_EMAIL is the fallback.
+ */
+export function getCoachEmail(): string | null {
+  return process.env.COACH_EMAIL || process.env.ADMIN_EMAIL || null;
+}
+
+/**
+ * Tell the coach that someone signed up for or left a workout,
+ * with the new head count and the current participant list.
+ */
+export async function notifyCoachRegistrationChange(
+  change: 'registered' | 'unregistered',
+  workout: { id: number; title: string; date: string; max_participants: number },
+  participant: UserData,
+  participants: UserData[],
+  changedBy?: UserData
+): Promise<EmailResult> {
+  const coachEmail = getCoachEmail();
+  if (!coachEmail) {
+    console.warn('COACH_EMAIL / ADMIN_EMAIL not configured, skipping coach notification');
+    return { success: false, error: 'Coach email not configured' };
+  }
+  const resendClient = getResendClient();
+  if (!resendClient) {
+    console.warn('RESEND_API_KEY not configured, skipping coach notification');
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://go-pure.ch';
+  const workoutUrl = `${appUrl}/workouts/${workout.id}`;
+  const whenStr = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Zurich',
+  }).format(new Date(workout.date));
+
+  const count = `${participants.length}/${workout.max_participants}`;
+  const verb = change === 'registered' ? 'signed up for' : 'unregistered from';
+  const byOther = changedBy && changedBy.email !== participant.email ? ` (by ${changedBy.name})` : '';
+  const subject = `${participant.name} ${verb} ${workout.title} · ${whenStr} · ${count}`;
+
+  const names = participants.map((p) => p.name).sort((a, b) => a.localeCompare(b));
+  const listHtml = names.length
+    ? `<ol>${names.map((n) => `<li>${escapeHtml(n)}</li>`).join('')}</ol>`
+    : '<p><em>No one is registered.</em></p>';
+  const listText = names.length ? names.map((n, i) => `${i + 1}. ${n}`).join('\n') : 'No one is registered.';
+
+  const htmlBody = `
+    <h2>${escapeHtml(participant.name)} ${verb} a workout${escapeHtml(byOther)}</h2>
+    <p><strong>${escapeHtml(workout.title)}</strong><br>${escapeHtml(whenStr)}</p>
+    <p style="font-size: 1.3em; padding: 12px; background: #f4f4f4; border-radius: 6px;">
+      <strong>${count}</strong> participants
+    </p>
+    <h3>Current participants</h3>
+    ${listHtml}
+    <p>
+      <a href="${workoutUrl}" style="display: inline-block; padding: 10px 18px; background: #4ade80; color: #000; text-decoration: none; border-radius: 6px; font-weight: bold;">
+        Open workout
+      </a>
+    </p>
+  `;
+  const textBody = `${participant.name} ${verb} a workout${byOther}\n\n${workout.title}\n${whenStr}\n\nParticipants: ${count}\n\n${listText}\n\nOpen workout: ${workoutUrl}\n`;
+
+  try {
+    const { data, error } = await resendClient.emails.send({
+      from: FROM_EMAIL,
+      to: coachEmail,
+      subject,
+      html: htmlBody,
+      text: textBody,
+    });
+    if (error) {
+      console.error('Failed to send coach notification:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, messageId: data?.id };
+  } catch (e) {
+    console.error('Error sending coach notification:', e);
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}

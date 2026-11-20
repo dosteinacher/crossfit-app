@@ -1,7 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSessionFromCookie } from '@/lib/auth';
-import { notifyWorkoutRegistration } from '@/lib/email';
+import { notifyWorkoutRegistration, notifyCoachRegistrationChange, getCoachEmail } from '@/lib/email';
+import type { Registration, User, Workout } from '@/lib/types';
+
+/**
+ * Email the coach about a sign-up or unregister, with the new head count.
+ * Skipped when the coach made the change. Never fails the request.
+ */
+async function notifyCoach(
+  change: 'registered' | 'unregistered',
+  workout: Workout,
+  participantId: number,
+  actorId: number
+) {
+  try {
+    const coachEmail = getCoachEmail()?.toLowerCase();
+    const [participant, actor, registrations] = await Promise.all([
+      db.getUserById(participantId),
+      db.getUserById(actorId),
+      db.getRegistrationsForWorkout(workout.id),
+    ]);
+    if (!participant || !coachEmail) return;
+    if (actor?.email.toLowerCase() === coachEmail) return;
+
+    const users = await Promise.all((registrations as Registration[]).map((reg) => db.getUserById(reg.user_id) as Promise<User | null>));
+    const participants = users
+      .filter((u): u is NonNullable<typeof u> => Boolean(u))
+      .map((u) => ({ email: u.email, name: u.name }));
+
+    await notifyCoachRegistrationChange(
+      change,
+      { id: workout.id, title: workout.title, date: workout.date, max_participants: workout.max_participants },
+      { email: participant.email, name: participant.name },
+      participants,
+      actor ? { email: actor.email, name: actor.name } : undefined
+    );
+  } catch (emailError) {
+    console.error('Failed to notify coach:', emailError);
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -68,6 +106,8 @@ export async function POST(
       console.error('Failed to send calendar invite:', emailError);
     }
 
+    await notifyCoach('registered', workout, targetUserId, session.id);
+
     return NextResponse.json({ registration }, { status: 201 });
   } catch (error) {
     console.error('Register for workout error:', error);
@@ -101,6 +141,9 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    const workout = await db.getWorkoutById(workoutId);
+    if (workout) await notifyCoach('unregistered', workout, targetUserId, session.id);
 
     return NextResponse.json({ message: 'Unregistered successfully' });
   } catch (error) {
