@@ -1,9 +1,11 @@
 'use client';
 
-import { useId, useRef } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Badge, Button, Label } from '@/components/ui';
+import IntervalTimerSetup from '@/components/IntervalTimerSetup';
 import type { Item, Part, PartFormat } from '@/lib/workoutModel';
 import type { MovementSuggestion } from '@/lib/pastWorkoutInsights';
+import { parseTimerLine } from '@/lib/workoutNotation';
 
 const FORMAT_OPTIONS: Array<{ value: PartFormat; label: string }> = [
   { value: 'AMRAP', label: 'AMRAP' },
@@ -71,16 +73,32 @@ export default function GuidedPartCard({
   movementSuggestions?: MovementSuggestion[];
 }) {
   const newRowFocusRef = useRef<HTMLInputElement | null>(null);
+  const [showTimerSetup, setShowTimerSetup] = useState(false);
+  const needsIntervalTimer = part.format === 'Intervals' || (part.format === 'Other' && part.timerMode === 'intervals');
 
   function patch(fields: Partial<Part>) {
     onChange({ ...part, ...fields, headerRaw: undefined });
+  }
+
+  /** Sets the timer/timerMode through a field instead of a raw line. Drops any stale
+   * "~ ..." raw text for this part, and - when the new state actually implies a timer
+   * line - adds back a fresh (raw-less) extras entry, so toText derives the right line
+   * from the new structured state instead of either echoing stale text or, just as
+   * wrong, silently dropping the line altogether. */
+  function patchTimer(fields: Partial<Part>) {
+    const next = { ...part, ...fields };
+    const needsTimerLine = Boolean(next.timer) || next.timerMode === 'countdown' || next.timerMode === 'countup';
+    const withoutTimerExtra = (part.extras || []).filter((extra) => extra.kind !== 'timer');
+    const extras = needsTimerLine ? [...withoutTimerExtra, { kind: 'timer' as const, index: 0 }] : withoutTimerExtra;
+    onChange({ ...next, headerRaw: undefined, extras });
   }
 
   function setFormat(format: PartFormat) {
     const next: Partial<Part> = { format, headerRaw: undefined };
     if (format !== 'Other') next.otherName = undefined;
     if (format !== 'Rounds') { /* keep rounds value, just hide the field */ }
-    onChange({ ...part, ...next });
+    const extras = (part.extras || []).filter((extra) => extra.kind !== 'timer');
+    onChange({ ...part, ...next, extras });
   }
 
   function setItem(itemIndex: number, item: Item) {
@@ -210,7 +228,7 @@ export default function GuidedPartCard({
                   key={mode.value}
                   type="button"
                   aria-pressed={(part.timerMode || 'countup') === mode.value}
-                  onClick={() => patch({ timerMode: mode.value })}
+                  onClick={() => patchTimer({ timerMode: mode.value })}
                   className={`min-h-9 rounded-full px-3 text-sm font-bold ${
                     (part.timerMode || 'countup') === mode.value ? 'bg-ink text-white' : 'border border-line bg-paper text-ink hover:bg-canvas'
                   }`}
@@ -315,9 +333,33 @@ export default function GuidedPartCard({
         <button type="button" onClick={() => addItem({ kind: 'text', text: '' })} className="min-h-9 rounded-full border border-dashed border-line bg-paper px-3 text-sm font-bold text-ink hover:bg-canvas">+ Text line</button>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 rounded-sm bg-canvas px-3 py-2 text-[13px]">
+      <div className="relative mt-4 flex items-center justify-between gap-3 rounded-sm bg-canvas px-3 py-2 text-[13px]">
         <span className="font-bold text-ink">⏱ Timer on the board: {timerSummary(part)}</span>
-        {part.format !== 'Other' && <Badge variant="neutral">set from format + minutes</Badge>}
+        {needsIntervalTimer ? (
+          <button type="button" onClick={() => setShowTimerSetup((v) => !v)} className="min-h-8 shrink-0 rounded-sm border border-line bg-paper px-2 text-[13px] font-bold text-ink hover:bg-canvas">
+            {part.timer ? 'Change' : 'Set timer'}
+          </button>
+        ) : (
+          <Badge variant="neutral">set from format + minutes</Badge>
+        )}
+        {showTimerSetup && (
+          <IntervalTimerSetup
+            partIndex={index}
+            partTitle={part.title || `Part ${index + 1}`}
+            hasTimerLine={Boolean(part.timer)}
+            timer={part.timer}
+            onClose={() => setShowTimerSetup(false)}
+            onSave={(line) => {
+              const timer = parseTimerLine(line, 0, []);
+              if (timer) patchTimer({ timer, timerMode: 'intervals' });
+              setShowTimerSetup(false);
+            }}
+            onRemove={() => {
+              patchTimer({ timer: undefined });
+              setShowTimerSetup(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );

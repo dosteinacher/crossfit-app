@@ -9,6 +9,8 @@ import GuidedStartFrom from '@/components/GuidedStartFrom';
 import { toModel, toText, type Part, type WorkoutModel } from '@/lib/workoutModel';
 import { convertLegacyWorkoutToNotation, parseWorkout } from '@/lib/workoutNotation';
 import { getMovementSuggestions, type PastWorkoutSummary } from '@/lib/pastWorkoutInsights';
+import { getWorkoutChecks, type WorkoutCheckKind } from '@/lib/workoutChecks';
+import { DEFAULT_INTERVAL_TIMER } from '@/components/IntervalTimerSetup';
 
 /**
  * Maps a raw line's exact text to the notation parser's warning for that line,
@@ -146,8 +148,29 @@ export default function GuidedWorkoutEditor({
     setActivePartIndex(parts.length - 1);
   }
 
+  function fixCheck(partIndex: number, kind: WorkoutCheckKind) {
+    const part = model.parts[partIndex];
+    if (!part) return;
+    if (kind === 'minutes') updatePart(partIndex, { ...part, minutes: '12' });
+    else if (kind === 'movements') {
+      updatePart(partIndex, {
+        ...part,
+        items: [...part.items, { kind: 'movement', reps: '', name: '', load: '', alts: [] }],
+      });
+      setActivePartIndex(partIndex);
+    } else if (kind === 'rounds') updatePart(partIndex, { ...part, rounds: '3' });
+    else if (kind === 'timer') {
+      updatePart(partIndex, {
+        ...part,
+        timer: { ...DEFAULT_INTERVAL_TIMER },
+        extras: [...(part.extras || []).filter((extra) => extra.kind !== 'timer'), { kind: 'timer', index: 0 }],
+      });
+    }
+  }
+
   const previewText = toText(model);
   const warnings = warningsByLine(previewText);
+  const checks = getWorkoutChecks(model.parts);
 
   return (
     <div>
@@ -212,6 +235,22 @@ export default function GuidedWorkoutEditor({
               >
                 + Add part (e.g. Strength, WOD, Cool-down)
               </button>
+              {checks.length > 0 && (
+                <div className="space-y-1.5" aria-label="Checks before saving">
+                  {checks.map((check, i) => (
+                    <div key={i} className="flex items-center justify-between gap-3 rounded-sm border border-dashed border-line bg-canvas px-3 py-2 text-sm text-ink-2">
+                      <span>{check.message}</span>
+                      <button
+                        type="button"
+                        onClick={() => fixCheck(check.partIndex, check.kind)}
+                        className="min-h-8 shrink-0 rounded-sm border border-line bg-paper px-2 text-[13px] font-bold text-ink hover:bg-canvas"
+                      >
+                        {check.fixLabel}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className={mobileTab === 'edit' ? 'hidden md:block' : ''}>
               <GuidedLivePreview

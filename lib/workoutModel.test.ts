@@ -183,3 +183,13 @@ describe('toModel field extraction', () => {
     assert.doesNotThrow(() => toText(null as any));
   });
 });
+
+describe('setting timer fields directly (not via a raw line)', () => {
+  it('emits a "~ ..." line once a Timer object is set on a part with no prior timer line', () => {
+    const model = toModel('# Warm-up | 15 | Intervals\n10 Burpees');
+    model.parts[0].timer = { rounds: 8, work: 20, rest: 10, sets: 1, setRest: 60, prep: 10 };
+    model.parts[0].extras = [{ kind: 'timer', index: 0 }];
+    const text = toText(model);
+    assert.match(text, /^# Warm-up \| 15 \| Intervals\n~ Tabata\n10 Burpees$/);
+  });
+});
