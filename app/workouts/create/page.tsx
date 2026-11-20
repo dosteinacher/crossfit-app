@@ -4,8 +4,8 @@ import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { Card, Button, ErrorMessage, SuccessMessage, SegmentedControl } from '@/components/ui';
-import WorkoutDescriptionEditor from '@/components/WorkoutDescriptionEditor';
+import { Card, Button, ErrorMessage, SuccessMessage } from '@/components/ui';
+import GuidedWorkoutEditor from '@/components/GuidedWorkoutEditor';
 import { getMainWorkoutFormat } from '@/lib/workoutNotation';
 import { generateWorkout } from '@/lib/workout-generator';
 import {
@@ -51,7 +51,6 @@ function CreateWorkoutForm() {
   const [genExcludeExercises, setGenExcludeExercises] = useState<string[]>([]);
   const [genSuccess, setGenSuccess] = useState('');
 
-  const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
   const parsedWorkoutType = getMainWorkoutFormat(description);
   const visibleUsers = users.filter((user) =>
     `${user.name} ${user.email}`.toLowerCase().includes(attendeeSearch.trim().toLowerCase())
@@ -440,38 +439,7 @@ function CreateWorkoutForm() {
                     />
                   </div>
 
-                  <div>
-                    <WorkoutDescriptionEditor
-                      description={description}
-                      onChange={setDescription}
-                      title={title}
-                    />
-                  </div>
-
-                  <div>
-                    <p className="mb-2 text-sm font-bold text-ink">Workout type</p>
-                    {parsedWorkoutType ? (
-                      <>
-                        <input
-                          value={parsedWorkoutType}
-                          readOnly
-                          aria-describedby="create-workout-type-source"
-                          className="min-h-11 w-full rounded-sm border border-line bg-canvas px-3 py-2 text-base text-ink"
-                        />
-                        <p id="create-workout-type-source" className="mt-1 text-[13px] text-ink-2">From description</p>
-                      </>
-                    ) : (
-                      <SegmentedControl
-                        items={workoutTypes.map((type) => ({ label: type, value: type }))}
-                        value={workoutType}
-                        onChange={setWorkoutType}
-                        ariaLabel="Workout type"
-                        className="w-full flex-wrap"
-                      />
-                    )}
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-3">
                     <div>
                       <label htmlFor="workout-date" className="mb-1.5 block text-sm font-bold text-ink">Date</label>
                       <input
@@ -494,39 +462,42 @@ function CreateWorkoutForm() {
                         className="min-h-12 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
                       />
                     </div>
+                    <div>
+                      <label htmlFor="max-participants" className="mb-1.5 block text-sm font-bold text-ink">Max participants</label>
+                      <div className="inline-flex items-center rounded-sm border border-line bg-paper">
+                        <button
+                          type="button"
+                          aria-label="Decrease maximum participants"
+                          onClick={() => setMaxParticipants((current) => String(Math.max(1, (Number(current) || 1) - 1)))}
+                          className="h-12 w-12 text-xl font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
+                        >
+                          −
+                        </button>
+                        <input
+                          id="max-participants"
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={maxParticipants}
+                          onChange={(e) => setMaxParticipants(e.target.value)}
+                          onBlur={() => setMaxParticipants(String(Math.max(1, Number.parseInt(maxParticipants, 10) || 1)))}
+                          required
+                          className="h-12 w-16 border-x border-line bg-paper text-center text-base font-bold tabular-nums text-ink focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          aria-label="Increase maximum participants"
+                          onClick={() => setMaxParticipants((current) => String((Number(current) || 1) + 1))}
+                          className="h-12 w-12 text-xl font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
-                    <label htmlFor="max-participants" className="mb-1.5 block text-sm font-bold text-ink">Maximum participants</label>
-                    <div className="inline-flex items-center rounded-sm border border-line bg-paper">
-                      <button
-                        type="button"
-                        aria-label="Decrease maximum participants"
-                        onClick={() => setMaxParticipants((current) => String(Math.max(1, (Number(current) || 1) - 1)))}
-                        className="h-12 w-12 text-xl font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
-                      >
-                        −
-                      </button>
-                      <input
-                        id="max-participants"
-                        type="number"
-                        min={1}
-                        step={1}
-                        value={maxParticipants}
-                        onChange={(e) => setMaxParticipants(e.target.value)}
-                        onBlur={() => setMaxParticipants(String(Math.max(1, Number.parseInt(maxParticipants, 10) || 1)))}
-                        required
-                        className="h-12 w-16 border-x border-line bg-paper text-center text-base font-bold tabular-nums text-ink focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        aria-label="Increase maximum participants"
-                        onClick={() => setMaxParticipants((current) => String((Number(current) || 1) + 1))}
-                        className="h-12 w-12 text-xl font-bold text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ink/15"
-                      >
-                        +
-                      </button>
-                    </div>
+                    <GuidedWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
                   </div>
 
                   <div>

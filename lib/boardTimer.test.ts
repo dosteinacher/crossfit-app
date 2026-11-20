@@ -124,3 +124,29 @@ describe('board timer sound cues', () => {
     assert.deepEqual(getBoardTimerCue(configuration, 240), { cue: 'finish', secondsLeft: 0 });
   });
 });
+
+describe('board timer: v8 "~ Countdown" / "~ Count up" lines', () => {
+  it('uses timerMode when the format gives no mode of its own', () => {
+    assert.equal(getDefaultBoardTimerMode(part({ timerMode: 'countdown' })), 'countdown');
+    assert.equal(getDefaultBoardTimerMode(part({ timerMode: 'countup' })), 'countup');
+  });
+
+  it('lets an explicit interval timer win over timerMode', () => {
+    const timer = { rounds: 8, work: 20, rest: 10, sets: 1, setRest: 60, prep: 10 };
+    assert.equal(getDefaultBoardTimerMode(part({ timerMode: 'countdown', timer })), 'intervals');
+  });
+
+  it('builds a countdown configuration using the part minutes', () => {
+    assert.deepEqual(
+      getDefaultBoardTimerConfiguration(part({ format: 'CHIPPER', minutes: 25, timerMode: 'countdown' })),
+      { mode: 'countdown', minutes: 25 },
+    );
+  });
+
+  it('builds a capped count-up configuration for an unrecognized "Other" format', () => {
+    assert.deepEqual(
+      getDefaultBoardTimerConfiguration(part({ minutes: 20, timerMode: 'countup' })),
+      { mode: 'countup', minutes: 20 },
+    );
+  });
+});
