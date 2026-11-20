@@ -14,8 +14,14 @@ const isIntegerBetween = (value: unknown, min: number, max: number) => (
   typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
 );
 
-export function getDefaultBoardTimerMode(part: Pick<WorkoutPart, 'format' | 'timer'>): BoardTimerMode {
+export function getDefaultBoardTimerMode(
+  part: Pick<WorkoutPart, 'format' | 'timer' | 'timerMode'>,
+): BoardTimerMode {
   if (part.timer) return 'intervals';
+  // Set by the v8 guided editor's '~ Countdown' / '~ Count up' lines, for parts whose
+  // format doesn't already imply a mode (e.g. the 'Other' format: Chipper, Death by...).
+  if (part.timerMode === 'countdown') return 'countdown';
+  if (part.timerMode === 'countup') return 'countup';
   if (part.format === 'AMRAP') return 'countdown';
   if (part.format === 'EMOM') return 'emom';
   return 'countup';
@@ -28,7 +34,9 @@ export function getDefaultBoardTimerConfiguration(part: WorkoutPart): BoardTimer
   if (mode === 'emom') return { mode, minutes: part.minutes || 12, everyMinutes: 1 };
   return {
     mode,
-    minutes: (part.format === 'FOR TIME' || part.format === 'CHIPPER') ? part.minutes : undefined,
+    minutes: (part.format === 'FOR TIME' || part.format === 'CHIPPER' || part.timerMode === 'countup')
+      ? part.minutes
+      : undefined,
   };
 }
 

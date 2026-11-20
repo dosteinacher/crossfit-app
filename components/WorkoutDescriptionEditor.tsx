@@ -265,6 +265,8 @@ export default function WorkoutDescriptionEditor({
               <p><code># Name | 15 | AMRAP | Team of 3</code> starts a part and sets optional minutes, format, and team.</p>
               <p className="mt-1"><code>## Then</code> adds a section; <code>&gt; instruction</code> adds a sub-header; <code>! repeat</code> adds a note.</p>
               <p className="mt-1"><code>3 Rounds</code> is a scheme. <code>12 Wall Balls @ 20/14 kg / 10 Wall Balls</code> is reps, movement, load, and an alternative.</p>
+              <p className="mt-1"><code>- Then: 2:00 easy row</code> is always shown as typed, never parsed as a movement.</p>
+              <p className="mt-1"><code>~ Countdown</code> / <code>~ Count up</code> set the board&apos;s timer for an &quot;Other&quot;-format part (Chipper, Death by…), using its minutes.</p>
             </div>
           </details>
         </div>

@@ -263,3 +263,23 @@ describe('parseWorkout', () => {
     ]);
   });
 });
+
+describe('v8 "~ Countdown" / "~ Count up" lines', () => {
+  it('sets timerMode without warning, and leaves timer unset', () => {
+    const { parts, warnings } = parseWorkout('# Finisher | 20 | Chipper\n~ Countdown\n21-15-9\nThrusters');
+    assert.equal(parts[0].timerMode, 'countdown');
+    assert.equal(parts[0].timer, undefined);
+    assert.equal(warnings.some((w) => /unrecognized/i.test(w.message)), false);
+  });
+
+  it('sets timerMode countup', () => {
+    const { parts } = parseWorkout('# Death by | 20\n~ Count up\nMax Double Unders');
+    assert.equal(parts[0].timerMode, 'countup');
+  });
+
+  it('still parses a real interval timer line normally', () => {
+    const { parts } = parseWorkout('# A | 10\n~ 10 x 40/20\n10 Burpees');
+    assert.equal(parts[0].timerMode, undefined);
+    assert.deepEqual(parts[0].timer, { rounds: 10, work: 40, rest: 20, sets: 1, setRest: 60, prep: 10 });
+  });
+});

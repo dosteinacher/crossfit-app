@@ -15,6 +15,8 @@ export interface WorkoutPart {
   format?: 'AMRAP' | 'EMOM' | 'FOR TIME' | 'CHIPPER' | 'INTERVALS' | 'TABATA' | 'SKILL' | 'STRENGTH';
   team?: string;
   timer?: IntervalTimer;
+  /** Set by the v8 guided editor's '~ Countdown' / '~ Count up' lines. */
+  timerMode?: 'countdown' | 'countup';
   meta: string[];
   blocks: WorkoutBlock[];
 }
@@ -493,7 +495,14 @@ function parseExplicit(lines: SourceLine[], warnings: WorkoutWarning[]): Workout
         });
       } else {
         timerLineSeen[currentIndex] = true;
-        current.timer = parseTimerLine(value, source.line, warnings);
+        const timerWord = value.replace(/^~\s*/, '').trim().toLowerCase();
+        if (timerWord === 'countdown') {
+          current.timerMode = 'countdown';
+        } else if (timerWord === 'count up') {
+          current.timerMode = 'countup';
+        } else {
+          current.timer = parseTimerLine(value, source.line, warnings);
+        }
       }
       continue;
     }

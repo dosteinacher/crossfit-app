@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import WorkoutDescriptionEditor from '@/components/WorkoutDescriptionEditor';
+import GuidedWorkoutEditor from '@/components/GuidedWorkoutEditor';
 import { Card, Input, Button, ErrorMessage, SuccessMessage, Loading, TimeInput } from '@/components/ui';
 import { getMainWorkoutFormat } from '@/lib/workoutNotation';
 
@@ -41,7 +41,6 @@ export default function EditWorkoutPage() {
   const [participantError, setParticipantError] = useState('');
   const [participantLoading, setParticipantLoading] = useState(false);
 
-  const workoutTypes = ['General', 'Strength', 'Cardio', 'HIIT', 'Mobility', 'Olympic Lifting', 'Gymnastics'];
   const parsedWorkoutType = getMainWorkoutFormat(description);
 
   useEffect(() => {
@@ -210,43 +209,7 @@ export default function EditWorkoutPage() {
                 required
               />
 
-              <WorkoutDescriptionEditor
-                description={description}
-                onChange={setDescription}
-                title={title}
-              />
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pure-ink mb-1">
-                  Workout Type <span className="text-red-700">*</span>
-                </label>
-                {parsedWorkoutType ? (
-                  <>
-                    <input
-                      value={parsedWorkoutType}
-                      readOnly
-                      aria-describedby="edit-workout-type-source"
-                      className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-pure-ink"
-                    />
-                    <p id="edit-workout-type-source" className="mt-1 text-[13px] text-pure-text-light">From description</p>
-                  </>
-                ) : (
-                  <select
-                    value={workoutType}
-                    onChange={(e) => setWorkoutType(e.target.value)}
-                    className="w-full px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg focus:outline-none focus:ring-2 focus:ring-pure-green"
-                    required
-                  >
-                    {workoutTypes.map((type) => (
-                      <option key={type} value={type} className="bg-pure-bg text-pure-ink">
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
                   label="Date"
                   type="date"
@@ -261,16 +224,20 @@ export default function EditWorkoutPage() {
                   onChange={setTime}
                   required
                 />
+
+                <Input
+                  label="Max Participants"
+                  type="number"
+                  value={maxParticipants}
+                  onChange={setMaxParticipants}
+                  placeholder="4"
+                  required
+                />
               </div>
 
-              <Input
-                label="Max Participants"
-                type="number"
-                value={maxParticipants}
-                onChange={setMaxParticipants}
-                placeholder="4"
-                required
-              />
+              <div className="mb-4">
+                <GuidedWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} />
+              </div>
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-pure-ink mb-1">
