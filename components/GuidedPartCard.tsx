@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import { Badge, Button, Label } from '@/components/ui';
 import type { Item, Part, PartFormat } from '@/lib/workoutModel';
+import type { MovementSuggestion } from '@/lib/pastWorkoutInsights';
 
 const FORMAT_OPTIONS: Array<{ value: PartFormat; label: string }> = [
   { value: 'AMRAP', label: 'AMRAP' },
@@ -54,6 +55,7 @@ export default function GuidedPartCard({
   onMove,
   onPreview,
   warnings,
+  movementSuggestions,
 }: {
   part: Part;
   index: number;
@@ -65,6 +67,8 @@ export default function GuidedPartCard({
   onPreview: () => void;
   /** Notation-parser warnings for this workout, keyed by the exact raw line text (Phase 3). */
   warnings?: Map<string, string>;
+  /** Movement name/weight/easier-option autocomplete, most frequent first (Phase 4). */
+  movementSuggestions?: MovementSuggestion[];
 }) {
   const newRowFocusRef = useRef<HTMLInputElement | null>(null);
 
@@ -299,6 +303,7 @@ export default function GuidedPartCard({
             onEnter={() => addItem(newMovement(), true)}
             focusRef={itemIndex === part.items.length - 1 ? newRowFocusRef : undefined}
             warning={item.raw ? warnings?.get(item.raw) : undefined}
+            movementSuggestions={movementSuggestions}
           />
         ))}
       </div>
@@ -327,6 +332,7 @@ function GuidedRow({
   onEnter,
   focusRef,
   warning,
+  movementSuggestions,
 }: {
   item: Item;
   onChange: (next: Item) => void;
@@ -337,7 +343,22 @@ function GuidedRow({
   focusRef?: React.RefObject<HTMLInputElement | null>;
   /** The notation parser's warning for this line, if any (Phase 3). */
   warning?: string;
+  /** Movement name/weight/easier-option autocomplete, most frequent first (Phase 4). */
+  movementSuggestions?: MovementSuggestion[];
 }) {
+  const movementListId = useId();
+
+  /** Once a movement name matches a known one, fill in its usual weight / easier option — but only into empty fields, and only accepted once the user leaves the name field (Tab or click away), never typed over something they wrote. */
+  function fillSuggestedDetails(name: string) {
+    if (item.kind !== 'movement') return;
+    const match = movementSuggestions?.find((s) => s.name.toLowerCase() === name.trim().toLowerCase());
+    if (!match) return;
+    onChange({
+      ...item,
+      load: item.load || match.mostCommonLoad || '',
+      alts: item.alts.length ? item.alts : (match.mostCommonAlt ? [match.mostCommonAlt] : []),
+    });
+  }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       e.preventDefault();
@@ -378,10 +399,19 @@ function GuidedRow({
         <input
           value={item.name}
           onChange={(e) => onChange({ ...item, name: e.target.value })}
+          onBlur={(e) => fillSuggestedDetails(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="e.g. KB Swings"
+          list={movementSuggestions?.length ? movementListId : undefined}
           className="col-span-2 min-h-10 w-full rounded-sm border border-line bg-paper px-2 py-1 text-sm text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15 sm:col-span-1"
         />
+        {movementSuggestions && movementSuggestions.length > 0 && (
+          <datalist id={movementListId}>
+            {movementSuggestions.map((suggestion) => (
+              <option key={suggestion.name} value={suggestion.name} />
+            ))}
+          </datalist>
+        )}
         <input
           value={item.load}
           onChange={(e) => onChange({ ...item, load: e.target.value })}

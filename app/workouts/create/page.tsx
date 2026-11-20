@@ -497,7 +497,7 @@ function CreateWorkoutForm() {
                   </div>
 
                   <div>
-                    <GuidedWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} />
+                    <GuidedWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
                   </div>
 
                   <div>

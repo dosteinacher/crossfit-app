@@ -5,8 +5,10 @@ import { SegmentedControl } from '@/components/ui';
 import WorkoutDescriptionEditor from '@/components/WorkoutDescriptionEditor';
 import GuidedPartCard from '@/components/GuidedPartCard';
 import GuidedLivePreview from '@/components/GuidedLivePreview';
+import GuidedStartFrom from '@/components/GuidedStartFrom';
 import { toModel, toText, type Part, type WorkoutModel } from '@/lib/workoutModel';
-import { parseWorkout } from '@/lib/workoutNotation';
+import { convertLegacyWorkoutToNotation, parseWorkout } from '@/lib/workoutNotation';
+import { getMovementSuggestions, type PastWorkoutSummary } from '@/lib/pastWorkoutInsights';
 
 /**
  * Maps a raw line's exact text to the notation parser's warning for that line,
@@ -49,10 +51,13 @@ export default function GuidedWorkoutEditor({
   title,
   description,
   onDescriptionChange,
+  onTitleChange,
 }: {
   title: string;
   description: string;
   onDescriptionChange: (text: string) => void;
+  /** Optional: lets "Copy a past workout" (Phase 4) also fill in the title. */
+  onTitleChange?: (title: string) => void;
 }) {
   // Lazy initial state: reading localStorage only once, on the client, at mount.
   const [mode, setMode] = useState<Mode>(() => getStoredMode());
@@ -66,6 +71,7 @@ export default function GuidedWorkoutEditor({
   // fact. commitModel sets this to the text it just emitted, so our own round trip back
   // through the parent's `description` prop is recognized and doesn't re-derive the model.
   const [lastSeenDescription, setLastSeenDescription] = useState(description);
+  const [movementSuggestions, setMovementSuggestions] = useState<ReturnType<typeof getMovementSuggestions>>([]);
 
   if (description !== lastSeenDescription) {
     setLastSeenDescription(description);
@@ -80,6 +86,29 @@ export default function GuidedWorkoutEditor({
       // Ignore storage errors (private browsing, quota, etc.) — the toggle still works this session.
     }
   }, [mode]);
+
+  // Movement name/weight/easier-option autocomplete (Phase 4), from the same public,
+  // already-existing endpoint "Copy a past workout" uses. Best-effort: silently skipped
+  // if it fails, since autocomplete is a convenience, not something the editor depends on.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/workouts/all')
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data: { workouts?: PastWorkoutSummary[] }) => {
+        if (!cancelled) setMovementSuggestions(getMovementSuggestions(data.workouts || []));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  function applyParts(parts: Part[]) {
+    commitModel({ ...model, parts });
+    setActivePartIndex(0);
+  }
+
+  function convertCurrentFreeText() {
+    applyParts(toModel(convertLegacyWorkoutToNotation(description)).parts);
+  }
 
   function commitModel(next: WorkoutModel) {
     setModel(next);
@@ -132,34 +161,7 @@ export default function GuidedWorkoutEditor({
         />
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-paper p-3">
-        <span className="mr-1 text-[13px] font-bold uppercase tracking-[.1em] text-ink-2">Start from</span>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="min-h-9 cursor-not-allowed rounded-sm border border-line bg-canvas px-3 text-sm font-bold text-ink-2 opacity-60"
-        >
-          📋 A template
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="min-h-9 cursor-not-allowed rounded-sm border border-line bg-canvas px-3 text-sm font-bold text-ink-2 opacity-60"
-        >
-          📄 Copy a past workout
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="min-h-9 cursor-not-allowed rounded-sm border border-line bg-canvas px-3 text-sm font-bold text-ink-2 opacity-60"
-        >
-          📝 Paste text (WhatsApp, ChatGPT…)
-        </button>
-        <span className="text-sm text-ink-2">or fill in the parts below</span>
-      </div>
+      <GuidedStartFrom onApplyParts={applyParts} onApplyTitle={onTitleChange} />
 
       {mode === 'text' ? (
         <WorkoutDescriptionEditor description={description} onChange={onDescriptionChange} title={title} />
@@ -178,8 +180,14 @@ export default function GuidedWorkoutEditor({
             <div className={`space-y-4 ${mobileTab === 'preview' ? 'hidden md:block' : ''}`}>
               {model.parts.length === 0 && model.preamble.length > 0 && (
                 <div className="rounded-lg border border-line bg-canvas p-4 text-sm text-ink-2">
-                  This workout was written as free text, so Simple mode can&apos;t show parts and rows for it yet.
-                  Switch to Text mode to edit it, or use &quot;Paste text&quot; above once that&apos;s available.
+                  <p className="mb-2">This workout was written as free text, so Simple mode can&apos;t show parts and rows for it yet.</p>
+                  <button
+                    type="button"
+                    onClick={convertCurrentFreeText}
+                    className="min-h-9 rounded-sm border border-line bg-paper px-3 text-sm font-bold text-ink hover:bg-canvas"
+                  >
+                    Convert this workout to parts
+                  </button>
                 </div>
               )}
               {model.parts.map((part, index) => (
@@ -194,6 +202,7 @@ export default function GuidedWorkoutEditor({
                   onMove={(direction) => movePart(index, direction)}
                   onPreview={() => setActivePartIndex(index)}
                   warnings={warnings}
+                  movementSuggestions={movementSuggestions}
                 />
               ))}
               <button
