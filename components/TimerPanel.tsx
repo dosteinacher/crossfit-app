@@ -24,7 +24,8 @@ type Volume = 'low' | 'medium' | 'high';
 
 const SOUND_STORAGE_KEY = 'pure.board.sound';
 const VOLUME_STORAGE_KEY = 'pure.board.volume';
-const VOLUME_GAIN: Record<Volume, number> = { low: 0.07, medium: 0.18, high: 0.36 };
+// Square-wave cues carry well on TV speakers. The limiter in playCue keeps "high" from clipping.
+const VOLUME_GAIN: Record<Volume, number> = { low: 0.2, medium: 0.5, high: 0.9 };
 
 const PHASE_STYLE: Record<Phase, { label: string; color: string; className: string }> = {
   prep: { label: 'GET READY', color: '#FF8A1F', className: 'text-[#FF8A1F]' },
@@ -104,6 +105,7 @@ export default function TimerPanel({
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const audioOutputRef = useRef<{ context: AudioContext; node: AudioNode } | null>(null);
   const audioWarningRef = useRef(false);
   const lastCueElapsedRef = useRef<number | null>(null);
   const advanceRef = useRef(onAutoAdvance);
@@ -294,7 +296,7 @@ export default function TimerPanel({
     if (!audio) return;
 
     const notes = cue === 'finish'
-      ? [{ frequency: 880, delay: 0 }, { frequency: 1046, delay: 0.18 }, { frequency: 1318, delay: 0.36 }]
+      ? [{ frequency: 880, delay: 0 }, { frequency: 1046, delay: 0.3 }, { frequency: 1318, delay: 0.6 }]
       : [{
         frequency: cue === 'phaseStart-work'
           ? 880
@@ -303,20 +305,33 @@ export default function TimerPanel({
             : 520 + (4 - secondsLeft) * 80,
         delay: 0,
       }];
-    const duration = cue === 'tick' ? 0.08 : cue === 'finish' ? 0.16 : 0.18;
+    const duration = cue === 'tick' ? 0.16 : cue === 'finish' ? 0.3 : 0.35;
     const start = audio.currentTime;
+
+    if (audioOutputRef.current?.context !== audio) {
+      const limiter = audio.createDynamicsCompressor();
+      limiter.threshold.setValueAtTime(-6, audio.currentTime);
+      limiter.knee.setValueAtTime(0, audio.currentTime);
+      limiter.ratio.setValueAtTime(20, audio.currentTime);
+      limiter.attack.setValueAtTime(0.002, audio.currentTime);
+      limiter.release.setValueAtTime(0.1, audio.currentTime);
+      limiter.connect(audio.destination);
+      audioOutputRef.current = { context: audio, node: limiter };
+    }
+    const output = audioOutputRef.current.node;
 
     notes.forEach(({ frequency, delay }) => {
       const oscillator = audio.createOscillator();
       const gain = audio.createGain();
       const noteStart = start + delay;
-      oscillator.type = 'sine';
+      oscillator.type = 'square';
       oscillator.frequency.setValueAtTime(frequency, noteStart);
       gain.gain.setValueAtTime(0.0001, noteStart);
-      gain.gain.exponentialRampToValueAtTime(VOLUME_GAIN[volume], noteStart + 0.015);
+      gain.gain.exponentialRampToValueAtTime(VOLUME_GAIN[volume], noteStart + 0.01);
+      gain.gain.setValueAtTime(VOLUME_GAIN[volume], noteStart + duration * 0.6);
       gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + duration);
       oscillator.connect(gain);
-      gain.connect(audio.destination);
+      gain.connect(output);
       oscillator.start(noteStart);
       oscillator.stop(noteStart + duration);
       oscillator.onended = () => {
