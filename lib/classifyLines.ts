@@ -15,6 +15,8 @@
  * rendering.
  */
 
+import { parseContentLine, type WorkoutWarning } from './workoutNotation';
+
 export type LineKind = 'part' | 'group' | 'timer' | 'move' | 'info' | 'note' | 'text' | 'check';
 export type Confidence = 'strict' | 'lenient';
 
@@ -48,7 +50,12 @@ export interface LineClassification {
   parsed?: PartParse | GroupParse | MoveParse;
 }
 
-const MINUTES_PATTERN = /(\d+)\s*(?:min(?:ute)?s?\b|minuten\b|′|'|(?=\s*$))/i;
+// Deliberately does NOT match a bare trailing number with no unit — only an
+// explicit minutes marker counts (a bare number is too common in ordinary
+// movement lines, like rep counts, to safely imply "this line is a part
+// header"). The dash form ("Fresh Rotation – 30") is handled separately,
+// by MINUTES_DASH, and only together with other part-header evidence.
+const MINUTES_PATTERN = /(\d+)\s*(?:min(?:ute)?s?\b|minuten\b|′|')/i;
 const MINUTES_DASH = /[–—-]\s*(\d+)\s*$/;
 const PART_WORDS = /^(warm[\s-]?up|aufwärmen|strength|kraft|skill|wod|metcon|finisher|cool[\s-]?down|abkühlen|mobility)\b/i;
 const FORMAT_WORDS: Array<[string, RegExp]> = [
@@ -73,10 +80,11 @@ const BRACKET_ALT = /\(\s*(?:easier|scaled|alt|oder|leichter|or)\s*:?\s*([^)]+)\
 const LENIENT_LOAD = /\b(\d+(?:[.,]\d+)?(?:\s*[x×]\s*\d+(?:[.,]\d+)?)?(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*(?:kg|lbs?|%|cm|#))\b/i;
 
 const MOVE_LEAD = /^(\d+(?:\s*[-–—]\s*\d+)+|\d+\s*[x×]\s*\d+|\d+:\d{2}|\d+(?:[.,]\d+)?\s*(?:m|km|cal)\b|\d+|max)\s+(.+)$/i;
-// A bare rounds count ("2 Rounds", "4 Runden") is a scheme line, not a movement
-// named "Rounds" — already extracted into the part's `rounds` field when it
-// sits right under the header; otherwise it is shown as typed.
-const ROUNDS_SCHEME_LINE = /^\d+\s+(?:rounds?|runden?)\s*$/i;
+// A bare rounds count ("2 Rounds", "4 Runden", "6 Rounds (each 3)") is a scheme
+// line, not a movement named "Rounds" — matches lib/workoutNotation.ts's own
+// ROUNDS_SCHEME exactly (no trailing anchor: a parenthetical remark after the
+// count is still a scheme line, same as production).
+const ROUNDS_SCHEME_LINE = /^\d+\s+(?:rounds?|runden?)\b/i;
 
 function stripBracketAlt(value: string): { rest: string; alt?: string } {
   const match = value.match(BRACKET_ALT);
@@ -168,13 +176,31 @@ function parseGroupLine(value: string): GroupParse | undefined {
   return undefined;
 }
 
+const BLOCK_TYPE_TO_KIND: Record<string, LineKind> = {
+  section: 'group',
+  sub: 'info',
+  note: 'note',
+  scheme: 'text',
+  movement: 'move',
+  text: 'text',
+};
+
 export function classifyLines(text: string): LineClassification[] {
   const results: LineClassification[] = [];
   if (typeof text !== 'string') return results;
 
   const lines = text.split(/\r?\n/);
+  // Once a workout uses ANY strict '#' header, it is in notation mode for its
+  // whole length: every content line defers to lib/workoutNotation.ts's own
+  // parseContentLine instead of the lenient heuristics below, so a workout
+  // that already parses correctly on the real board is never reinterpreted
+  // differently here. Lenient part/group/movement detection is only for text
+  // that has no strict header anywhere — genuine free text.
+  const hasStrictHeader = lines.some((line) => /^#(?!#)\s*/.test(line.trim()));
+
   // True once we're still in "the leading paragraph directly under a part header"
   // — closed by the first group/move/check line, same rule as lib/workoutModel.ts.
+  // Only used in lenient mode; strict mode has no such concept (production doesn't either).
   let infoOpen = false;
   let sawContentInPart = false;
 
@@ -186,7 +212,7 @@ export function classifyLines(text: string): LineClassification[] {
       results.push({ line: lineNumber, text: raw, kind, confidence, parsed });
     };
 
-    // Strict notation first — never reinterpreted leniently.
+    // Strict notation first — never reinterpreted leniently, in either mode.
     if (/^#(?!#)\s*/.test(value)) {
       const segments = value.replace(/^#\s*/, '').split('|').map((s) => s.trim());
       const title = segments.shift() || 'Workout';
@@ -225,7 +251,20 @@ export function classifyLines(text: string): LineClassification[] {
       return;
     }
 
-    // Lenient reading from here on.
+    if (hasStrictHeader) {
+      // Notation mode: classify exactly the way the real board does.
+      const warnings: WorkoutWarning[] = [];
+      const block = parseContentLine({ text: raw, line: lineNumber }, warnings);
+      const gotWarning = warnings.length > 0;
+      const kind: LineKind = gotWarning && block.type === 'text' ? 'check' : BLOCK_TYPE_TO_KIND[block.type];
+      const parsed: LineClassification['parsed'] = block.type === 'movement'
+        ? { reps: block.reps || '', name: block.name, load: block.load, alts: block.alt ? [block.alt] : [] }
+        : undefined;
+      push(kind, gotWarning ? 'lenient' : 'strict', parsed);
+      return;
+    }
+
+    // Lenient reading — only reached for text with no strict header anywhere.
     if (NOTE_PREFIX.test(value)) {
       push('note', 'lenient');
       infoOpen = false;

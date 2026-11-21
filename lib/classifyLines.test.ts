@@ -197,3 +197,29 @@ describe('board parity: strict notation renders identically on both paths', () =
     }
   });
 });
+
+describe('board parity: the exact real-data regressions this found', () => {
+  it('does not promote a bare "EMOM 45" scheme-style line to a new part mid-part', async () => {
+    const { blocksFromProduction, blocksFromClassifier, diffBlocks } = await import('./boardBlocksCompare');
+    const text = '# Wod Long - «Keep Turning» | 45 | EMOM | Team of 3 · Three stations\nEMOM 45\n> A starts at Snatches.\n## Snatches\n8 Snatches @35kg';
+    assert.deepEqual(diffBlocks(blocksFromProduction(text), blocksFromClassifier(text)), []);
+  });
+
+  it('keeps a rounds-scheme line with a trailing parenthetical as text, not a movement', async () => {
+    const { blocksFromProduction, blocksFromClassifier, diffBlocks } = await import('./boardBlocksCompare');
+    const text = '# WOD «Power Couple» | 18 | Intervals | Team of 2\n6 Rounds (each 3)\n6 Hang Power Cleans @ 40 kg';
+    assert.deepEqual(diffBlocks(blocksFromProduction(text), blocksFromClassifier(text)), []);
+  });
+
+  it('does not insert a lenient "@" into a strict-notation movement line without one', async () => {
+    const { blocksFromProduction, blocksFromClassifier, diffBlocks } = await import('./boardBlocksCompare');
+    const text = '# Deadlift | 15 | Strength\n5x10 Deadlift - Moderate Heavy 70-90kg';
+    assert.deepEqual(diffBlocks(blocksFromProduction(text), blocksFromClassifier(text)), []);
+  });
+
+  it('does not insert a lenient "@" into "8 Power Cleans 43kg" inside strict notation', async () => {
+    const { blocksFromProduction, blocksFromClassifier, diffBlocks } = await import('./boardBlocksCompare');
+    const text = '# WOD | 20 | AMRAP\n8 Power Cleans 43kg';
+    assert.deepEqual(diffBlocks(blocksFromProduction(text), blocksFromClassifier(text)), []);
+  });
+});
