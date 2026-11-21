@@ -148,16 +148,116 @@ function fieldsFor(part: PreviewPart, text: string): EditFields {
   };
 }
 
+function PartEditFields({
+  editFields,
+  setEditFields,
+  onCancel,
+  onDone,
+}: {
+  editFields: EditFields;
+  setEditFields: (fields: EditFields) => void;
+  onCancel: () => void;
+  onDone: () => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <label className="block text-[12px] font-bold text-ink">
+          Part name
+          <input
+            type="text"
+            value={editFields.title}
+            onChange={(e) => setEditFields({ ...editFields, title: e.target.value })}
+            className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
+          />
+        </label>
+        <label className="block text-[12px] font-bold text-ink">
+          Minutes
+          <input
+            type="number"
+            min={0}
+            value={editFields.minutes}
+            onChange={(e) => setEditFields({ ...editFields, minutes: e.target.value })}
+            placeholder="No cap"
+            className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
+          />
+        </label>
+        <label className="block text-[12px] font-bold text-ink">
+          Who works together
+          <select
+            value={editFields.team}
+            onChange={(e) => setEditFields({ ...editFields, team: e.target.value })}
+            className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
+          >
+            {TEAM_OPTIONS.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-[12px] font-bold text-ink">
+          How is it played
+          <select
+            value={editFields.format}
+            onChange={(e) => setEditFields({ ...editFields, format: e.target.value })}
+            className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
+          >
+            {FORMAT_OPTIONS.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-[12px] font-bold text-ink">
+          Rounds
+          <input
+            type="number"
+            min={0}
+            value={editFields.rounds}
+            onChange={(e) => setEditFields({ ...editFields, rounds: e.target.value })}
+            className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
+          />
+        </label>
+      </div>
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="min-h-9 rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className="min-h-9 rounded-sm bg-lime px-3 text-[13px] font-bold text-ink hover:opacity-90"
+        >
+          Done
+        </button>
+      </div>
+      <p className="text-[11px] text-ink-2">Only this part&apos;s first line changes. Everything else stays as you wrote it.</p>
+    </div>
+  );
+}
+
 export default function PasteFirstWorkoutEditor({
   title,
   description,
   onDescriptionChange,
   onTitleChange,
+  mobileView,
+  useBottomSheetForEdit,
 }: {
   title: string;
   description: string;
   onDescriptionChange: (text: string) => void;
   onTitleChange?: (title: string) => void;
+  /**
+   * On a phone, only one side is shown at a time (Text|Preview tabs own the
+   * choice from outside); on desktop both sides always show side by side
+   * and this is omitted.
+   */
+  mobileView?: 'text' | 'preview';
+  /** On a phone, ✎ Edit opens as a bottom sheet instead of inline in the preview. */
+  useBottomSheetForEdit?: boolean;
 }) {
   void title;
   void onTitleChange;
@@ -238,7 +338,7 @@ export default function PasteFirstWorkoutEditor({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
+        <div className={mobileView === 'preview' ? 'hidden md:block' : ''}>
           <p className="mb-1.5 text-[13px] font-bold uppercase tracking-wide text-ink-2">Your workout</p>
           <div className="flex overflow-hidden rounded-sm border border-line bg-paper">
             <div
@@ -273,7 +373,7 @@ export default function PasteFirstWorkoutEditor({
           </div>
         </div>
 
-        <div>
+        <div className={mobileView === 'text' ? 'hidden md:block' : ''}>
           <p className="mb-1.5 text-[13px] font-bold uppercase tracking-wide text-ink-2">Preview · what the TV shows</p>
           <div className="min-h-[360px] space-y-2 rounded-sm border border-line bg-canvas p-2">
             {parts.every((p) => p.headerLine < 0 && p.rows.length === 0) && (
@@ -300,81 +400,14 @@ export default function PasteFirstWorkoutEditor({
                   </div>
                 ) : null}
 
-                {editingLine === part.headerLine && editFields && (
-                  <div className="space-y-3 border-b border-line-2 bg-canvas px-3 py-3">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <label className="block text-[12px] font-bold text-ink">
-                        Part name
-                        <input
-                          type="text"
-                          value={editFields.title}
-                          onChange={(e) => setEditFields({ ...editFields, title: e.target.value })}
-                          className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
-                        />
-                      </label>
-                      <label className="block text-[12px] font-bold text-ink">
-                        Minutes
-                        <input
-                          type="number"
-                          min={0}
-                          value={editFields.minutes}
-                          onChange={(e) => setEditFields({ ...editFields, minutes: e.target.value })}
-                          placeholder="No cap"
-                          className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
-                        />
-                      </label>
-                      <label className="block text-[12px] font-bold text-ink">
-                        Who works together
-                        <select
-                          value={editFields.team}
-                          onChange={(e) => setEditFields({ ...editFields, team: e.target.value })}
-                          className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
-                        >
-                          {TEAM_OPTIONS.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="block text-[12px] font-bold text-ink">
-                        How is it played
-                        <select
-                          value={editFields.format}
-                          onChange={(e) => setEditFields({ ...editFields, format: e.target.value })}
-                          className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
-                        >
-                          {FORMAT_OPTIONS.map((f) => (
-                            <option key={f} value={f}>{f}</option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="block text-[12px] font-bold text-ink">
-                        Rounds
-                        <input
-                          type="number"
-                          min={0}
-                          value={editFields.rounds}
-                          onChange={(e) => setEditFields({ ...editFields, rounds: e.target.value })}
-                          className="mt-1 min-h-9 w-full rounded-sm border border-line bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none"
-                        />
-                      </label>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => { setEditingLine(null); setEditFields(null); }}
-                        className="min-h-8 rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={commitEdit}
-                        className="min-h-8 rounded-sm bg-lime px-3 text-[13px] font-bold text-ink hover:opacity-90"
-                      >
-                        Done
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-ink-2">Only this part&apos;s first line changes. Everything else stays as you wrote it.</p>
+                {!useBottomSheetForEdit && editingLine === part.headerLine && editFields && (
+                  <div className="border-b border-line-2 bg-canvas px-3 py-3">
+                    <PartEditFields
+                      editFields={editFields}
+                      setEditFields={setEditFields}
+                      onCancel={() => { setEditingLine(null); setEditFields(null); }}
+                      onDone={commitEdit}
+                    />
                   </div>
                 )}
 
@@ -407,6 +440,25 @@ export default function PasteFirstWorkoutEditor({
           </div>
         </div>
       </div>
+
+      {useBottomSheetForEdit && editingLine !== null && editFields && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center" role="dialog" aria-modal="true" aria-label="Edit part">
+          <div
+            className="absolute inset-0 bg-ink/40"
+            onClick={() => { setEditingLine(null); setEditFields(null); }}
+          />
+          <div className="relative z-10 max-h-[85vh] w-full overflow-y-auto rounded-t-2xl border-t border-line bg-paper p-4 pb-[calc(16px_+_env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.15)]">
+            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line-2" aria-hidden="true" />
+            <p className="mb-3 text-sm font-bold text-ink">Edit part</p>
+            <PartEditFields
+              editFields={editFields}
+              setEditFields={setEditFields}
+              onCancel={() => { setEditingLine(null); setEditFields(null); }}
+              onDone={commitEdit}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

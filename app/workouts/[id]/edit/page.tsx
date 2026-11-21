@@ -40,6 +40,7 @@ export default function EditWorkoutPage() {
   const [selectedAddUserId, setSelectedAddUserId] = useState('');
   const [participantError, setParticipantError] = useState('');
   const [participantLoading, setParticipantLoading] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'text' | 'preview'>('text');
 
   const parsedWorkoutType = getMainWorkoutFormat(description);
 
@@ -236,7 +237,35 @@ export default function EditWorkoutPage() {
               </div>
 
               <div className="mb-4">
-                <PasteFirstWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
+                <div className="hidden md:block">
+                  <PasteFirstWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
+                </div>
+                <div className="md:hidden">
+                  <div className="mb-3 flex rounded-sm border border-line bg-paper p-1">
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab('text')}
+                      className={`min-h-9 flex-1 rounded-sm text-sm font-bold ${mobileTab === 'text' ? 'bg-ink text-lime' : 'text-ink'}`}
+                    >
+                      Text
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab('preview')}
+                      className={`min-h-9 flex-1 rounded-sm text-sm font-bold ${mobileTab === 'preview' ? 'bg-ink text-lime' : 'text-ink'}`}
+                    >
+                      Preview
+                    </button>
+                  </div>
+                  <PasteFirstWorkoutEditor
+                    title={title}
+                    description={description}
+                    onDescriptionChange={setDescription}
+                    onTitleChange={setTitle}
+                    mobileView={mobileTab}
+                    useBottomSheetForEdit
+                  />
+                </div>
               </div>
 
               <div className="mb-6">
@@ -296,7 +325,7 @@ export default function EditWorkoutPage() {
                 )}
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <div className="sticky bottom-0 z-20 -mx-4 flex gap-4 border-t border-line bg-pure-bg/95 px-4 py-3 backdrop-blur-sm md:static md:mt-6 md:border-0 md:bg-transparent md:px-0 md:py-0">
                 <Button type="submit" disabled={saving} className="flex-1">
                   {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
