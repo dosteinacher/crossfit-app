@@ -40,7 +40,7 @@ export interface ParsedWorkout {
   warnings: WorkoutWarning[];
 }
 
-interface SourceLine {
+export interface SourceLine {
   text: string;
   line: number;
 }
@@ -300,7 +300,7 @@ function parseMovement(value: string, line: number): WorkoutBlock | null {
   };
 }
 
-function parseContentLine(source: SourceLine, warnings: WorkoutWarning[], legacyMovementContext = false): WorkoutBlock {
+export function parseContentLine(source: SourceLine, warnings: WorkoutWarning[], legacyMovementContext = false): WorkoutBlock {
   const value = source.text.trim()
     .replace(/^(?:[-*•]\s+)/, '')
     .replace(/\s+#\s*NAME\b/gi, '')
