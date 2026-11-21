@@ -9,6 +9,7 @@ import WorkoutFormatStamps from '@/components/WorkoutFormatStamps';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import type { WorkoutWithDetails } from '@/lib/types';
+import { castToTv } from '@/lib/castToTv';
 
 type RatingFilter = 'all' | 'unrated' | '1' | '2' | '3' | '4' | '5';
 type WorkoutFilter = 'all' | 'upcoming' | 'past' | 'mine';
@@ -29,6 +30,7 @@ export default function WorkoutsPage() {
   const [page, setPage] = useState(1);
   const [registering, setRegistering] = useState<number | null>(null);
   const [upcomingSummary, setUpcomingSummary] = useState({ count: 0, registered: 0 });
+  const [toast, setToast] = useState('');
   const PAGE_SIZE = 12;
 
   const fetchWorkouts = useCallback(async () => {
@@ -111,6 +113,14 @@ export default function WorkoutsPage() {
       console.error('Workout registration error:', error);
     } finally {
       setRegistering(null);
+    }
+  };
+
+  const handleCastToTv = async (workoutId: number) => {
+    const result = await castToTv(workoutId);
+    if (result === 'opened') {
+      setToast('Use AirPlay / Screen Mirroring to send this window to the TV');
+      window.setTimeout(() => setToast(''), 5000);
     }
   };
 
@@ -218,6 +228,13 @@ export default function WorkoutsPage() {
                         <Link href={`/workouts/${workout.id}/board`} className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas">
                           Board
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => void handleCastToTv(workout.id)}
+                          className="inline-flex min-h-11 items-center rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas"
+                        >
+                          Cast to TV
+                        </button>
                         <StatusAction
                           status={status}
                           disabled={pending || (full && !workout.is_registered)}
@@ -241,6 +258,11 @@ export default function WorkoutsPage() {
           )}
         </div>
       </main>
+      {toast && (
+        <div role="status" aria-live="polite" className="fixed bottom-5 left-1/2 z-50 w-[min(92vw,34rem)] -translate-x-1/2 rounded-lg bg-ink px-5 py-4 text-center text-sm font-semibold text-white shadow-lg">
+          {toast}
+        </div>
+      )}
     </>
   );
 }

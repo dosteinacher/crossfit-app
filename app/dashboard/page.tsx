@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Announcement, WorkoutWithDetails } from '@/lib/types';
 import { getDashboardStats } from '@/lib/dashboard-stats';
 import { parseWorkout } from '@/lib/workoutNotation';
+import { castToTv } from '@/lib/castToTv';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -105,25 +106,11 @@ export default function DashboardPage() {
   };
 
   const handleCastToTv = async (workoutId: number) => {
-    const boardUrl = new URL(`/workouts/${workoutId}/board?tv=1`, window.location.origin).toString();
-    type PresentationRequestLike = { start: () => Promise<unknown> };
-    type PresentationRequestFactory = new (urls: string[]) => PresentationRequestLike;
-    const PresentationRequest = (window as Window & {
-      PresentationRequest?: PresentationRequestFactory;
-    }).PresentationRequest;
-
-    if (PresentationRequest) {
-      try {
-        await new PresentationRequest([boardUrl]).start();
-        return;
-      } catch (error) {
-        console.warn('Could not start TV presentation:', error);
-      }
+    const result = await castToTv(workoutId);
+    if (result === 'opened') {
+      setToast('Use AirPlay / Screen Mirroring to send this window to the TV');
+      window.setTimeout(() => setToast(''), 5000);
     }
-
-    window.open(boardUrl, '_blank', 'noopener,noreferrer');
-    setToast('Use AirPlay / Screen Mirroring to send this window to the TV');
-    window.setTimeout(() => setToast(''), 5000);
   };
 
   const now = clock;
