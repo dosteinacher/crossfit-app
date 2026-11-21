@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import GuidedWorkoutEditor from '@/components/GuidedWorkoutEditor';
+import PasteFirstWorkoutEditor from '@/components/PasteFirstWorkoutEditor';
 import { Card, Input, Button, ErrorMessage, SuccessMessage, Loading, TimeInput } from '@/components/ui';
 import { getMainWorkoutFormat } from '@/lib/workoutNotation';
 
@@ -236,7 +236,7 @@ export default function EditWorkoutPage() {
               </div>
 
               <div className="mb-4">
-                <GuidedWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
+                <PasteFirstWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
               </div>
 
               <div className="mb-6">

@@ -5,16 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Card, Button, ErrorMessage, SuccessMessage } from '@/components/ui';
-import GuidedWorkoutEditor from '@/components/GuidedWorkoutEditor';
+import PasteFirstWorkoutEditor from '@/components/PasteFirstWorkoutEditor';
 import { getMainWorkoutFormat } from '@/lib/workoutNotation';
-import { generateWorkout } from '@/lib/workout-generator';
-import {
-  EXERCISES,
-  STRENGTH_PRESETS,
-  DURATION_PRESETS,
-  WORKOUT_FORMATS,
-  type WorkoutFormat,
-} from '@/lib/workout-generator-data';
+import { classifyLines } from '@/lib/classifyLines';
 
 function CreateWorkoutForm() {
   const router = useRouter();
@@ -38,20 +31,10 @@ function CreateWorkoutForm() {
   const [usersLoadError, setUsersLoadError] = useState('');
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [attendeeSearch, setAttendeeSearch] = useState('');
-
-  // Workout generator state (optional section)
-  const [genExpanded, setGenExpanded] = useState(false);
-  const [genAthleteCount, setGenAthleteCount] = useState(2);
-  const [genStrengthIncluded, setGenStrengthIncluded] = useState(false);
-  const [genStrengthPreset, setGenStrengthPreset] = useState('');
-  const [genStrengthCustom, setGenStrengthCustom] = useState('');
-  const [genDuration, setGenDuration] = useState(30);
-  const [genFormat, setGenFormat] = useState<WorkoutFormat>('AMRAP');
-  const [genIncludeExercises, setGenIncludeExercises] = useState<string[]>([]);
-  const [genExcludeExercises, setGenExcludeExercises] = useState<string[]>([]);
-  const [genSuccess, setGenSuccess] = useState('');
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
 
   const parsedWorkoutType = getMainWorkoutFormat(description);
+  const checkCount = classifyLines(description).filter((c) => c.kind === 'check').length;
   const visibleUsers = users.filter((user) =>
     `${user.name} ${user.email}`.toLowerCase().includes(attendeeSearch.trim().toLowerCase())
   );
@@ -136,43 +119,6 @@ function CreateWorkoutForm() {
     }
   }, [templateId, loadTemplate]);
 
-  const handleGenerate = () => {
-    setGenSuccess('');
-    const strengthBlock =
-      genStrengthPreset === '' || genStrengthPreset === 'Custom'
-        ? genStrengthCustom
-        : genStrengthPreset;
-    const result = generateWorkout({
-      athleteCount: genAthleteCount,
-      strengthIncluded: genStrengthIncluded,
-      strengthBlock,
-      durationMinutes: genDuration,
-      format: genFormat,
-      includeExercises: genIncludeExercises,
-      excludeExercises: genExcludeExercises,
-    });
-    setTitle(result.title);
-    setDescription(result.description);
-    setWorkoutType(result.workout_type);
-    setMaxParticipants(String(genAthleteCount));
-    setGenSuccess('Workout generated! Edit below and set date/time, then create.');
-  };
-
-  const toggleGenInclude = (exercise: string) => {
-    setGenIncludeExercises((prev) =>
-      prev.includes(exercise) ? prev.filter((e) => e !== exercise) : [...prev, exercise]
-    );
-  };
-  const toggleGenExclude = (exercise: string) => {
-    setGenExcludeExercises((prev) =>
-      prev.includes(exercise)
-        ? prev.filter((e) => e !== exercise)
-        : prev.length < 4
-          ? [...prev, exercise]
-          : prev
-    );
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -243,7 +189,7 @@ function CreateWorkoutForm() {
               </h1>
             </div>
             <Link href="/archive">
-              <Button variant="secondary">Browse Archive</Button>
+              <Button type="button" variant="secondary">⧉ Copy an old workout</Button>
             </Link>
           </div>
 
@@ -257,189 +203,23 @@ function CreateWorkoutForm() {
 
           <div className="grid items-start gap-6">
             <div className="space-y-6">
-          {/* Workout generator (optional) */}
-          {!templateId && (
-            <div className="overflow-hidden rounded-lg border border-line bg-paper">
-              <button
-                type="button"
-                onClick={() => setGenExpanded(!genExpanded)}
-                aria-expanded={genExpanded}
-                className="flex min-h-14 w-full items-center justify-between px-4 text-left font-bold text-ink hover:bg-canvas"
-              >
-                <span>Help me build a workout</span>
-                <span aria-hidden="true" className="text-xl">{genExpanded ? '−' : '+'}</span>
-              </button>
-              {genExpanded && (
-                <div className="space-y-4 border-t border-line-2 px-4 pb-4 pt-4">
-                  {genSuccess && (
-                    <p className="text-sm font-semibold text-ink">{genSuccess}</p>
-                  )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="mb-1 block text-sm font-bold text-ink">
-                        How many CrossFitters? (1–6) <span className="text-danger">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={6}
-                        value={genAthleteCount}
-                        onChange={(e) => setGenAthleteCount(Math.min(6, Math.max(1, Number(e.target.value) || 1)))}
-                        className="min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-bold text-ink">
-                        How long? (min) <span className="text-danger">*</span>
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {DURATION_PRESETS.map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            onClick={() => setGenDuration(d)}
-                            className={`min-h-11 rounded-sm px-3 text-sm font-bold ${
-                              genDuration === d
-                                ? 'bg-lime text-ink'
-                                : 'border border-line bg-paper text-ink hover:bg-canvas'
-                            }`}
-                          >
-                            {d}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-bold text-ink">
-                      Strength included?
-                    </label>
-                    <div className="mb-2 flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={!genStrengthIncluded}
-                          onChange={() => setGenStrengthIncluded(false)}
-                          className="accent-ink"
-                        />
-                        <span className="text-base text-ink">No</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          checked={genStrengthIncluded}
-                          onChange={() => setGenStrengthIncluded(true)}
-                          className="accent-ink"
-                        />
-                        <span className="text-base text-ink">Yes</span>
-                      </label>
-                    </div>
-                    {genStrengthIncluded && (
-                      <div className="mt-2">
-                        <select
-                          value={genStrengthPreset}
-                          onChange={(e) => setGenStrengthPreset(e.target.value)}
-                          className="mb-2 min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
-                        >
-                          {STRENGTH_PRESETS.map((p) => (
-                            <option key={p.label} value={p.value}>
-                              {p.label}
-                            </option>
-                          ))}
-                        </select>
-                        {(genStrengthPreset === '' || genStrengthPreset === 'Custom') && (
-                          <input
-                            type="text"
-                            value={genStrengthCustom}
-                            onChange={(e) => setGenStrengthCustom(e.target.value)}
-                            placeholder="e.g. Back Squat 5x5"
-                            className="min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-bold text-ink">
-                      Workout format
-                    </label>
-                    <select
-                      value={genFormat}
-                      onChange={(e) => setGenFormat(e.target.value as WorkoutFormat)}
-                      className="min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
-                    >
-                      {WORKOUT_FORMATS.map((f) => (
-                        <option key={f.value} value={f.value}>
-                          {f.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="mb-1 block text-sm font-bold text-ink">
-                        Exercises to include (optional)
-                      </label>
-                      <div className="max-h-32 overflow-y-auto rounded-sm border border-line bg-canvas p-2">
-                        {EXERCISES.map((ex) => (
-                          <label key={ex} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-paper">
-                            <input
-                              type="checkbox"
-                              checked={genIncludeExercises.includes(ex)}
-                              onChange={() => toggleGenInclude(ex)}
-                              className="accent-ink"
-                            />
-                            <span className="text-sm text-ink">{ex}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-bold text-ink">
-                        Exercises to exclude (optional, max 4)
-                      </label>
-                      <div className="max-h-32 overflow-y-auto rounded-sm border border-line bg-canvas p-2">
-                        {EXERCISES.map((ex) => (
-                          <label key={ex} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-paper">
-                            <input
-                              type="checkbox"
-                              checked={genExcludeExercises.includes(ex)}
-                              onChange={() => toggleGenExclude(ex)}
-                              disabled={!genExcludeExercises.includes(ex) && genExcludeExercises.length >= 4}
-                              className="accent-ink"
-                            />
-                            <span className="text-sm text-ink">{ex}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <Button type="button" onClick={handleGenerate}>
-                    Generate workout
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
               {error && <ErrorMessage message={error} />}
               {success && <SuccessMessage message={success} />}
               <form onSubmit={handleSubmit} className="space-y-5">
                 <Card className="space-y-5">
-                  <div>
-                    <label htmlFor="workout-title" className="mb-1.5 block text-sm font-bold text-ink">Workout title</label>
-                    <input
-                      id="workout-title"
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g., Monday Morning WOD"
-                      required
-                      className="min-h-12 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-4">
+                    <div className="sm:col-span-1">
+                      <label htmlFor="workout-title" className="mb-1.5 block text-sm font-bold text-ink">Title</label>
+                      <input
+                        id="workout-title"
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g., Monday Morning WOD"
+                        required
+                        className="min-h-12 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                      />
+                    </div>
                     <div>
                       <label htmlFor="workout-date" className="mb-1.5 block text-sm font-bold text-ink">Date</label>
                       <input
@@ -448,6 +228,7 @@ function CreateWorkoutForm() {
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                         required
+                        lang="de-CH"
                         className="min-h-12 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
                       />
                     </div>
@@ -463,7 +244,7 @@ function CreateWorkoutForm() {
                       />
                     </div>
                     <div>
-                      <label htmlFor="max-participants" className="mb-1.5 block text-sm font-bold text-ink">Max participants</label>
+                      <label htmlFor="max-participants" className="mb-1.5 block text-sm font-bold text-ink">Max people</label>
                       <div className="inline-flex items-center rounded-sm border border-line bg-paper">
                         <button
                           type="button"
@@ -497,77 +278,97 @@ function CreateWorkoutForm() {
                   </div>
 
                   <div>
-                    <GuidedWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
+                    <PasteFirstWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
                   </div>
 
-                  <div>
-                    <label htmlFor="attendee-search" className="mb-1.5 block text-sm font-bold text-ink">Pre-select attendees <span className="font-normal text-ink-2">(optional)</span></label>
-                    <p className="mb-3 text-sm text-ink-2">
-                      Selected members will be registered automatically and receive a calendar invite.
-                    </p>
-                    <input
-                      id="attendee-search"
-                      type="search"
-                      value={attendeeSearch}
-                      onChange={(e) => setAttendeeSearch(e.target.value)}
-                      placeholder="Search members by name or email"
-                      className="mb-2 min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
-                    />
-                    <div className="max-h-60 overflow-y-auto rounded-sm border border-line">
-                      {usersLoadError ? (
-                        <p className="p-3 text-sm text-ink-2">{usersLoadError}</p>
-                      ) : usersLoading ? (
-                        <p className="p-3 text-sm text-ink-2">Loading members…</p>
-                      ) : users.length === 0 ? (
-                        <p className="p-3 text-sm text-ink-2">No members are available to pre-select.</p>
-                      ) : visibleUsers.length === 0 ? (
-                        <p className="p-3 text-sm text-ink-2">No members match that search.</p>
-                      ) : (
-                        visibleUsers.map((user) => (
-                          <label key={user.id} className="flex min-h-12 cursor-pointer items-center gap-3 border-b border-line-2 px-3 last:border-0 hover:bg-canvas">
+                  <div className="border-t border-line-2 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setMoreOptionsOpen(!moreOptionsOpen)}
+                      aria-expanded={moreOptionsOpen}
+                      className="flex min-h-11 w-full items-center justify-between text-left text-sm font-bold text-ink"
+                    >
+                      <span>More options</span>
+                      <span aria-hidden="true" className="text-lg">{moreOptionsOpen ? '−' : '+'}</span>
+                    </button>
+                    {moreOptionsOpen && (
+                      <div className="space-y-5 pt-3">
+                        <div>
+                          <label htmlFor="attendee-search" className="mb-1.5 block text-sm font-bold text-ink">Pre-select attendees <span className="font-normal text-ink-2">(optional)</span></label>
+                          <p className="mb-3 text-sm text-ink-2">
+                            Selected members will be registered automatically and receive a calendar invite.
+                          </p>
+                          <input
+                            id="attendee-search"
+                            type="search"
+                            value={attendeeSearch}
+                            onChange={(e) => setAttendeeSearch(e.target.value)}
+                            placeholder="Search members by name or email"
+                            className="mb-2 min-h-11 w-full rounded-sm border border-line bg-paper px-3 py-2 text-base text-ink placeholder:text-ink-2 focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+                          />
+                          <div className="max-h-60 overflow-y-auto rounded-sm border border-line">
+                            {usersLoadError ? (
+                              <p className="p-3 text-sm text-ink-2">{usersLoadError}</p>
+                            ) : usersLoading ? (
+                              <p className="p-3 text-sm text-ink-2">Loading members…</p>
+                            ) : users.length === 0 ? (
+                              <p className="p-3 text-sm text-ink-2">No members are available to pre-select.</p>
+                            ) : visibleUsers.length === 0 ? (
+                              <p className="p-3 text-sm text-ink-2">No members match that search.</p>
+                            ) : (
+                              visibleUsers.map((user) => (
+                                <label key={user.id} className="flex min-h-12 cursor-pointer items-center gap-3 border-b border-line-2 px-3 last:border-0 hover:bg-canvas">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedUserIds.includes(user.id)}
+                                    onChange={(e) => setSelectedUserIds((current) =>
+                                      e.target.checked
+                                        ? current.includes(user.id) ? current : [...current, user.id]
+                                        : current.filter((id) => id !== user.id)
+                                    )}
+                                    className="h-4 w-4 accent-ink"
+                                  />
+                                  <span className="min-w-0 text-sm font-semibold text-ink">
+                                    {user.name} <span className="font-normal text-ink-2">({user.email})</span>
+                                  </span>
+                                </label>
+                              ))
+                            )}
+                          </div>
+                          {selectedUserIds.length > 0 && (
+                            <p className="mt-2 text-sm font-semibold text-ink">
+                              {selectedUserIds.length} member{selectedUserIds.length === 1 ? '' : 's'} selected
+                            </p>
+                          )}
+                        </div>
+
+                        {!templateId && (
+                          <label className="flex min-h-12 cursor-pointer items-center gap-3 border-t border-line-2 pt-3 text-sm text-ink">
                             <input
                               type="checkbox"
-                              checked={selectedUserIds.includes(user.id)}
-                              onChange={(e) => setSelectedUserIds((current) =>
-                                e.target.checked
-                                  ? current.includes(user.id) ? current : [...current, user.id]
-                                  : current.filter((id) => id !== user.id)
-                              )}
+                              checked={saveToArchive}
+                              onChange={(e) => setSaveToArchive(e.target.checked)}
                               className="h-4 w-4 accent-ink"
                             />
-                            <span className="min-w-0 text-sm font-semibold text-ink">
-                              {user.name} <span className="font-normal text-ink-2">({user.email})</span>
-                            </span>
+                            Save this workout to Archive for future reuse
                           </label>
-                        ))
-                      )}
-                    </div>
-                    {selectedUserIds.length > 0 && (
-                      <p className="mt-2 text-sm font-semibold text-ink">
-                        {selectedUserIds.length} member{selectedUserIds.length === 1 ? '' : 's'} selected
-                      </p>
+                        )}
+                      </div>
                     )}
                   </div>
-
-                  {!templateId && (
-                    <label className="flex min-h-12 cursor-pointer items-center gap-3 border-t border-line-2 pt-3 text-sm text-ink">
-                      <input
-                        type="checkbox"
-                        checked={saveToArchive}
-                        onChange={(e) => setSaveToArchive(e.target.checked)}
-                        className="h-4 w-4 accent-ink"
-                      />
-                      Save this workout to Archive for future reuse
-                    </label>
-                  )}
                 </Card>
-                <div className="sticky bottom-[calc(80px_+_env(safe-area-inset-bottom))] z-20 -mx-4 flex gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur-sm md:bottom-0">
+                <div className="sticky bottom-[calc(80px_+_env(safe-area-inset-bottom))] z-20 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur-sm md:bottom-0">
                   <Button type="submit" disabled={loading} className="flex-1">
                     {loading ? 'Creating…' : 'Create workout'}
                   </Button>
                   <Button type="button" variant="secondary" onClick={() => router.back()} className="flex-1">
                     Cancel
                   </Button>
+                  {checkCount > 0 && (
+                    <p className="w-full text-[13px] text-ink-2">
+                      {checkCount} line{checkCount === 1 ? '' : 's'} in the workout text may need a look — you can still create it.
+                    </p>
+                  )}
                 </div>
               </form>
             </div>
