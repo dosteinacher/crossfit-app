@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import PasteFirstWorkoutEditor from '@/components/PasteFirstWorkoutEditor';
-import { Card, Input, Button, ErrorMessage, SuccessMessage, Loading, TimeInput } from '@/components/ui';
+import WorkoutFormBody from '@/components/WorkoutFormBody';
+import MoreOptionsSection from '@/components/MoreOptionsSection';
+import { ErrorMessage, SuccessMessage, Loading } from '@/components/ui';
 import { getMainWorkoutFormat } from '@/lib/workoutNotation';
 
 interface Participant {
@@ -40,7 +41,6 @@ export default function EditWorkoutPage() {
   const [selectedAddUserId, setSelectedAddUserId] = useState('');
   const [participantError, setParticipantError] = useState('');
   const [participantLoading, setParticipantLoading] = useState(false);
-  const [mobileTab, setMobileTab] = useState<'text' | 'preview'>('text');
 
   const parsedWorkoutType = getMainWorkoutFormat(description);
 
@@ -189,159 +189,101 @@ export default function EditWorkoutPage() {
 
   if (loading) return <Loading />;
 
+  const moreOptions = (
+    <MoreOptionsSection>
+      <div>
+        <label className="mb-1.5 block text-sm font-bold text-ink">Participants</label>
+        {participantError && <ErrorMessage message={participantError} />}
+
+        {participants.length === 0 ? (
+          <p className="mb-3 text-sm text-ink-2">No participants yet.</p>
+        ) : (
+          <ul className="mb-3 space-y-1">
+            {participants.map((p) => (
+              <li
+                key={p.user_id}
+                className="flex items-center justify-between rounded-sm border border-line bg-canvas px-3 py-2"
+              >
+                <span className="text-sm text-ink">{p.user_name}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveParticipant(p.user_id)}
+                  disabled={participantLoading}
+                  className="text-[13px] font-bold text-danger hover:underline disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {unregisteredUsers.length > 0 && (
+          <div className="flex gap-2">
+            <select
+              value={selectedAddUserId}
+              onChange={(e) => setSelectedAddUserId(e.target.value)}
+              className="min-h-11 flex-1 rounded-sm border border-line bg-paper px-3 text-sm text-ink focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/15"
+            >
+              <option value="">Select a person to add...</option>
+              {unregisteredUsers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleAddParticipant}
+              disabled={!selectedAddUserId || participantLoading}
+              className="min-h-11 rounded-sm bg-lime px-4 text-sm font-bold text-ink hover:opacity-90 disabled:opacity-40"
+            >
+              Add
+            </button>
+          </div>
+        )}
+      </div>
+    </MoreOptionsSection>
+  );
+
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-pure-bg py-8">
-        <div className="container mx-auto max-w-[1200px] px-4">
-          <h1 className="text-4xl font-bold mb-8 text-pure-ink">Edit Workout</h1>
+      <main className="min-h-screen bg-canvas py-6 md:py-10">
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="mb-6 md:mb-8">
+            <p className="text-[13px] font-bold uppercase tracking-[.14em] text-ink-2">Workouts</p>
+            <h1 className="mt-2 font-display text-[58px] font-black leading-[.82] tracking-[-.01em] text-ink md:text-[96px]">
+              Edit Workout
+            </h1>
+          </div>
 
-          <Card>
-            {error && <ErrorMessage message={error} />}
-            {success && <SuccessMessage message={success} />}
-
-            <form onSubmit={handleSubmit}>
-              <Input
-                label="Workout Title"
-                type="text"
-                value={title}
-                onChange={setTitle}
-                placeholder="e.g., Monday Morning WOD"
-                required
+          <div className="grid items-start gap-6">
+            <div className="space-y-6">
+              {error && <ErrorMessage message={error} />}
+              {success && <SuccessMessage message={success} />}
+              <WorkoutFormBody
+                title={title}
+                onTitleChange={setTitle}
+                description={description}
+                onDescriptionChange={setDescription}
+                date={date}
+                onDateChange={setDate}
+                time={time}
+                onTimeChange={setTime}
+                maxParticipants={maxParticipants}
+                onMaxParticipantsChange={setMaxParticipants}
+                onSubmit={handleSubmit}
+                loading={saving}
+                submitLabel="Save changes"
+                loadingLabel="Saving…"
+                onCancel={() => router.back()}
+                moreOptions={moreOptions}
               />
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Input
-                  label="Date"
-                  type="date"
-                  value={date}
-                  onChange={setDate}
-                  required
-                />
-
-                <TimeInput
-                  label="Time"
-                  value={time}
-                  onChange={setTime}
-                  required
-                />
-
-                <Input
-                  label="Max Participants"
-                  type="number"
-                  value={maxParticipants}
-                  onChange={setMaxParticipants}
-                  placeholder="4"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <div className="hidden md:block">
-                  <PasteFirstWorkoutEditor title={title} description={description} onDescriptionChange={setDescription} onTitleChange={setTitle} />
-                </div>
-                <div className="md:hidden">
-                  <div className="mb-3 flex rounded-sm border border-line bg-paper p-1">
-                    <button
-                      type="button"
-                      onClick={() => setMobileTab('text')}
-                      className={`min-h-9 flex-1 rounded-sm text-sm font-bold ${mobileTab === 'text' ? 'bg-ink text-lime' : 'text-ink'}`}
-                    >
-                      Text
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMobileTab('preview')}
-                      className={`min-h-9 flex-1 rounded-sm text-sm font-bold ${mobileTab === 'preview' ? 'bg-ink text-lime' : 'text-ink'}`}
-                    >
-                      Preview
-                    </button>
-                  </div>
-                  <PasteFirstWorkoutEditor
-                    title={title}
-                    description={description}
-                    onDescriptionChange={setDescription}
-                    onTitleChange={setTitle}
-                    mobileView={mobileTab}
-                    useBottomSheetForEdit
-                  />
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-pure-ink mb-1">
-                  Participants
-                </label>
-                {participantError && (
-                  <p className="text-red-600 text-[13px] mb-2">{participantError}</p>
-                )}
-
-                {participants.length === 0 ? (
-                  <p className="text-pure-text-light text-sm mb-3">No participants yet.</p>
-                ) : (
-                  <ul className="mb-3 space-y-1">
-                    {participants.map((p) => (
-                      <li
-                        key={p.user_id}
-                        className="flex items-center justify-between bg-pure-bg border border-gray-300 rounded-lg px-3 py-2"
-                      >
-                        <span className="text-sm text-pure-ink">{p.user_name}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveParticipant(p.user_id)}
-                          disabled={participantLoading}
-                          className="text-red-600 hover:text-red-700 text-[13px] font-medium disabled:opacity-50"
-                        >
-                          Remove
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {unregisteredUsers.length > 0 && (
-                  <div className="flex gap-2">
-                    <select
-                      value={selectedAddUserId}
-                      onChange={(e) => setSelectedAddUserId(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-pure-bg border border-gray-300 text-pure-ink rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pure-green"
-                    >
-                      <option value="">Select a person to add...</option>
-                      {unregisteredUsers.map((u) => (
-                        <option key={u.id} value={u.id} className="bg-pure-bg">
-                          {u.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={handleAddParticipant}
-                      disabled={!selectedAddUserId || participantLoading}
-                      className="px-4 py-2 bg-pure-green text-black text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-40"
-                    >
-                      Add
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="sticky bottom-0 z-20 -mx-4 flex gap-4 border-t border-line bg-pure-bg/95 px-4 py-3 backdrop-blur-sm md:static md:mt-6 md:border-0 md:bg-transparent md:px-0 md:py-0">
-                <Button type="submit" disabled={saving} className="flex-1">
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => router.back()}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }
