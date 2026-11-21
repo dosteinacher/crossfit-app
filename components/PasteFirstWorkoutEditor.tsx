@@ -11,10 +11,11 @@
  * strict PURE notation — every other line is left exactly as typed.
  */
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { classifyLines, type LineClassification, type MoveParse, type PartParse } from '@/lib/classifyLines';
 import { cleanPastedText } from '@/lib/pasteCleanup';
 import { parseWorkout } from '@/lib/workoutNotation';
+import { CHATGPT_PROMPT, NOTATION_GUIDE } from '@/lib/chatgptPrompt';
 
 const TAG_LABEL: Record<LineClassification['kind'], string> = {
   part: '#',
@@ -263,8 +264,16 @@ export default function PasteFirstWorkoutEditor({
   void onTitleChange;
   const [editingLine, setEditingLine] = useState<number | null>(null);
   const [editFields, setEditFields] = useState<EditFields | null>(null);
+  const [promptCopied, setPromptCopied] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!promptCopied) return;
+    const timer = setTimeout(() => setPromptCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [promptCopied]);
 
   const classified = useMemo(() => classifyLines(description), [description]);
   const parts = useMemo(() => groupIntoParts(classified), [classified]);
@@ -308,6 +317,15 @@ export default function PasteFirstWorkoutEditor({
     onDescriptionChange(replaceLine(description, editingLine, newLine));
     setEditingLine(null);
     setEditFields(null);
+  }
+
+  async function copyPrompt() {
+    try {
+      await navigator.clipboard.writeText(CHATGPT_PROMPT);
+      setPromptCopied(true);
+    } catch {
+      setPromptCopied(false);
+    }
   }
 
   function fixCheckLine(lineNumber: number, as: 'note' | 'movement' | 'text') {
@@ -370,6 +388,22 @@ export default function PasteFirstWorkoutEditor({
               spellCheck={false}
               className="min-h-[360px] flex-1 resize-y bg-paper px-3 py-2 font-mono text-[13px] leading-5 text-ink placeholder:text-ink-2 focus:outline-none"
             />
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={copyPrompt}
+              className="min-h-9 rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas"
+            >
+              {promptCopied ? 'Copied!' : 'Copy ChatGPT prompt'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setGuideOpen(true)}
+              className="min-h-9 rounded-sm border border-line bg-paper px-3 text-[13px] font-bold text-ink hover:bg-canvas"
+            >
+              ? How to write
+            </button>
           </div>
         </div>
 
@@ -456,6 +490,36 @@ export default function PasteFirstWorkoutEditor({
               onCancel={() => { setEditingLine(null); setEditFields(null); }}
               onDone={commitEdit}
             />
+          </div>
+        </div>
+      )}
+
+      {guideOpen && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center" role="dialog" aria-modal="true" aria-label="How to write a workout">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setGuideOpen(false)} />
+          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border-t border-line bg-paper p-4 pb-[calc(16px_+_env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(0,0,0,0.15)]">
+            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line-2" aria-hidden="true" />
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-bold text-ink">How to write a workout</p>
+              <button
+                type="button"
+                onClick={() => setGuideOpen(false)}
+                aria-label="Close"
+                className="min-h-8 min-w-8 rounded-sm text-lg font-bold text-ink-2 hover:text-ink"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-3">
+              {NOTATION_GUIDE.map((section) => (
+                <div key={section.heading}>
+                  <p className="text-[13px] font-bold text-ink">{section.heading}</p>
+                  {section.lines.map((line, i) => (
+                    <p key={i} className="font-mono text-[12px] leading-5 text-ink-2">{line}</p>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
