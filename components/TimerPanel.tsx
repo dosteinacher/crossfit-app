@@ -22,6 +22,11 @@ import {
 
 type Volume = 'low' | 'medium' | 'high';
 
+// Every fresh start (any mode) gets this fixed "Get ready" countdown first,
+// on top of whatever the timer's own configuration is — e.g. an Intervals
+// timer's own `prep` still runs afterward, unchanged.
+const PRE_START_COUNTDOWN_SECONDS = 10;
+
 const SOUND_STORAGE_KEY = 'pure.board.sound';
 const VOLUME_STORAGE_KEY = 'pure.board.volume';
 // Square-wave cues carry well on TV speakers. The limiter in playCue keeps "high" from clipping.
@@ -97,6 +102,7 @@ export default function TimerPanel({
   const [accumulated, setAccumulated] = useState(0);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
+  const [preCountdown, setPreCountdown] = useState<number | null>(null);
   const [timerLoaded, setTimerLoaded] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -118,10 +124,10 @@ export default function TimerPanel({
   const done = timerState?.done ?? (duration !== undefined && elapsed >= duration);
   const phase = timerState?.done ? undefined : timerState?.seg?.phase;
   const phaseStyle = phase ? PHASE_STYLE[phase] : undefined;
-  const phaseLabel = phaseStyle?.label || (
+  const phaseLabel = preCountdown !== null ? PHASE_STYLE.prep.label : phaseStyle?.label || (
     done ? 'DONE' : mode === 'countup' ? 'COUNT UP' : mode === 'countdown' ? 'COUNTDOWN' : mode === 'emom' ? 'EMOM' : 'INTERVALS'
   );
-  const phaseColor = phaseStyle?.color || '#FFFFFF';
+  const phaseColor = preCountdown !== null ? PHASE_STYLE.prep.color : phaseStyle?.color || '#FFFFFF';
   const nextLabel = done
     ? 'NEXT PART'
     : timerState?.next
@@ -138,7 +144,9 @@ export default function TimerPanel({
   const advanceAnnouncement = done && upcomingPartTitle && onAutoAdvance
     ? `NEXT: ${String(partIndex + 2).padStart(2, '0')} ${upcomingPartTitle}`
     : '';
-  const displayTime = mode === 'intervals'
+  const displayTime = preCountdown !== null
+    ? formatTime(preCountdown, true)
+    : mode === 'intervals'
     ? formatTime(timerState?.segLeft || 0, true)
     : mode === 'countdown'
       ? formatTime(Math.max(0, (duration || 0) - elapsed), true)
@@ -356,6 +364,11 @@ export default function TimerPanel({
   }, [configuration, elapsed, mode, playCue, preferencesLoaded, running, timer, timerLoaded, timerState?.segLeft]);
 
   useEffect(() => {
+    if (preCountdown === null || preCountdown < 1 || preCountdown > 3) return;
+    playCue('tick', preCountdown);
+  }, [preCountdown, playCue]);
+
+  useEffect(() => {
     if (!running) return;
     let active = true;
     const requestWakeLock = async () => {
@@ -419,14 +432,29 @@ export default function TimerPanel({
     const timestamp = Date.now();
     const nextElapsed = Math.max(0, Math.min(end, position));
     lastCueElapsedRef.current = null;
+    setPreCountdown(null);
     setAccumulated(nextElapsed);
     setStartedAt(running ? timestamp : null);
     setNow(timestamp);
   }, [end, running]);
 
+  const beginRun = useCallback((startAccumulated: number) => {
+    const timestamp = Date.now();
+    if (soundEnabled && preferencesLoaded) ensureAudioContext();
+    setAccumulated(startAccumulated);
+    setStartedAt(timestamp);
+    setRunning(true);
+    setNow(timestamp);
+  }, [ensureAudioContext, preferencesLoaded, soundEnabled]);
+
   const toggleTimer = useCallback(() => {
     if (!timerLoaded || !preferencesLoaded) return;
     onActivity?.();
+    if (preCountdown !== null) {
+      // Pressing the button mid-countdown cancels it rather than starting early.
+      setPreCountdown(null);
+      return;
+    }
     if (running) {
       const timestamp = Date.now();
       setAccumulated(Math.min(end, liveElapsed()));
@@ -435,18 +463,35 @@ export default function TimerPanel({
       setNow(timestamp);
       return;
     }
-    const timestamp = Date.now();
-    if (soundEnabled && preferencesLoaded) ensureAudioContext();
-    setAccumulated(done ? 0 : elapsed);
-    setStartedAt(timestamp);
-    setRunning(true);
-    setNow(timestamp);
-  }, [done, elapsed, end, ensureAudioContext, liveElapsed, onActivity, preferencesLoaded, running, soundEnabled, timerLoaded]);
+    // A fresh start (or restart) always gets the "Get ready" countdown first;
+    // resuming from a manual pause mid-part does not.
+    if (done || elapsed === 0) {
+      if (soundEnabled) ensureAudioContext();
+      setPreCountdown(PRE_START_COUNTDOWN_SECONDS);
+      return;
+    }
+    beginRun(elapsed);
+  }, [beginRun, done, elapsed, end, ensureAudioContext, liveElapsed, onActivity, preCountdown, preferencesLoaded, running, soundEnabled, timerLoaded]);
+
+  useEffect(() => {
+    if (preCountdown === null) return;
+    if (preCountdown <= 0) {
+      setPreCountdown(null);
+      beginRun(done ? 0 : elapsed);
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      setPreCountdown((current) => (current === null ? null : current - 1));
+    }, 1000);
+    return () => window.clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `done`/`elapsed` are read only at the final tick, deliberately not re-running this effect as they change while running stays false.
+  }, [preCountdown]);
 
   const stopTimer = useCallback(() => {
     if (!timerLoaded || !preferencesLoaded) return;
     onActivity?.();
     lastCueElapsedRef.current = null;
+    setPreCountdown(null);
     setAccumulated(0);
     setStartedAt(null);
     setRunning(false);
@@ -606,7 +651,7 @@ export default function TimerPanel({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [nextInterval, onActivity, preferencesLoaded, previousInterval, stopTimer, timerLoaded, toggleSound, toggleTimer]);
 
-  const phaseWordClass = phaseStyle?.className || 'text-white';
+  const phaseWordClass = preCountdown !== null ? PHASE_STYLE.prep.className : phaseStyle?.className || 'text-white';
   const remainingLabel = duration === undefined && mode !== 'intervals' ? '—' : formatTime(totalLeft);
   const roundProgress = timerState?.roundProgress || [];
   const currentRound = timerState?.round || 1;
@@ -629,8 +674,8 @@ export default function TimerPanel({
         : part.format === 'FOR TIME' || part.format === 'CHIPPER'
             ? part.minutes ? part.format : 'No time cap'
           : part.format || 'Stopwatch';
-  const startLabel = running ? 'Ⅱ Pause' : done ? '↻ Restart' : elapsed > 0 ? '▶ Resume' : '▶ Start';
-  const timeButtonLabel = running ? 'Pause timer' : done ? 'Restart timer' : elapsed > 0 ? 'Resume timer' : 'Start timer';
+  const startLabel = preCountdown !== null ? '✕ Cancel' : running ? 'Ⅱ Pause' : done ? '↻ Restart' : elapsed > 0 ? '▶ Resume' : '▶ Start';
+  const timeButtonLabel = preCountdown !== null ? 'Cancel countdown' : running ? 'Pause timer' : done ? 'Restart timer' : elapsed > 0 ? 'Resume timer' : 'Start timer';
   const buttonClass = size === 'stage'
     ? 'h-[68px] rounded-xl bg-[#1E1F1B] font-display text-[22px] font-black uppercase'
     : 'h-12 rounded-lg bg-[#1E1F1B] font-display text-[15px] font-black uppercase';
@@ -841,7 +886,7 @@ export default function TimerPanel({
             aria-label={timeButtonLabel}
             className="board-timer-mobile-start"
           >
-            {running ? 'Ⅱ' : '▶'}
+            {preCountdown !== null ? '✕' : running ? 'Ⅱ' : '▶'}
           </button>
         </div>
         {mobileExpanded && (
