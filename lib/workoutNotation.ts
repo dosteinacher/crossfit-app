@@ -256,7 +256,14 @@ function splitAlternative(value: string) {
       depth === 0 &&
       !(/\d/.test(value[index - 1] || '') && /\d/.test(value[index + 1] || ''))
     ) {
+      // The *first* slash splits the movement from its easier option(s) — a
+      // second (or third) slash, like "Cal Row / SkiErg / Bike", is still
+      // part of the alt, not a second separator. Taking the last slash
+      // instead (no `break` here) swallowed everything up to it into the
+      // movement name, so "Cal Row / SkiErg" rendered as the name with only
+      // "Bike" left over as the alt.
       separator = index;
+      break;
     }
   }
   return separator < 0

@@ -86,6 +86,21 @@ describe('parseWorkout', () => {
     });
   });
 
+  it('splits on the first slash with three or more alternatives, not the last', () => {
+    // Regression: "Cal Row / SkiErg / Bike" used to become name "Cal Row / SkiErg"
+    // with only "Bike" left over as the alt, because the old splitAlternative kept
+    // overwriting its separator index with each slash it found instead of the first.
+    const { parts } = parseWorkout(`# WOD | 20 | AMRAP
+20 Cal Row / SkiErg / Bike`);
+    assert.deepEqual(parts[0].blocks[0], {
+      type: 'movement',
+      reps: '20',
+      name: 'Cal Row',
+      alt: 'SkiErg / Bike',
+      line: 2,
+    });
+  });
+
   it('accepts header metadata segments in any order', () => {
     const [part] = parseWorkout('# WOD | Partner relay | Team of 4 · Shared | 16 | Intervals').parts;
     assert.equal(part.title, 'WOD');
