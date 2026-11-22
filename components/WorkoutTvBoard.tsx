@@ -211,8 +211,8 @@ function WorkoutTvBlock({
 }) {
   if (block.type === 'movement') {
     return (
-      <div className={`grid min-h-[5.125em] grid-cols-[6em_minmax(0,1fr)] items-center gap-[.9em] border-b-2 py-[.32em] ${divider}`}>
-        <span className={`font-display text-[3.75em] font-black leading-none tabular-nums ${text}`}>
+      <div className={`grid min-h-[5.125em] grid-cols-[7.25em_minmax(0,1fr)] items-center gap-[.9em] border-b-2 py-[.32em] ${divider}`}>
+        <span className={`truncate font-display text-[3.75em] font-black leading-none tabular-nums ${text}`}>
           {block.reps || '—'}
         </span>
         <div className="min-w-0">
